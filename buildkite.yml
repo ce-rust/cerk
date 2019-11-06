@@ -1,0 +1,9 @@
+steps:
+  - label: "test"
+    plugins:
+      - docker-compose#v3.0.3:
+          run: test
+  - label: "rust doc"
+    plugins:
+      - docker-compose#v3.0.3:
+          run: doc

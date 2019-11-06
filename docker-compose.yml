@@ -1,0 +1,15 @@
+version: '3.7'
+
+services:
+  test:
+    image: rust:1.38
+    volumes:
+      - .:/cerk/
+    working_dir: /cerk
+    command: cargo test
+  doc:
+    image: rust:1.38
+    volumes:
+      - .:/cerk/
+    working_dir: /cerk
+    command: cargo doc
