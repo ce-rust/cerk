@@ -1,5 +1,5 @@
-use crate::runtime::channel::{BoxedReceiver,BoxedSender};
 use crate::kernel::BrokerEvent;
+use crate::runtime::channel::{BoxedReceiver, BoxedSender};
 
 pub trait InternalServer {
     fn process_broker_event(&mut self, event: BrokerEvent, outbox: &BoxedSender);
