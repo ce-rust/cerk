@@ -1,7 +1,3 @@
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
+use cerk::runtime::{BoxedReceiver, BoxedSender};
+
+pub fn start_routing(inbox: BoxedReceiver, sender_to_kernel: BoxedSender) {}

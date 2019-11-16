@@ -56,8 +56,7 @@ impl ThreadingScheduler {
         let (sender_to_server, receiver_from_kernel) = new_channel();
         let server_sender_to_kernel = sender_to_kernel.clone_boxed();
         thread::spawn(move || {
-            let mut internal_server = internal_server_fn();
-            internal_server.start(receiver_from_kernel, server_sender_to_kernel);
+            internal_server_fn(receiver_from_kernel, server_sender_to_kernel);
         });
         sender_to_kernel.send(BrokerEvent::InernalServerScheduled(id, sender_to_server));
     }

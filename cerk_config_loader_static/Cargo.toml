@@ -1,5 +1,5 @@
 [package]
-name = "cerk_router_broadcast"
+name = "cerk_config_loader_static"
 version = "0.1.0"
 authors = ["Linus Basig <linus@basig.me>"]
 edition = "2018"

@@ -2,6 +2,7 @@
 
 members = [
     "cerk",
+    "cerk_config_loader_static",
     "cerk_port_unix_socket",
     "cerk_router_broadcast",
     "cerk_runtime_threading",
