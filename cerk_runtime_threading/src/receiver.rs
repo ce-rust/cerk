@@ -8,12 +8,12 @@ pub struct ThreadingReceiver {
 
 impl ThreadingReceiver {
     pub fn new(receiver: Receiver<BrokerEvent>) -> Self {
-        return ThreadingReceiver { receiver: receiver };
+        ThreadingReceiver { receiver: receiver }
     }
 }
 
 impl CerkReceiver for ThreadingReceiver {
     fn receive(&self) -> BrokerEvent {
-        return self.receiver.recv().unwrap();
+        self.receiver.recv().unwrap()
     }
 }
