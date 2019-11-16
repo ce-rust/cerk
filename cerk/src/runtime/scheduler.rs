@@ -1,5 +1,5 @@
-use crate::kernel::StartOptions;
+use crate::kernel::{KernelFn, StartOptions};
 
-pub type ScheduFn = fn(start_options: StartOptions);
+pub type ScheduFn = fn(StartOptions, KernelFn);
 
 pub trait Scheduler {}
