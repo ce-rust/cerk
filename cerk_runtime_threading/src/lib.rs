@@ -5,7 +5,7 @@ use crate::receiver::ThreadingReceiver;
 use crate::sender::ThreadingSender;
 use cerk::kernel::{BrokerEvent, KernelFn, StartOptions};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
-use cerk::runtime::InternalServerFn;
+use cerk::runtime::{InternalServerFn, InternalServerId};
 use std::sync::mpsc::sync_channel;
 use std::thread;
 
@@ -39,21 +39,26 @@ impl ThreadingScheduler {
         loop {
             let event = receiver_from_kernel.receive();
             match event {
-                BrokerEvent::ScheduleInternalServer(internal_server) => {
-                    self.schedule(internal_server, &sender_to_kernel)
+                BrokerEvent::ScheduleInternalServer(id, internal_server) => {
+                    self.schedule(id, internal_server, &sender_to_kernel)
                 }
                 _ => println!("Unknown event"),
             }
         }
     }
 
-    fn schedule(&self, internal_server_fn: InternalServerFn, sender_to_kernel: &BoxedSender) {
+    fn schedule(
+        &self,
+        id: InternalServerId,
+        internal_server_fn: InternalServerFn,
+        sender_to_kernel: &BoxedSender,
+    ) {
         let (sender_to_server, receiver_from_kernel) = new_channel();
         let server_sender_to_kernel = sender_to_kernel.clone_boxed();
         thread::spawn(move || {
             let mut internal_server = internal_server_fn();
             internal_server.start(receiver_from_kernel, server_sender_to_kernel);
         });
-        sender_to_kernel.send(BrokerEvent::InernalServerScheduled(sender_to_server));
+        sender_to_kernel.send(BrokerEvent::InernalServerScheduled(id, sender_to_server));
     }
 }

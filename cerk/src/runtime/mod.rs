@@ -4,3 +4,5 @@ mod scheduler;
 
 pub use crate::runtime::internal_server::{InternalServer, InternalServerFn};
 pub use crate::runtime::scheduler::ScheduFn;
+
+pub type InternalServerId = &'static str;
