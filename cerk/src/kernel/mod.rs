@@ -31,7 +31,7 @@ impl Kernel {
                 BrokerEvent::InernalServerScheduled(id, sender_to_server) => {
                     outboxes.insert(id, sender_to_server);
                 }
-                _ => println!("event not implemented"),
+                evt => warn!("event {} not implemented", evt),
             }
         }
     }

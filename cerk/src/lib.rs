@@ -3,6 +3,9 @@ pub mod ports;
 pub mod routing;
 pub mod runtime;
 
+#[macro_use]
+extern crate log;
+
 #[cfg(test)]
 mod tests {
     #[test]
