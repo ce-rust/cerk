@@ -18,7 +18,9 @@ impl fmt::Display for BrokerEvent {
             BrokerEvent::InernalServerScheduled(id, _) => {
                 write!(f, "InernalServerScheduled server_id={}", id)
             }
-            BrokerEvent::IncommingCloudEvent(id, _) => write!(f, "IncommingCloudEvent source_id={}", id),
+            BrokerEvent::IncommingCloudEvent(id, _) => {
+                write!(f, "IncommingCloudEvent source_id={}", id)
+            }
         }
     }
 }

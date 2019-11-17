@@ -7,32 +7,32 @@ use std::collections::HashMap;
 pub use crate::kernel::broker_event::BrokerEvent;
 pub use crate::kernel::cloud_event::CloudEvent;
 
-struct Kernel {}
+fn kernel_start(
+    start_options: StartOptions,
+    inbox: BoxedReceiver,
+    sender_to_scheduler: BoxedSender,
+) {
+    let mut outboxes = HashMap::<InternalServerId, BoxedSender>::new();
 
-impl Kernel {
-    fn start(start_options: StartOptions, inbox: BoxedReceiver, sender_to_scheduler: BoxedSender) {
-        let mut outboxes = HashMap::<InternalServerId, BoxedSender>::new();
+    sender_to_scheduler.send(BrokerEvent::ScheduleInternalServer(
+        "router",
+        start_options.router_start,
+    ));
+    sender_to_scheduler.send(BrokerEvent::ScheduleInternalServer(
+        "config_loader",
+        start_options.config_loader_start,
+    ));
 
-        sender_to_scheduler.send(BrokerEvent::ScheduleInternalServer(
-            "router",
-            start_options.router_start,
-        ));
-        sender_to_scheduler.send(BrokerEvent::ScheduleInternalServer(
-            "config_loader",
-            start_options.config_loader_start,
-        ));
+    for (id, port_start) in start_options.ports.iter() {
+        sender_to_scheduler.send(BrokerEvent::ScheduleInternalServer(id, *port_start));
+    }
 
-        for (id, port_start) in start_options.ports.iter() {
-            sender_to_scheduler.send(BrokerEvent::ScheduleInternalServer(id, *port_start));
-        }
-
-        loop {
-            match inbox.receive() {
-                BrokerEvent::InernalServerScheduled(id, sender_to_server) => {
-                    outboxes.insert(id, sender_to_server);
-                }
-                evt => warn!("event {} not implemented", evt),
+    loop {
+        match inbox.receive() {
+            BrokerEvent::InernalServerScheduled(id, sender_to_server) => {
+                outboxes.insert(id, sender_to_server);
             }
+            evt => warn!("event {} not implemented", evt),
         }
     }
 }
@@ -46,6 +46,6 @@ pub struct StartOptions {
     pub ports: Box<[(InternalServerId, InternalServerFn)]>,
 }
 
-pub fn start_kernel(start_options: StartOptions) {
-    (start_options.scheduler_start)(start_options, Kernel::start);
+pub fn bootstrap(start_options: StartOptions) {
+    (start_options.scheduler_start)(start_options, kernel_start);
 }

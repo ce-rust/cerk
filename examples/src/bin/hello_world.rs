@@ -1,4 +1,4 @@
-use cerk::kernel::{start_kernel, StartOptions};
+use cerk::kernel::{bootstrap, StartOptions};
 use cerk_config_loader_static::config_loader_start;
 use cerk_port_dummies::port_printer_start;
 use cerk_port_dummies::port_sequence_generator_start;
@@ -21,5 +21,5 @@ fn main() {
             ("dummy-logger-output", port_sequence_generator_start),
         ]),
     };
-    start_kernel(start_options);
+    bootstrap(start_options);
 }
