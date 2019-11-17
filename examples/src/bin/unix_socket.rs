@@ -5,7 +5,8 @@ use env_logger::Env;
 use cerk::kernel::{bootstrap, BrokerEvent, Config, StartOptions};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
-use cerk_port_dummies::{port_printer_start, port_sequence_generator_start};
+use cerk_port_dummies::{port_sequence_generator_start};
+use cerk_port_unix_socket::port_output_unix_socket_json_start;
 use cerk_router_broadcast::router_start;
 use cerk_runtime_threading::ThreadingScheduler;
 
@@ -19,7 +20,7 @@ fn static_config_loader_start(
         match inbox.receive() {
             BrokerEvent::Init => {
                 sender_to_kernel.send(BrokerEvent::ConfigUpdated(
-                    Config::Array(vec![Config::String(String::from("dummy-logger-output"))]),
+                    Config::Array(vec![Config::String(String::from("unix-json-output"))]),
                     String::from("router"),
                 ));
                 sender_to_kernel.send(BrokerEvent::ConfigUpdated(
@@ -28,7 +29,7 @@ fn static_config_loader_start(
                 ));
                 sender_to_kernel.send(BrokerEvent::ConfigUpdated(
                     Config::Null,
-                    String::from("dummy-logger-output"),
+                    String::from("unix-json-output"),
                 ));
             }
             broker_event => warn!("event {} not implemented", broker_event),
@@ -48,7 +49,10 @@ fn main() {
                 String::from("dummy-sequence-generator"),
                 port_sequence_generator_start,
             ),
-            (String::from("dummy-logger-output"), port_printer_start),
+            (
+                String::from("unix-json-output"),
+                port_output_unix_socket_json_start,
+            ),
         ]),
     };
     bootstrap(start_options);
