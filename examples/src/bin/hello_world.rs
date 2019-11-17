@@ -1,16 +1,13 @@
-use cerk::kernel::{bootstrap, StartOptions};
-use cerk_port_dummies::port_printer_start;
-use cerk_port_dummies::port_sequence_generator_start;
-use cerk_router_broadcast::router_start;
-use cerk_runtime_threading::ThreadingScheduler;
-
 #[macro_use]
 extern crate log;
 use env_logger::Env;
 
-use cerk::kernel::{BrokerEvent, Config};
+use cerk::kernel::{bootstrap, BrokerEvent, Config, StartOptions};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
+use cerk_port_dummies::{port_printer_start, port_sequence_generator_start};
+use cerk_router_broadcast::router_start;
+use cerk_runtime_threading::ThreadingScheduler;
 
 fn static_config_loader_start(
     id: InternalServerId,
