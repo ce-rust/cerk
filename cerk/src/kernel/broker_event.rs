@@ -11,6 +11,7 @@ pub enum BrokerEvent {
     IncommingCloudEvent(InternalServerId, CloudEvent),
     ConfigUpdated(Config, InternalServerId),
     OutgoingCloudEvent(CloudEvent, InternalServerId),
+    Batch(Vec<BrokerEvent>),
 }
 
 impl fmt::Display for BrokerEvent {
@@ -30,6 +31,7 @@ impl fmt::Display for BrokerEvent {
             BrokerEvent::OutgoingCloudEvent(_, id) => {
                 write!(f, "OutgoingCloudEvent destination_id={}", id)
             }
+            BrokerEvent::Batch(_) => write!(f, "Batch"),
         }
     }
 }

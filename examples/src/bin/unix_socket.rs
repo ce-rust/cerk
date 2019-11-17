@@ -9,6 +9,9 @@ use cerk_port_dummies::port_sequence_generator_start;
 use cerk_port_unix_socket::port_output_unix_socket_json_start;
 use cerk_router_broadcast::router_start;
 use cerk_runtime_threading::ThreadingScheduler;
+use std::fs::remove_file;
+
+const SOCKET_PATH: &str = "./cloud-events";
 
 fn static_config_loader_start(
     id: InternalServerId,
@@ -19,18 +22,20 @@ fn static_config_loader_start(
     loop {
         match inbox.receive() {
             BrokerEvent::Init => {
-                sender_to_kernel.send(BrokerEvent::ConfigUpdated(
-                    Config::Array(vec![Config::String(String::from("unix-json-output"))]),
-                    String::from("router"),
-                ));
-                sender_to_kernel.send(BrokerEvent::ConfigUpdated(
-                    Config::Null,
-                    String::from("dummy-sequence-generator"),
-                ));
-                sender_to_kernel.send(BrokerEvent::ConfigUpdated(
-                    Config::String(String::from("./cloud-events")),
-                    String::from("unix-json-output"),
-                ));
+                sender_to_kernel.send(BrokerEvent::Batch(vec![
+                    BrokerEvent::ConfigUpdated(
+                        Config::Array(vec![Config::String(String::from("unix-json-output"))]),
+                        String::from("router"),
+                    ),
+                    BrokerEvent::ConfigUpdated(
+                        Config::Null,
+                        String::from("dummy-sequence-generator"),
+                    ),
+                    BrokerEvent::ConfigUpdated(
+                        Config::String(String::from(SOCKET_PATH)),
+                        String::from("unix-json-output"),
+                    ),
+                ]));
             }
             broker_event => warn!("event {} not implemented", broker_event),
         }
@@ -39,6 +44,8 @@ fn static_config_loader_start(
 
 fn main() {
     env_logger::from_env(Env::default().default_filter_or("debug")).init();
+    let _ = remove_file(SOCKET_PATH);
+
     info!("start hello world example");
     let start_options = StartOptions {
         scheduler_start: ThreadingScheduler::start,
