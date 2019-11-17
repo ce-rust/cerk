@@ -7,6 +7,9 @@ use std::collections::HashMap;
 pub use crate::kernel::broker_event::BrokerEvent;
 pub use crate::kernel::cloud_event::CloudEvent;
 
+const ROUTER_ID: InternalServerId = "router";
+const CONFIG_LOADER_ID: InternalServerId = "config_loader";
+
 fn kernel_start(
     start_options: StartOptions,
     inbox: BoxedReceiver,
@@ -15,11 +18,11 @@ fn kernel_start(
     let mut outboxes = HashMap::<InternalServerId, BoxedSender>::new();
 
     sender_to_scheduler.send(BrokerEvent::ScheduleInternalServer(
-        "router",
+        ROUTER_ID,
         start_options.router_start,
     ));
     sender_to_scheduler.send(BrokerEvent::ScheduleInternalServer(
-        "config_loader",
+        CONFIG_LOADER_ID,
         start_options.config_loader_start,
     ));
 
@@ -32,7 +35,10 @@ fn kernel_start(
             BrokerEvent::InernalServerScheduled(id, sender_to_server) => {
                 outboxes.insert(id, sender_to_server);
             }
-            evt => warn!("event {} not implemented", evt),
+            broker_event @ BrokerEvent::IncommingCloudEvent(_, _) => {
+                outboxes.get(ROUTER_ID).unwrap().send(broker_event) // if the router is not present: panic! we cant work without it
+            }
+            broker_event => warn!("event {} not implemented", broker_event),
         }
     }
 }

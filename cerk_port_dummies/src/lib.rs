@@ -19,6 +19,7 @@ pub fn port_sequence_generator_start(
 ) {
     info!("start sequence generator port with id {}", id);
     for i in 1.. {
+        thread::sleep(time::Duration::from_secs(1));
         debug!("send dummy event with sequence number {} to kernel", i);
         sender_to_kernel.send(BrokerEvent::IncommingCloudEvent(
             id,
@@ -27,6 +28,5 @@ pub fn port_sequence_generator_start(
                 source: String::from("dummy"),
             },
         ));
-        thread::sleep(time::Duration::from_secs(1));
     }
 }
