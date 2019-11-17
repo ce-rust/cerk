@@ -1,9 +1,11 @@
 mod broker_event;
+mod cloud_event;
 use crate::runtime::channel::{BoxedReceiver, BoxedSender};
 use crate::runtime::{InternalServerFn, InternalServerId, ScheduFn};
 use std::collections::HashMap;
 
 pub use crate::kernel::broker_event::BrokerEvent;
+pub use crate::kernel::cloud_event::CloudEvent;
 
 struct Kernel {}
 
