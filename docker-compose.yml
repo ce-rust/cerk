@@ -6,10 +6,10 @@ services:
     volumes:
       - .:/cerk/
     working_dir: /cerk
-    command: cargo test
+    command: cargo test --all
   doc:
     image: rust:1.38
     volumes:
       - .:/cerk/
     working_dir: /cerk
-    command: cargo doc
+    command: cargo doc --all
