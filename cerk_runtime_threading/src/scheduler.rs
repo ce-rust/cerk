@@ -41,7 +41,7 @@ impl ThreadingScheduler {
         internal_server_fn: InternalServerFn,
         sender_to_kernel: &BoxedSender,
     ) {
-        //debug!("schedule {} thread", id);
+        debug!("schedule {} thread", id);
         let (sender_to_server, receiver_from_kernel) = new_channel();
         let server_sender_to_kernel = sender_to_kernel.clone_boxed();
         let new_server_id = id.clone();
