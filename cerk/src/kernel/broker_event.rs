@@ -1,4 +1,4 @@
-use crate::kernel::CloudEvent;
+use super::CloudEvent;
 use crate::runtime::channel::BoxedSender;
 use crate::runtime::{InternalServerFn, InternalServerId};
 use std::fmt;
