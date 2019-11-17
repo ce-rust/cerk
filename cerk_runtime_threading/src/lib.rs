@@ -1,6 +1,8 @@
 mod receiver;
 mod sender;
 
+#[macro_use]
+extern crate log;
 use crate::receiver::ThreadingReceiver;
 use crate::sender::ThreadingSender;
 use cerk::kernel::{BrokerEvent, KernelFn, StartOptions};
@@ -24,6 +26,7 @@ impl ThreadingScheduler {
         ThreadingScheduler {}
     }
     pub fn start(start_options: StartOptions, start_kernel: KernelFn) {
+        info!("start threading scheduler");
         let mut scheduler = ThreadingScheduler::new();
         scheduler.init(start_options, start_kernel);
     }
@@ -53,6 +56,7 @@ impl ThreadingScheduler {
         internal_server_fn: InternalServerFn,
         sender_to_kernel: &BoxedSender,
     ) {
+        debug!("schedule {} thread", id);
         let (sender_to_server, receiver_from_kernel) = new_channel();
         let server_sender_to_kernel = sender_to_kernel.clone_boxed();
         thread::spawn(move || {
