@@ -41,12 +41,16 @@ impl ThreadingScheduler {
         internal_server_fn: InternalServerFn,
         sender_to_kernel: &BoxedSender,
     ) {
-        debug!("schedule {} thread", id);
+        //debug!("schedule {} thread", id);
         let (sender_to_server, receiver_from_kernel) = new_channel();
         let server_sender_to_kernel = sender_to_kernel.clone_boxed();
+        let new_server_id = id.clone();
         thread::spawn(move || {
-            internal_server_fn(id, receiver_from_kernel, server_sender_to_kernel);
+            internal_server_fn(new_server_id, receiver_from_kernel, server_sender_to_kernel);
         });
-        sender_to_kernel.send(BrokerEvent::InernalServerScheduled(id, sender_to_server));
+        sender_to_kernel.send(BrokerEvent::InernalServerScheduled(
+            id.clone(),
+            sender_to_server,
+        ));
     }
 }
