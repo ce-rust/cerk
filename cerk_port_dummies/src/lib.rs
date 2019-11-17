@@ -10,14 +10,14 @@ pub fn port_printer_start(
     inbox: BoxedReceiver,
     sender_to_kernel: BoxedSender,
 ) {
-    info!("start printer port");
+    info!("start printer port with id {}", id);
 }
 pub fn port_sequence_generator_start(
     id: InternalServerId,
     inbox: BoxedReceiver,
     sender_to_kernel: BoxedSender,
 ) {
-    info!("start sequence generator port");
+    info!("start sequence generator port with id {}", id);
     for i in 1.. {
         debug!("send dummy event with sequence number {} to kernel", i);
         sender_to_kernel.send(BrokerEvent::IncommingCloudEvent(

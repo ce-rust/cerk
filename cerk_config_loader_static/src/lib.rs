@@ -8,5 +8,5 @@ pub fn config_loader_start(
     inbox: BoxedReceiver,
     sender_to_kernel: BoxedSender,
 ) {
-    info!("start static config loader");
+    info!("start static config loader with id {}", id);
 }
