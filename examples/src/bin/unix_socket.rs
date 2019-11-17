@@ -5,7 +5,7 @@ use env_logger::Env;
 use cerk::kernel::{bootstrap, BrokerEvent, Config, StartOptions};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
-use cerk_port_dummies::{port_sequence_generator_start};
+use cerk_port_dummies::port_sequence_generator_start;
 use cerk_port_unix_socket::port_output_unix_socket_json_start;
 use cerk_router_broadcast::router_start;
 use cerk_runtime_threading::ThreadingScheduler;
@@ -28,7 +28,7 @@ fn static_config_loader_start(
                     String::from("dummy-sequence-generator"),
                 ));
                 sender_to_kernel.send(BrokerEvent::ConfigUpdated(
-                    Config::Null,
+                    Config::String(String::from("./cloud-events")),
                     String::from("unix-json-output"),
                 ));
             }
