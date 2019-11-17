@@ -38,6 +38,12 @@ fn kernel_start(
             broker_event @ BrokerEvent::IncommingCloudEvent(_, _) => {
                 outboxes.get(ROUTER_ID).unwrap().send(broker_event) // if the router is not present: panic! we cant work without it
             }
+            BrokerEvent::OutgoingCloudEvent(cloud_event, destionation_server_id) => {
+                debug!("got outgoing event, forward to {}", destionation_server_id);
+                outboxes.get(destionation_server_id).unwrap().send(
+                    BrokerEvent::OutgoingCloudEvent(cloud_event, destionation_server_id),
+                );
+            }
             broker_event => warn!("event {} not implemented", broker_event),
         }
     }

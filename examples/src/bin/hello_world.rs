@@ -17,8 +17,8 @@ fn main() {
         router_start: start_routing,
         config_loader_start: config_loader_start,
         ports: Box::new([
-            ("dummy-sequence-generator", port_printer_start),
-            ("dummy-logger-output", port_sequence_generator_start),
+            ("dummy-sequence-generator", port_sequence_generator_start),
+            ("dummy-logger-output", port_printer_start),
         ]),
     };
     bootstrap(start_options);

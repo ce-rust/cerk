@@ -11,6 +11,14 @@ pub fn port_printer_start(
     sender_to_kernel: BoxedSender,
 ) {
     info!("start printer port with id {}", id);
+    loop {
+        match inbox.receive() {
+            BrokerEvent::OutgoingCloudEvent(cloud_event, _) => {
+                info!("{} received cloud event with id={}!", id, cloud_event.id)
+            }
+            broker_event => warn!("event {} not implemented", broker_event),
+        }
+    }
 }
 pub fn port_sequence_generator_start(
     id: InternalServerId,

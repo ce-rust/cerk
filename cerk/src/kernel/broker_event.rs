@@ -7,6 +7,7 @@ pub enum BrokerEvent {
     ScheduleInternalServer(InternalServerId, InternalServerFn),
     InernalServerScheduled(InternalServerId, BoxedSender),
     IncommingCloudEvent(InternalServerId, CloudEvent),
+    OutgoingCloudEvent(CloudEvent, InternalServerId),
 }
 
 impl fmt::Display for BrokerEvent {
@@ -20,6 +21,9 @@ impl fmt::Display for BrokerEvent {
             }
             BrokerEvent::IncommingCloudEvent(id, _) => {
                 write!(f, "IncommingCloudEvent source_id={}", id)
+            }
+            BrokerEvent::OutgoingCloudEvent(_, id) => {
+                write!(f, "OutgoingCloudEvent destination_id={}", id)
             }
         }
     }
