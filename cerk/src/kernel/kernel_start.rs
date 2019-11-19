@@ -8,6 +8,53 @@ const CONFIG_LOADER_ID: &str = "config_loader";
 
 type Outboxes = HashMap<InternalServerId, BoxedSender>;
 
+fn process_broker_event(
+    broker_event: BrokerEvent,
+    outboxes: &mut Outboxes,
+    number_of_servers: usize,
+) {
+    match broker_event {
+        BrokerEvent::InernalServerScheduled(id, sender_to_server) => {
+            init_internal_server(outboxes, number_of_servers, id, sender_to_server);
+        }
+        broker_event @ BrokerEvent::IncommingCloudEvent(_, _) => {
+            outboxes
+                .get(&String::from(ROUTER_ID))
+                .unwrap()
+                .send(broker_event) // if the router is not present: panic! we cant work without it
+        }
+        BrokerEvent::OutgoingCloudEvent(cloud_event, destionation_server_id) => {
+            debug!(
+                "received OutgoingCloudEvent, forward to {}",
+                destionation_server_id
+            );
+            outboxes
+                .get(&destionation_server_id)
+                .unwrap()
+                .send(BrokerEvent::OutgoingCloudEvent(
+                    cloud_event,
+                    destionation_server_id,
+                ));
+        }
+        BrokerEvent::ConfigUpdated(config, destionation_server_id) => {
+            debug!(
+                "received ConfigUpdated, forward to {}",
+                destionation_server_id
+            );
+            outboxes
+                .get(&destionation_server_id)
+                .unwrap()
+                .send(BrokerEvent::ConfigUpdated(config, destionation_server_id));
+        }
+        BrokerEvent::Batch(broker_events) => {
+            for broker_event in broker_events.into_iter() {
+                process_broker_event(broker_event, outboxes, number_of_servers);
+            }
+        }
+        broker_event => warn!("event {} not implemented", broker_event),
+    }
+}
+
 fn init_internal_server(
     outboxes: &mut Outboxes,
     number_of_servers: usize,
@@ -44,36 +91,7 @@ pub fn kernel_start(
     let number_of_servers = 2 + start_options.ports.len(); // 2 = router + config_loader
 
     loop {
-        match inbox.receive() {
-            BrokerEvent::InernalServerScheduled(id, sender_to_server) => {
-                init_internal_server(&mut outboxes, number_of_servers, id, sender_to_server);
-            }
-            broker_event @ BrokerEvent::IncommingCloudEvent(_, _) => {
-                outboxes
-                    .get(&String::from(ROUTER_ID))
-                    .unwrap()
-                    .send(broker_event) // if the router is not present: panic! we cant work without it
-            }
-            BrokerEvent::OutgoingCloudEvent(cloud_event, destionation_server_id) => {
-                debug!(
-                    "received OutgoingCloudEvent, forward to {}",
-                    destionation_server_id
-                );
-                outboxes.get(&destionation_server_id).unwrap().send(
-                    BrokerEvent::OutgoingCloudEvent(cloud_event, destionation_server_id),
-                );
-            }
-            BrokerEvent::ConfigUpdated(config, destionation_server_id) => {
-                debug!(
-                    "received ConfigUpdated, forward to {}",
-                    destionation_server_id
-                );
-                outboxes
-                    .get(&destionation_server_id)
-                    .unwrap()
-                    .send(BrokerEvent::ConfigUpdated(config, destionation_server_id));
-            }
-            broker_event => warn!("event {} not implemented", broker_event),
-        }
+        let broker_event = inbox.receive();
+        process_broker_event(broker_event, &mut outboxes, number_of_servers);
     }
 }
