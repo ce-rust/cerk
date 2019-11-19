@@ -4,14 +4,14 @@ use cerk::runtime::InternalServerId;
 use std::io::Write;
 use std::os::unix::net::{UnixListener, UnixStream};
 
-fn write_to_stream<'a>(
+fn write_to_stream(
     listener: &UnixListener,
     stream: Option<UnixStream>,
     message: &CloudEvent,
     max_tries: usize,
 ) -> Option<UnixStream> {
     if max_tries == 0 {
-        panic!("too many failiers while connection stream");
+        panic!("too many failures while trying to connect to stream");
     }
     match stream {
         None => match listener.accept() {
@@ -33,7 +33,7 @@ pub fn port_output_unix_socket_json_start(
     inbox: BoxedReceiver,
     _sender_to_kernel: BoxedSender,
 ) {
-    info!("start printer port with id {}", id);
+    info!("start output JSON over unix socket port with id {}", id);
     let mut listener: Option<UnixListener> = None;
     let mut stream: Option<UnixStream> = None;
 
