@@ -1,5 +1,5 @@
 [package]
-name = "cerk_port_dummies"
+name = "cloud_event"
 version = "0.1.0"
 authors = [
     "Linus Basig <linus@basig.me>",
@@ -10,6 +10,3 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-log = "0.4.0"
-cerk = { path = "../cerk" }
-cloud_event = { path = "../cloud_event" }

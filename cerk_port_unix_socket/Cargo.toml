@@ -13,3 +13,4 @@ edition = "2018"
 log = "0.4.0"
 env_logger = "0.7.1"
 cerk = { path = "../cerk" }
+cloud_event = { path = "../cloud_event" }
