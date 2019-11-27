@@ -5,6 +5,6 @@ members = [
     "cerk_port_unix_socket",
     "cerk_router_broadcast",
     "cerk_runtime_threading",
-    "cloud_event",
+    "cloudevents",
     "examples",
 ]
