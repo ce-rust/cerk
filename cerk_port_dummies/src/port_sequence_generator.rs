@@ -16,9 +16,9 @@ fn generate_events(id: InternalServerId, sender_to_kernel: BoxedSender) {
                 spec_version: String::from("1.0"),
                 time: Some(Utc::now().naive_utc()),
                 source: String::from("dummy.sequence-generator"),
-                subject: String::from("dummy"),
-                data_schema: String::from(""),
-                content_type: String::from("text"),
+                subject: None,
+                data_schema: None,
+                data_content_type: Some(String::from("text/plain")),
                 data: Data::String(format!("sequence {}", i)),
             },
         ));
