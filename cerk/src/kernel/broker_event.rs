@@ -1,7 +1,7 @@
 use super::Config;
 use crate::runtime::channel::BoxedSender;
 use crate::runtime::{InternalServerFn, InternalServerId};
-use cloud_event::CloudEvent;
+use cloudevents::CloudEvent;
 use std::fmt;
 
 pub enum BrokerEvent {
