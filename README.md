@@ -7,11 +7,13 @@ CERK is an open source [CloudEvents](https://github.com/cloudevents/spec) Router
 ## Introduction
 
 CERK lets you route your [CloudEvents](https://github.com/cloudevents/spec) between different sources and sinks.
-It is build with modularity and partability in mind.
+It is built with modularity and portability in mind.
 
 ## Components
 
-CERK comes with a couple of predefined components, but implementing a own component is easy.
+CERK comes with a couple of prefabricated components, but implementing custom components is easy.
+
+### Runtimes
 
 ### Ports
 
@@ -25,7 +27,13 @@ CERK comes with a couple of predefined components, but implementing a own compon
 
 | Name                                                     | Description                        |
 |----------------------------------------------------------|------------------------------------|
-| [static router](./examples/src/bin/hello_world.rs)       | Have to be implemented for each project individually |
+| [cerk_router_broadcast](./cerk_router_broadcast/)       | The broadcast router forwards all incomming CloudEvents to the configured ports |
+
+### ConfigLoaders
+
+| Name                                                     | Description                        |
+|----------------------------------------------------------|------------------------------------|
+| [static config loader](./examples/src/bin/hello_world.rs)       | Have to be implemented for each project individually |
 
 
 ## Examples
