@@ -1,6 +1,7 @@
-use cerk::kernel::{BrokerEvent, CloudEvent};
+use cerk::kernel::BrokerEvent;
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
+use cloudevents::CloudEvent;
 use std::{thread, time};
 
 fn generate_events(id: InternalServerId, sender_to_kernel: BoxedSender) {
