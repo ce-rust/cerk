@@ -1,3 +1,3 @@
 pub mod cloud_event;
 
-pub use self::cloud_event::CloudEvent;
+pub use self::cloud_event::{CloudEvent, Data};

@@ -1,8 +1,9 @@
 use cerk::kernel::BrokerEvent;
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
-use cloud_event::CloudEvent;
+use cloud_event::{CloudEvent, Data};
 use std::{thread, time};
+use chrono::Utc;
 
 fn generate_events(id: InternalServerId, sender_to_kernel: BoxedSender) {
     for i in 1.. {
@@ -11,7 +12,14 @@ fn generate_events(id: InternalServerId, sender_to_kernel: BoxedSender) {
             id.clone(),
             CloudEvent {
                 id: format!("{}", i),
-                source: String::from("dummy"),
+                event_type: String::from("sequence-generator.counter"),
+                spec_version: String::from("1.0"),
+                time: Some(Utc::now().naive_utc()),
+                source: String::from("dummy.sequence-generator"),
+                subject: String::from("dummy"),
+                data_schema: String::from(""),
+                content_type: String::from("text"),
+                data: Data::String(format!("sequence {}", i)),
             },
         ));
         thread::sleep(time::Duration::from_secs(1));
