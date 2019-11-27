@@ -5,8 +5,9 @@ use env_logger::Env;
 use cerk::kernel::{bootstrap, BrokerEvent, Config, StartOptions};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
-use cerk_port_dummies::port_sequence_generator_start;
-use cerk_port_unix_socket::port_output_unix_socket_json_start;
+use cerk_port_unix_socket::{
+    port_input_unix_socket_json_start, port_output_unix_socket_json_start,
+};
 use cerk_router_broadcast::router_start;
 use cerk_runtime_threading::ThreadingScheduler;
 use std::fs::remove_file;
@@ -29,7 +30,7 @@ fn static_config_loader_start(
                     ),
                     BrokerEvent::ConfigUpdated(
                         Config::Null,
-                        String::from("dummy-sequence-generator"),
+                        String::from("unix-json-input"),
                     ),
                     BrokerEvent::ConfigUpdated(
                         Config::String(String::from(SOCKET_PATH)),
@@ -53,8 +54,8 @@ fn main() {
         config_loader_start: static_config_loader_start,
         ports: Box::new([
             (
-                String::from("dummy-sequence-generator"),
-                port_sequence_generator_start,
+                String::from("unix-json-input"),
+                port_input_unix_socket_json_start,
             ),
             (
                 String::from("unix-json-output"),
