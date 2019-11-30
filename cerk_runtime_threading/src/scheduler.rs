@@ -48,7 +48,7 @@ impl ThreadingScheduler {
         thread::spawn(move || {
             internal_server_fn(new_server_id, receiver_from_kernel, server_sender_to_kernel);
         });
-        sender_to_kernel.send(BrokerEvent::InernalServerScheduled(
+        sender_to_kernel.send(BrokerEvent::InternalServerScheduled(
             id.clone(),
             sender_to_server,
         ));

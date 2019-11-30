@@ -7,7 +7,7 @@ use std::fmt;
 pub enum BrokerEvent {
     Init,
     ScheduleInternalServer(InternalServerId, InternalServerFn),
-    InernalServerScheduled(InternalServerId, BoxedSender),
+    InternalServerScheduled(InternalServerId, BoxedSender),
     IncommingCloudEvent(InternalServerId, CloudEvent),
     ConfigUpdated(Config, InternalServerId),
     OutgoingCloudEvent(CloudEvent, InternalServerId),
@@ -21,8 +21,8 @@ impl fmt::Display for BrokerEvent {
             BrokerEvent::ScheduleInternalServer(id, _) => {
                 write!(f, "ScheduleInternalServer server_id={}", id)
             }
-            BrokerEvent::InernalServerScheduled(id, _) => {
-                write!(f, "InernalServerScheduled server_id={}", id)
+            BrokerEvent::InternalServerScheduled(id, _) => {
+                write!(f, "InternalServerScheduled server_id={}", id)
             }
             BrokerEvent::IncommingCloudEvent(id, _) => {
                 write!(f, "IncommingCloudEvent source_id={}", id)
