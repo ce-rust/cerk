@@ -20,7 +20,7 @@ fn write_to_stream(
             Err(err) => panic!(err),
         },
         Some(mut stream) => {
-            if let Err(_) = stream.write_all(message.id.as_bytes()) {
+            if let Err(_) = stream.write_all(format!("{:?}", message).as_bytes()) {
                 write_to_stream(listener, None, message, max_tries - 1)
             } else {
                 Some(stream)

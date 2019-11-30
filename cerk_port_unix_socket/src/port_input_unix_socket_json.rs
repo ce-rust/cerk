@@ -1,10 +1,12 @@
 use cerk::kernel::{BrokerEvent, Config};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
+use cloudevents::{CloudEvent, Data};
 use std::io::{BufRead, BufReader};
 use std::os::unix::net::{UnixListener, UnixStream};
 
 fn liten_to_stream(
+    id: &InternalServerId,
     listener: &UnixListener,
     stream: Option<BufReader<UnixStream>>,
     sender_to_kernel: &BoxedSender,
@@ -18,13 +20,25 @@ fn liten_to_stream(
         None => match listener.accept() {
             Ok((socket, _)) => {
                 let stream = BufReader::new(socket);
-                liten_to_stream(listener, Some(stream), sender_to_kernel, max_tries - 1)
+                liten_to_stream(id, listener, Some(stream), sender_to_kernel, max_tries - 1)
             }
             Err(err) => panic!(err),
         },
         Some(stream) => {
             for line in stream.lines() {
-                info!("{}", line.unwrap());
+                let cloud_event = CloudEvent {
+                    id: String::from("1"),
+                    event_type: String::from("socket-in"),
+                    spec_version: String::from("1.0"),
+                    source: id.clone(),
+                    time: None,
+                    subject: None,
+                    data_schema: None,
+                    data_content_type: Some(String::from("text/plain")),
+                    data: Data::String(line.unwrap()),
+                };
+                info!("{:?}", cloud_event);
+                sender_to_kernel.send(BrokerEvent::IncommingCloudEvent(id.clone(), cloud_event))
             }
             None // todo
         }
@@ -58,7 +72,7 @@ pub fn port_input_unix_socket_json_start(
         }
 
         if let Some(listener) = listener.as_ref() {
-            stream = liten_to_stream(listener, stream, &sender_to_kernel, 10);
+            stream = liten_to_stream(&id, listener, stream, &sender_to_kernel, 10);
         }
     }
 }
