@@ -12,5 +12,5 @@ edition = "2018"
 [dependencies]
 log = "0.4.0"
 cerk = { path = "../cerk" }
-cloudevents = { git = "https://github.com/ce-rust/rust-cloudevents/", branch = "feat/cloudevents-v1" }
+cloudevents = { git = "https://github.com/ce-rust/rust-cloudevents/", branch = "feat/no-static-str" }
 chrono = "0.4"
