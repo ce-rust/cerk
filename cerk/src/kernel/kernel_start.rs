@@ -14,7 +14,7 @@ fn process_broker_event(
     number_of_servers: usize,
 ) {
     match broker_event {
-        BrokerEvent::InernalServerScheduled(id, sender_to_server) => {
+        BrokerEvent::InternalServerScheduled(id, sender_to_server) => {
             init_internal_server(outboxes, number_of_servers, id, sender_to_server);
         }
         broker_event @ BrokerEvent::IncommingCloudEvent(_, _) => {
