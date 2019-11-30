@@ -7,3 +7,7 @@ steps:
     plugins:
       - docker-compose#v3.0.3:
           run: doc
+  - label: "check readme"
+    plugins:
+       - docker-compose#v3.0.3:
+          run: check-readme

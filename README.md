@@ -1,8 +1,8 @@
-# CERK - CloudEvents Router Kernel
+# cerk 0.1.0
 
 [![Build status](https://badge.buildkite.com/4494e29d5f2c47e3fe998af46dff78a447800a76a68024e392.svg?branch=master)](https://buildkite.com/ce-rust/cerk)
 
-CERK is an open source [CloudEvents](https://github.com/cloudevents/spec) Router written in Rust with a MicroKernel architecture. 
+CERK is an open source [CloudEvents](https://github.com/cloudevents/spec) Router written in Rust with a MicroKernel architecture.
 
 ## Introduction
 
@@ -35,7 +35,6 @@ CERK comes with a couple of prefabricated components, but implementing custom co
 |----------------------------------------------------------|------------------------------------|
 | [static config loader](./examples/src/bin/hello_world.rs)       | Have to be implemented for each project individually |
 
-
 ## Examples
 
 | Name                                                     | Description                        |
@@ -43,7 +42,13 @@ CERK comes with a couple of prefabricated components, but implementing custom co
 | [Hello World](./examples/src/bin/hello_world.rs)         | Routing CloudEvents that are generated from an input port to a output port, the output port print the result to the console. |
 | [UNIX Socket](./examples/src/bin/unix_socket.rs)         | Routing CloudEvents that are generated from an input port to a output port, the output port forwards the events to a UNIX socket |
 
+## Update Readme
 
-## CloudEvents
+The original readme text is an rust doc comment in the [lib.rs](./cloudevents/src/lib.rs) file
 
-More details about CloudEvents can be found [here](./cloudevents/README.md).
+1. `cargo install cargo-readme`
+2. `cargo readme  -r cerk > README.md`
+
+## License
+
+Apache-2.0
