@@ -1,14 +1,15 @@
 use cerk::kernel::{BrokerEvent, Config};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
-use cloudevents::CloudEvent;
+use cloudevents::v10::CloudEvent;
 use std::io::Write;
 use std::os::unix::net::{UnixListener, UnixStream};
+use serde_json;
 
 fn write_to_stream(
     listener: &UnixListener,
     stream: Option<UnixStream>,
-    message: &CloudEvent,
+    event: &CloudEvent,
     max_tries: usize,
 ) -> Option<UnixStream> {
     if max_tries == 0 {
@@ -16,14 +17,23 @@ fn write_to_stream(
     }
     match stream {
         None => match listener.accept() {
-            Ok((socket, _)) => write_to_stream(listener, Some(socket), message, max_tries - 1),
+            Ok((socket, _)) => write_to_stream(listener, Some(socket), event, max_tries - 1),
             Err(err) => panic!(err),
         },
         Some(mut stream) => {
-            if let Err(_) = stream.write_all(format!("{:?}", message).as_bytes()) {
-                write_to_stream(listener, None, message, max_tries - 1)
-            } else {
-                Some(stream)
+            match serde_json::to_string(event) {
+                Ok(mut message) => {
+                    message.push_str("\n");
+                    if let Err(_) = stream.write_all(message.as_bytes()) {
+                        write_to_stream(listener, None, event, max_tries - 1)
+                    } else {
+                        Some(stream)
+                    }
+                },
+                Err(err) => {
+                    error!("serialization filed: {:?}", err);
+                    Some(stream)
+                }
             }
         }
     }
@@ -53,6 +63,7 @@ pub fn port_output_unix_socket_json_start(
                 };
             }
             BrokerEvent::OutgoingCloudEvent(cloud_event, _) => {
+                debug!("{} cloudevent received", id);
                 match listener.as_ref() {
                     Some(listener) => {
                         stream = write_to_stream(listener, stream, &cloud_event, 10);
