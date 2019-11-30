@@ -9,6 +9,13 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[[bin]]
+name = "hello_world"
+path = "src/hello_world/main.rs"
+[[bin]]
+name = "unix_socket"
+path = "src/unix_socket/main.rs"
+
 [dependencies]
 log = "0.4.0"
 env_logger = "0.7.1"
