@@ -1,7 +1,7 @@
 use cerk::kernel::{BrokerEvent, Config};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
-use cloudevents::{CloudEvent, Data};
+use cloudevents::v10::Data;
 use std::io::{BufRead, BufReader};
 use std::os::unix::net::{UnixListener, UnixStream};
 
@@ -26,17 +26,13 @@ fn liten_to_stream(
         },
         Some(stream) => {
             for line in stream.lines() {
-                let cloud_event = CloudEvent {
-                    id: String::from("1"),
+                let cloud_event = cloudevent_v10!(
+                    event_id: String::from("1"),
                     event_type: String::from("socket-in"),
-                    spec_version: String::from("1.0"),
                     source: id.clone(),
-                    time: None,
-                    subject: None,
-                    data_schema: None,
-                    data_content_type: Some(String::from("text/plain")),
-                    data: Data::String(line.unwrap()),
-                };
+                    datacontenttype: String::from("text/plain"),
+                    data: Data::StringOrBinary(line.unwrap()),
+                ).unwrap();
                 info!("{:?}", cloud_event);
                 sender_to_kernel.send(BrokerEvent::IncommingCloudEvent(id.clone(), cloud_event))
             }

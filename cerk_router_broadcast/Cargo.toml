@@ -12,4 +12,4 @@ edition = "2018"
 [dependencies]
 log = "0.4.0"
 cerk = { path = "../cerk" }
-cloudevents = { path = "../cloudevents" }
+cloudevents = { git = "https://github.com/ce-rust/rust-cloudevents/", branch = "feat/cloudevents-v1" }

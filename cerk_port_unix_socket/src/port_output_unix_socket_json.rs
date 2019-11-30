@@ -1,7 +1,7 @@
 use cerk::kernel::{BrokerEvent, Config};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
-use cloudevents::CloudEvent;
+use cloudevents::v10::CloudEvent;
 use std::io::Write;
 use std::os::unix::net::{UnixListener, UnixStream};
 
