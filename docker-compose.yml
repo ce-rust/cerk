@@ -14,7 +14,7 @@ services:
     working_dir: /cerk
     command: cargo doc --all
   check-readme:
-    image: rust:1.38
+    image: lazzaretti/ce-rust-docker-cargo-readme:3.1.2
     volumes:
       - .:/cerk/
     working_dir: /cerk
@@ -22,4 +22,4 @@ services:
       - /bin/bash 
       - -c
       - |
-        cargo install cargo-readme && diff -q <(cargo readme  -r cerk) README.md || echo 1>&2 'Please update the README with `cargo readme -r cerk > README.md`' && exit -1
+        diff <(cargo readme  -r cerk) README.md || (echo 1>&2 'Please update the README with `cargo readme -r cerk > README.md`' && exit 1 )
