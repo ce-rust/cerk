@@ -69,6 +69,8 @@ fn init_internal_server(
     }
 }
 
+/// The function that gets started from the scheduler.
+/// It implements the Kernel.
 pub fn kernel_start(
     start_options: StartOptions,
     inbox: BoxedReceiver,
