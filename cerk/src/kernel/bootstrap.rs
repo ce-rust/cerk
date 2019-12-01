@@ -2,6 +2,7 @@ pub use super::kernel_start::kernel_start;
 use super::start_options::StartOptions;
 use crate::runtime::channel::{BoxedReceiver, BoxedSender};
 
+/// Function signature for the Kernel.
 pub type KernelFn = fn(StartOptions, BoxedReceiver, BoxedSender);
 
 /// The `bootstrap` function is the entrance point of the CERK router.
