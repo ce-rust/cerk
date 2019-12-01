@@ -1,7 +1,7 @@
 use cerk::kernel::{BrokerEvent, Config};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
-use cloudevents::CloudEvent;
+use cloudevents::v10::CloudEvent;
 
 fn route_event(sender_to_kernel: &BoxedSender, port_ids: &Vec<Config>, cloud_event: CloudEvent) {
     for port_id in port_ids.iter() {
