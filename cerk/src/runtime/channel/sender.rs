@@ -2,8 +2,14 @@ use crate::kernel::BrokerEvent;
 
 /// Wrapper for a platform-specific channel sender.
 pub trait Sender: Send {
+    /// send a BrokerEvent to the chanel receiver
     fn send(&self, event: BrokerEvent);
-    fn clone_boxed(&self) -> Box<dyn Sender>; // TODO: make it less ugly (real Clone maybe)
+
+    /// clones a sender and returns new boxed instance
+    ///
+    /// # open issues
+    /// * https://github.com/ce-rust/cerk/issues/21
+    fn clone_boxed(&self) -> Box<dyn Sender>;
 }
 
 /// Boxed wrapper for a platform-specific channel sender.

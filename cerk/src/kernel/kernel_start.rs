@@ -1,3 +1,5 @@
+//! Implementation of the Kernel
+
 use super::{BrokerEvent, StartOptions};
 use crate::runtime::channel::{BoxedReceiver, BoxedSender};
 use crate::runtime::InternalServerId;
