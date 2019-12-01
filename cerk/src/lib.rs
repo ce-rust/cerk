@@ -14,17 +14,18 @@ CERK comes with a couple of prefabricated components, but implementing custom co
 
 ## Ports
 
-| Name                                                     | Serialization    | Connection     |
-|----------------------------------------------------------|------------------|----------------|
-| [port_output_unix_socket_json](./cerk_port_unix_socket/) | JSON             | UNIX Socket    |
-| [port_sequence_generator](./cerk_port_dummies/)          | -                | \<time based\> |
-| [port_printer](./cerk_port_dummies/)                     | TEXT             |                |
+| Name                                                     | type   | Serialization    | Connection     |
+|----------------------------------------------------------|--------|------------------|----------------|
+| [port_input_unix_socket_json](./cerk_port_unix_socket/)  | input  | JSON             | UNIX Socket    |
+| [port_output_unix_socket_json](./cerk_port_unix_socket/) | output | JSON             | UNIX Socket    |
+| [port_sequence_generator](./cerk_port_dummies/)          | input  | -                | \<time based\> |
+| [port_printer](./cerk_port_dummies/)                     | output | TEXT             |                |
 
 ## Routers
 
 | Name                                                     | Description                        |
 |----------------------------------------------------------|------------------------------------|
-| [cerk_router_broadcast](./cerk_router_broadcast/)       | The broadcast router forwards all incomming CloudEvents to the configured ports |
+| [cerk_router_broadcast](./cerk_router_broadcast/)        | The broadcast router forwards all incomming CloudEvents to the configured ports |
 
 ## ConfigLoaders
 
@@ -36,8 +37,8 @@ CERK comes with a couple of prefabricated components, but implementing custom co
 
 | Name                                                     | Description                        |
 |----------------------------------------------------------|------------------------------------|
-| [Hello World](./examples/src/bin/hello_world.rs)         | Routing CloudEvents that are generated from an input port to a output port, the output port print the result to the console. |
-| [UNIX Socket](./examples/src/bin/unix_socket.rs)         | Routing CloudEvents that are generated from an input port to a output port, the output port forwards the events to a UNIX socket |
+| [Hello World](./examples/src/hello_world/)         | Routing CloudEvents that are generated from an input port to a output port, the output port print the result to the console. |
+| [UNIX Socket](./examples/src/unix_socket/)         | Routing CloudEvents that are generated from an input port to a output port, the output port forwards the events to a UNIX socket |
 */
 
 #[macro_use]
