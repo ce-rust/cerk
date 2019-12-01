@@ -8,8 +8,17 @@
 
 ## run
 
-1. Run `cargo run --bin hello_world`
-2. In the logs you can see how the events are generated at the source and printed at the sink.
+### docker
+
+Run `docker-compose run hello-world`
+
+### local
+
+Run `cargo run --bin hello_world`
+
+## output
+
+In the logs you can see how the events are generated at the source and printed at the sink.
 
 ```text
 2019-12-01T13:07:52Z INFO  hello_world] start hello world example
