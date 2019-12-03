@@ -3,7 +3,14 @@ use super::start_options::StartOptions;
 use crate::runtime::channel::{BoxedReceiver, BoxedSender};
 
 /// Function signature for the Kernel.
-pub type KernelFn = fn(start_options: StartOptions, receiver: BoxedReceiver, sender: BoxedSender);
+/// 
+/// # Arguments
+/// 
+/// * `start_options` - The start options defining the components and the behavior of the router.
+/// * `inbox` - The inbox channel of the Kernel, every component should send there events for the Kernel to this channel.
+/// * `sender_to_scheduler` - The outbox channel for messages for the Scheduler.
+/// 
+pub type KernelFn = fn(start_options: StartOptions, inbox: BoxedReceiver, sender_to_scheduler: BoxedSender);
 
 /// The `bootstrap` function is the entrance point of the CERK router.
 /// This function starts the Kernel with the help of the scheduler.
