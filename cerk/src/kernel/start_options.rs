@@ -1,10 +1,10 @@
-use crate::runtime::{InternalServerFn, InternalServerId, ScheduFn};
+use crate::runtime::{InternalServerFn, InternalServerId, ScheduleFn};
 
 /// The start option for the Kernel.
 /// This struct defines the components that will be started with the scheduler.
 pub struct StartOptions {
     /// the function to start the scheduler
-    pub scheduler_start: ScheduFn,
+    pub scheduler_start: ScheduleFn,
 
     /// the function to start the router
     pub router_start: InternalServerFn,
