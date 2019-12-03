@@ -52,8 +52,8 @@ pub enum BrokerEvent {
     IncommingCloudEvent(InternalServerId, CloudEvent),
 
     /// The OutgoingCloudEvent event indicates to the receiver that a CloudEvent has been routed and is ready to be forwarded to the outside world.
-    /// The event is created by the router, send to the Kernel and then to the output adapter.
-    /// A single event is created for every message and receiver.
+    /// The event is created by the router, send to the Kernel and then to the output port.
+    /// One event for every output port which should forward the data is created.
     ///
     /// # Arguments
     ///
