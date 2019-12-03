@@ -12,7 +12,7 @@ pub enum BrokerEvent {
     /// # Arguments
     ///
     /// * `InternalServerId` - id of the component that should be scheduled
-    /// * `InternalServerFn` - factory function of the component that should be scheduled
+    /// * `InternalServerFn` - start function of the component that should be scheduled
     ///
     ScheduleInternalServer(InternalServerId, InternalServerFn),
 
