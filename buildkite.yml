@@ -7,3 +7,13 @@ steps:
     plugins:
       - docker-compose#v3.0.3:
           run: doc
+  - label: "check readme"
+    plugins:
+       - docker-compose#v3.0.3:
+          run: check-readme
+  - label: "example: execute hello world"
+    commands: 
+      - cd examples/src/hello_world
+      - docker-compose run hello-world | tee build.log | grep --line-buffered "dummy-logger-output received cloud event with id=3" | exit 0
+    timeout_in_minutes: 10
+    artifact_paths: "**/build.log"

@@ -13,3 +13,13 @@ services:
       - .:/cerk/
     working_dir: /cerk
     command: cargo doc --all
+  check-readme:
+    image: lazzaretti/ce-rust-docker-cargo-readme:3.1.2
+    volumes:
+      - .:/cerk/
+    working_dir: /cerk
+    command: 
+      - /bin/bash 
+      - -c
+      - |
+        diff <(cargo readme  -r cerk) README.md || (echo 1>&2 'Please update the README with `cargo readme -r cerk > README.md`' && exit 1 )
