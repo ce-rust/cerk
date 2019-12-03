@@ -22,7 +22,7 @@ pub fn router_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel
         match inbox.receive() {
             BrokerEvent::Init => info!("{} initiated", id),
             BrokerEvent::IncommingCloudEvent(_, cloud_event) => match &config {
-                Config::Array(port_ids) => route_event(&sender_to_kernel, &port_ids, cloud_event),
+                Config::Vec(port_ids) => route_event(&sender_to_kernel, &port_ids, cloud_event),
                 _ => error!("No valid routing config found, message could not be routed!"),
             },
             BrokerEvent::ConfigUpdated(updated_config, _) => config = updated_config,

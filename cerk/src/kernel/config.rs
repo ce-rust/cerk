@@ -8,6 +8,6 @@ pub enum Config {
     Null,
     Bool(bool),
     String(String),
-    Array(Vec<Config>),
-    Object(HashMap<String, Config>),
+    Vec(Vec<Config>),
+    HashMap(HashMap<String, Config>),
 }
