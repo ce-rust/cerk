@@ -1,4 +1,4 @@
-/*! 
+/*!
 CERK is an open source [CloudEvents](https://github.com/cloudevents/spec) Router written in Rust with a MicroKernel architecture.
 
 # Introduction
