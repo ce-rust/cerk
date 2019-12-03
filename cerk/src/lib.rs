@@ -1,4 +1,4 @@
-/*! 
+/*!
 CERK is an open source [CloudEvents](https://github.com/cloudevents/spec) Router written in Rust with a MicroKernel architecture.
 
 # Introduction
@@ -40,6 +40,8 @@ CERK comes with a couple of prefabricated components, but implementing custom co
 | [Hello World](./examples/src/hello_world/)         | Routing CloudEvents that are generated from an input port to a output port, the output port print the result to the console. |
 | [UNIX Socket](./examples/src/unix_socket/)         | Routing CloudEvents that are generated from an input port to a output port, the output port forwards the events to a UNIX socket |
 */
+
+#![deny(missing_docs)]
 
 #[macro_use]
 extern crate log;

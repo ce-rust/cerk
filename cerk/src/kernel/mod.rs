@@ -1,3 +1,5 @@
+//! Implementation of the core components of CERK
+
 mod bootstrap;
 mod broker_event;
 mod config;

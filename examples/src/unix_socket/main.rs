@@ -26,7 +26,7 @@ fn static_config_loader_start(
             BrokerEvent::Init => {
                 sender_to_kernel.send(BrokerEvent::Batch(vec![
                     BrokerEvent::ConfigUpdated(
-                        Config::Array(vec![Config::String(String::from("unix-json-output"))]),
+                        Config::Vec(vec![Config::String(String::from("unix-json-output"))]),
                         String::from("router"),
                     ),
                     BrokerEvent::ConfigUpdated(

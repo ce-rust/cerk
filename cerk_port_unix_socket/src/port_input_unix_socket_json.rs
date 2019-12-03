@@ -2,9 +2,9 @@ use cerk::kernel::{BrokerEvent, Config};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
 use cloudevents::v10::CloudEvent;
+use serde_json;
 use std::io::{BufRead, BufReader};
 use std::os::unix::net::{UnixListener, UnixStream};
-use serde_json;
 
 fn liten_to_stream(
     id: &InternalServerId,
@@ -29,13 +29,14 @@ fn liten_to_stream(
             for line in stream.lines() {
                 debug!("{} received new line", id);
                 match line {
-                    Ok(line) =>{
-                        match serde_json::from_str::<CloudEvent>(&line) {
-                            Ok(cloud_event) => {
-                                debug!("{} deserialized event successfully", id);
-                                sender_to_kernel.send(BrokerEvent::IncommingCloudEvent(id.clone(), cloud_event))
-                            },
-                            Err(err) => error!("{} while converting string to CloudEvent: {:?}", id, err),
+                    Ok(line) => match serde_json::from_str::<CloudEvent>(&line) {
+                        Ok(cloud_event) => {
+                            debug!("{} deserialized event successfully", id);
+                            sender_to_kernel
+                                .send(BrokerEvent::IncommingCloudEvent(id.clone(), cloud_event))
+                        }
+                        Err(err) => {
+                            error!("{} while converting string to CloudEvent: {:?}", id, err)
                         }
                     },
                     Err(err) => error!("{} while reading from stream: {:?}", id, err),

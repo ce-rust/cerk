@@ -1,3 +1,5 @@
+//! Wrappers for platform-specific channel implementation used in CERK.
+
 mod receiver;
 mod sender;
 

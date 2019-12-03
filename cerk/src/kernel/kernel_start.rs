@@ -1,3 +1,5 @@
+//! Implementation of the Kernel
+
 use super::{BrokerEvent, StartOptions};
 use crate::runtime::channel::{BoxedReceiver, BoxedSender};
 use crate::runtime::InternalServerId;
@@ -69,6 +71,8 @@ fn init_internal_server(
     }
 }
 
+/// The function that gets started from the scheduler.
+/// It implements the Kernel.
 pub fn kernel_start(
     start_options: StartOptions,
     inbox: BoxedReceiver,

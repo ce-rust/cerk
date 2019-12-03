@@ -19,7 +19,7 @@ fn static_config_loader_start(
         match inbox.receive() {
             BrokerEvent::Init => {
                 sender_to_kernel.send(BrokerEvent::ConfigUpdated(
-                    Config::Array(vec![Config::String(String::from("dummy-logger-output"))]),
+                    Config::Vec(vec![Config::String(String::from("dummy-logger-output"))]),
                     String::from("router"),
                 ));
                 sender_to_kernel.send(BrokerEvent::ConfigUpdated(

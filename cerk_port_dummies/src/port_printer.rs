@@ -12,9 +12,11 @@ pub fn port_printer_start(
         match inbox.receive() {
             BrokerEvent::Init => info!("{} initiated", id),
             BrokerEvent::ConfigUpdated(_, _) => info!("{} received ConfigUpdated", id),
-            BrokerEvent::OutgoingCloudEvent(cloud_event, _) => {
-                info!("{} received cloud event with id={}!", id, cloud_event.event_id())
-            }
+            BrokerEvent::OutgoingCloudEvent(cloud_event, _) => info!(
+                "{} received cloud event with id={}!",
+                id,
+                cloud_event.event_id()
+            ),
             broker_event => warn!("event {} not implemented", broker_event),
         }
     }

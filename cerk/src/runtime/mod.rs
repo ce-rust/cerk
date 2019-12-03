@@ -1,3 +1,6 @@
+//! Runtime definitions for CERK.
+//! The implementations for the declarations could be platform-specific.
+
 pub mod channel;
 mod internal_server;
 mod scheduler;
