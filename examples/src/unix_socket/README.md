@@ -1,12 +1,12 @@
-# UNIX Socket example
+# UNIX Socket Example
 
-## requirements
+## Requirements
 
 * openbsd-netcat, command `nc`
   * **arch linux**: install it from the arch repository with `yaourt -S openbsd-netcat`
   * **mac**: install it with homebrew `brew install netcat`
 
-## run
+## Run
 
 1. run `cargo run --bin unix_socket`
 2. listen to the outgoing socket `nc -U ./cloud-events-out`
