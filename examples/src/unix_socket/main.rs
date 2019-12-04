@@ -9,7 +9,7 @@ use cerk_port_unix_socket::{
     port_input_unix_socket_json_start, port_output_unix_socket_json_start,
 };
 use cerk_router_broadcast::router_start;
-use cerk_runtime_threading::ThreadingScheduler;
+use cerk_runtime_threading::threading_scheduler_start;
 use std::fs::remove_file;
 
 const PORT_UNIX_INPUT: &str = "unix-json-input";
@@ -54,7 +54,7 @@ fn main() {
 
     info!("start hello world example");
     let start_options = StartOptions {
-        scheduler_start: ThreadingScheduler::start,
+        scheduler_start: threading_scheduler_start,
         router_start: router_start,
         config_loader_start: static_config_loader_start,
         ports: Box::new([
