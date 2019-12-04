@@ -1,3 +1,5 @@
+//! A channel implementation for CERK based on `std::sync::mpsc`.
+
 mod new_channel;
 mod receiver;
 mod sender;

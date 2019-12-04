@@ -1,22 +1,22 @@
-# UNIX Socket example
+# Hello World Example
 
-## requirements
+## Requirements
 
 * openbsd-netcat, command `nc`
   * **arch linux**: install it from the arch repository with `yaourt -S openbsd-netcat`
   * **mac**: install it with homebrew `brew install netcat`
 
-## run
+## Run
 
-### docker
+### Docker
 
 Run `docker-compose run hello-world`
 
-### local
+### Local
 
 Run `cargo run --bin hello_world`
 
-## output
+## Output
 
 In the logs you can see how the events are generated at the source and printed at the sink.
 
