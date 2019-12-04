@@ -7,7 +7,7 @@ use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
 use cerk_port_dummies::{port_printer_start, port_sequence_generator_start};
 use cerk_router_broadcast::router_start;
-use cerk_runtime_threading::ThreadingScheduler;
+use cerk_runtime_threading::threading_scheduler_start;
 
 fn static_config_loader_start(
     id: InternalServerId,
@@ -40,7 +40,7 @@ fn main() {
     env_logger::from_env(Env::default().default_filter_or("debug")).init();
     info!("start hello world example");
     let start_options = StartOptions {
-        scheduler_start: ThreadingScheduler::start,
+        scheduler_start: threading_scheduler_start,
         router_start: router_start,
         config_loader_start: static_config_loader_start,
         ports: Box::new([
