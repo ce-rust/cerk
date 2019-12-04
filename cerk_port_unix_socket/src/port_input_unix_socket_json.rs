@@ -5,6 +5,7 @@ use cloudevents::v10::CloudEvent;
 use serde_json;
 use std::io::{BufRead, BufReader};
 use std::os::unix::net::{UnixListener, UnixStream};
+use std::time::Duration;
 
 fn liten_to_stream(
     id: &InternalServerId,
@@ -28,13 +29,13 @@ fn liten_to_stream(
         Some(stream) => {
             let mut line = String::new();
 
-            loop{
+            loop {
                 match stream.read_line(&mut line) {
                     Ok(0) => break,
                     Err(err) => {
                         error!("{} read_line error {:?}", id, err);
                         break;
-                    },
+                    }
                     Ok(_) => {
                         debug!("{} received new line", id);
                         match serde_json::from_str::<CloudEvent>(&line) {
@@ -45,7 +46,7 @@ fn liten_to_stream(
                             }
                             Err(err) => {
                                 error!("{} while converting string to CloudEvent: {:?}", id, err);
-                            },
+                            }
                         }
                     }
                 }
@@ -83,20 +84,22 @@ pub fn port_input_unix_socket_json_start(
     let mut stream: Option<BufReader<UnixStream>> = None;
 
     loop {
-        match inbox.receive() {
-            BrokerEvent::Init => {
-                info!("{} initiated", id);
+        if let Some(broker_event) = inbox.receive_timeout(Duration::from_millis(100)) {
+            match broker_event {
+                BrokerEvent::Init => {
+                    info!("{} initiated", id);
+                }
+                BrokerEvent::ConfigUpdated(config, _) => {
+                    info!("{} received ConfigUpdated", id);
+                    match config {
+                        Config::String(socket_path) => {
+                            listener = Some(UnixListener::bind(socket_path).unwrap());
+                        }
+                        _ => error!("{} received invalide config", id),
+                    };
+                }
+                broker_event => warn!("event {} not implemented", broker_event),
             }
-            BrokerEvent::ConfigUpdated(config, _) => {
-                info!("{} received ConfigUpdated", id);
-                match config {
-                    Config::String(socket_path) => {
-                        listener = Some(UnixListener::bind(socket_path).unwrap());
-                    }
-                    _ => error!("{} received invalide config", id),
-                };
-            }
-            broker_event => warn!("event {} not implemented", broker_event),
         }
 
         if let Some(listener) = listener.as_ref() {
