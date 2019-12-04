@@ -15,6 +15,20 @@ fn route_event(sender_to_kernel: &BoxedSender, port_ids: &Vec<Config>, cloud_eve
     }
 }
 
+/// This router broadcasts all received CloudEvents to the configured ports.
+///
+/// # Configurations
+///
+/// The Socket expects a `Config::Vec([Config::String])` as configuration.
+/// The strings should be Port ids, to which all received CloudEvents should be forwarded to.
+///
+/// e.g. `Config::Vec(vec![Config::String(String::from("output-port"))])`
+///
+/// # Examples
+///
+/// * [Hello World Example](https://github.com/ce-rust/cerk/tree/master/examples/src/hello_world)
+/// * [UNIX Socket Example](https://github.com/ce-rust/cerk/tree/master/examples/src/unix_socket)
+///
 pub fn router_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel: BoxedSender) {
     info!("start broadcast router with id {}", id);
     let mut config: Config = Config::Null;

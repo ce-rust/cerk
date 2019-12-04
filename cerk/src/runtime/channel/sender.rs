@@ -8,6 +8,7 @@ pub trait Sender: Send {
     /// clones a sender and returns new boxed instance
     ///
     /// # open issues
+    ///
     /// * https://github.com/ce-rust/cerk/issues/21
     fn clone_boxed(&self) -> Box<dyn Sender>;
 }

@@ -3,6 +3,13 @@ use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
 use cloudevents::CloudEvent;
 
+/// This port prints the CloudEvent id to the logger.
+/// This port is for testing!
+///
+/// # Examples
+///
+/// * [Hello World Example](https://github.com/ce-rust/cerk/tree/master/examples/src/hello_world)
+///
 pub fn port_printer_start(
     id: InternalServerId,
     inbox: BoxedReceiver,

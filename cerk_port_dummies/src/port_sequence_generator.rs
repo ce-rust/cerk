@@ -24,6 +24,13 @@ fn generate_events(id: InternalServerId, sender_to_kernel: BoxedSender) {
     }
 }
 
+/// This port generates a CloudEvent every second and sends it to the Kernel.
+/// This port is for testing!
+///
+/// # Examples
+///
+/// * [Hello World Example](https://github.com/ce-rust/cerk/tree/master/examples/src/hello_world)
+///
 pub fn port_sequence_generator_start(
     id: InternalServerId,
     inbox: BoxedReceiver,

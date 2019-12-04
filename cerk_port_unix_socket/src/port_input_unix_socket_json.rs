@@ -47,6 +47,23 @@ fn liten_to_stream(
     }
 }
 
+/// This port reads CloudEvents form a UNIX Socket and sens them to the Kernel.
+///
+/// # Configurations
+///
+/// The Socket expects a `Config::String` as configuration.
+/// The string should be a file path where the UNIX Socket should be created.
+///
+/// e.g. `Config::String(String::from("path/to/the/socket"))`
+///
+/// # Examples
+///
+/// * [UNIX Socket Example](https://github.com/ce-rust/cerk/tree/master/examples/src/unix_socket)
+///
+/// # open issues
+///
+/// * https://github.com/ce-rust/cerk/issues/25
+///
 pub fn port_input_unix_socket_json_start(
     id: InternalServerId,
     inbox: BoxedReceiver,

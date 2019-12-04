@@ -1,3 +1,16 @@
+/*!
+This is a package for [CERK](https://github.com/ce-rust/cerk).
+CERK is an open source [CloudEvents](https://github.com/cloudevents/spec) Router written in Rust with a MicroKernel architecture.
+
+This package contains some dummy ports for testing and demonstrations.
+
+* [port_printer](./port_printer.rs)
+* [port_sequence_generator](./port_sequence_generator.rs)
+
+*/
+
+#![deny(missing_docs)]
+
 #[macro_use]
 extern crate log;
 #[macro_use]
