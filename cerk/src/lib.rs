@@ -31,7 +31,7 @@ CERK comes with a couple of prefabricated components, but implementing custom co
 
 | Name                                                     | Description                        |
 |----------------------------------------------------------|------------------------------------|
-| [static config loader](./examples/src/bin/hello_world.rs)       | Have to be implemented for each project individually |
+| [static config loader](./examples/src/hello_world/main.rs)       | Have to be implemented for each project individually |
 
 # Examples
 
