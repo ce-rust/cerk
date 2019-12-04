@@ -3,7 +3,7 @@ use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use std::sync::mpsc::sync_channel;
 
 /// Create a new chanel with a `ThreadingSender` and a `ThreadingReceiver`.
-/// The implementation is based on `std::sync::mpsc` chanel model.
+/// The implementation is based on `std::sync::mpsc` channel model.
 /// The channel has an internal buffer of 50 messages on which messages will be queued.
 pub fn new_channel() -> (BoxedSender, BoxedReceiver) {
     let (tx, rx) = sync_channel(50); // todo set with configs
