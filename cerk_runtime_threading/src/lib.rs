@@ -11,4 +11,4 @@ extern crate log;
 pub mod channel;
 mod scheduler;
 
-pub use self::scheduler::ThreadingScheduler;
+pub use self::scheduler::threading_scheduler_start;
