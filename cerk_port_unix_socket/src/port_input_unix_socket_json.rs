@@ -9,7 +9,7 @@ use std::os::unix::net::{UnixListener, UnixStream};
 fn liten_to_stream(
     id: &InternalServerId,
     listener: &UnixListener,
-    stream: Option<BufReader<UnixStream>>,
+    mut stream: Option<BufReader<UnixStream>>,
     sender_to_kernel: &BoxedSender,
     max_tries: usize,
 ) -> Option<BufReader<UnixStream>> {
@@ -17,7 +17,7 @@ fn liten_to_stream(
         panic!("too many failures while trying to connect to stream");
     }
     debug!("listen to stream...");
-    match stream {
+    match stream.as_mut() {
         None => match listener.accept() {
             Ok((socket, _)) => {
                 let stream = BufReader::new(socket);
@@ -26,23 +26,32 @@ fn liten_to_stream(
             Err(err) => panic!(err),
         },
         Some(stream) => {
-            for line in stream.lines() {
-                debug!("{} received new line", id);
-                match line {
-                    Ok(line) => match serde_json::from_str::<CloudEvent>(&line) {
-                        Ok(cloud_event) => {
-                            debug!("{} deserialized event successfully", id);
-                            sender_to_kernel
-                                .send(BrokerEvent::IncommingCloudEvent(id.clone(), cloud_event))
-                        }
-                        Err(err) => {
-                            error!("{} while converting string to CloudEvent: {:?}", id, err)
-                        }
+            let mut line = String::new();
+
+            loop{
+                match stream.read_line(&mut line) {
+                    Ok(0) => break,
+                    Err(err) => {
+                        error!("{} read_line error {:?}", id, err);
+                        break;
                     },
-                    Err(err) => error!("{} while reading from stream: {:?}", id, err),
+                    Ok(_) => {
+                        debug!("{} received new line", id);
+                        match serde_json::from_str::<CloudEvent>(&line) {
+                            Ok(cloud_event) => {
+                                debug!("{} deserialized event successfully", id);
+                                sender_to_kernel
+                                    .send(BrokerEvent::IncommingCloudEvent(id.clone(), cloud_event))
+                            }
+                            Err(err) => {
+                                error!("{} while converting string to CloudEvent: {:?}", id, err);
+                            },
+                        }
+                    }
                 }
+                line.clear();
             }
-            None // todo
+            None
         }
     }
 }
