@@ -4,12 +4,20 @@ use cerk::runtime::channel::BoxedSender;
 use cerk::runtime::{InternalServerFn, InternalServerId};
 use std::thread;
 
+/// Struct for ThreadingScheduler
+///
+/// # open issues
+///
+/// * https://github.com/ce-rust/cerk/issues/24
 pub struct ThreadingScheduler {}
 
 impl ThreadingScheduler {
     fn new() -> Self {
         ThreadingScheduler {}
     }
+    /// A Scheduler implementation for CERK based on the `std::thread` model.
+    /// `std::sync::mpsc` is used for the channels.
+    /// The function that gets invoked in the `bootstrap` function in the start phase of CERK.
     pub fn start(start_options: StartOptions, start_kernel: KernelFn) {
         info!("start threading scheduler");
         let mut scheduler = ThreadingScheduler::new();
