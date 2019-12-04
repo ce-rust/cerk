@@ -1,7 +1,6 @@
 use cerk::kernel::BrokerEvent;
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
-use cloudevents::CloudEvent;
 
 /// This port prints the CloudEvent id to the logger.
 /// This port is for testing!
@@ -23,10 +22,7 @@ pub fn port_printer_start(
             BrokerEvent::OutgoingCloudEvent(cloud_event, _) => info!(
                 "{} received cloud event with id={}!",
                 id,
-                match cloud_event {
-                    CloudEvent::V0_2(ref event) => event.event_id(),
-                    CloudEvent::V1_0(ref event) => event.event_id(),
-                }
+                get_event_field!(cloud_event, event_id)
             ),
             broker_event => warn!("event {} not implemented", broker_event),
         }
