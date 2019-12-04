@@ -1,7 +1,7 @@
 use cerk::kernel::{BrokerEvent, Config};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
-use cloudevents::v10::CloudEvent;
+use cloudevents::CloudEvent;
 use serde_json;
 use std::io::{BufRead, BufReader};
 use std::os::unix::net::{UnixListener, UnixStream};

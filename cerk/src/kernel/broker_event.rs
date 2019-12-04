@@ -1,7 +1,7 @@
 use super::Config;
 use crate::runtime::channel::BoxedSender;
 use crate::runtime::{InternalServerFn, InternalServerId};
-use cloudevents::v10::CloudEvent;
+use cloudevents::CloudEvent;
 use std::fmt;
 
 /// Representation of all events which are exchanged between the components

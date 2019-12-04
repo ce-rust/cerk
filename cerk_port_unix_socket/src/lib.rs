@@ -1,7 +1,5 @@
 #[macro_use]
 extern crate log;
-#[macro_use]
-extern crate cloudevents;
 
 mod port_input_unix_socket_json;
 mod port_output_unix_socket_json;
