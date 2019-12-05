@@ -3,6 +3,7 @@
 members = [
     "cerk",
     "cerk_port_unix_socket",
+    "cerk_port_mqtt",
     "cerk_router_broadcast",
     "cerk_runtime_threading",
     "examples",

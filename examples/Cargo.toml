@@ -15,6 +15,10 @@ path = "src/hello_world/main.rs"
 [[bin]]
 name = "unix_socket"
 path = "src/unix_socket/main.rs"
+[[bin]]
+name = "mqtt"
+path = "src/mqtt/main.rs"
+
 
 [dependencies]
 log = "0.4.0"
@@ -24,3 +28,4 @@ cerk_runtime_threading = { path = "../cerk_runtime_threading" }
 cerk_router_broadcast = { path = "../cerk_router_broadcast" }
 cerk_port_dummies = { path = "../cerk_port_dummies" }
 cerk_port_unix_socket = { path = "../cerk_port_unix_socket" }
+cerk_port_mqtt = { path = "../cerk_port_mqtt" }
