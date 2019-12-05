@@ -6,8 +6,6 @@ use serde_json;
 use std::io::Write;
 use std::os::unix::net::{UnixListener, UnixStream};
 
-
-
 fn write_to_stream(
     listener: &UnixListener,
     stream: Option<UnixStream>,
@@ -23,11 +21,11 @@ fn write_to_stream(
             Err(err) => panic!(err),
         },
         Some(mut stream) => {
-                let serialized = match event {
-                    CloudEvent::V0_2(event) => serde_json::to_string(event),
-                    CloudEvent::V1_0(event) => serde_json::to_string(event),
-                };
-                match serialized {
+            let serialized = match event {
+                CloudEvent::V0_2(event) => serde_json::to_string(event),
+                CloudEvent::V1_0(event) => serde_json::to_string(event),
+            };
+            match serialized {
                 Ok(mut message) => {
                     message.push_str("\n");
                     if let Err(_) = stream.write_all(message.as_bytes()) {
@@ -41,7 +39,7 @@ fn write_to_stream(
                     Some(stream)
                 }
             }
-        },
+        }
     }
 }
 

@@ -10,6 +10,9 @@ use cerk_port_mqtt::port_output_mqtt_start;
 use cerk_router_broadcast::router_start;
 use cerk_runtime_threading::threading_scheduler_start;
 
+const DUMMY_SEQUENCE_GENERATOR: &'static str = "dummy-sequence-generator";
+const MQTT_OUTPUT: &'static str = "mqtt-output";
+
 fn static_config_loader_start(
     id: InternalServerId,
     inbox: BoxedReceiver,
@@ -20,16 +23,16 @@ fn static_config_loader_start(
         match inbox.receive() {
             BrokerEvent::Init => {
                 sender_to_kernel.send(BrokerEvent::ConfigUpdated(
-                    Config::Vec(vec![Config::String(String::from("mqtt-output"))]),
+                    Config::Vec(vec![Config::String(String::from(MQTT_OUTPUT))]),
                     String::from("router"),
                 ));
                 sender_to_kernel.send(BrokerEvent::ConfigUpdated(
                     Config::Null,
-                    String::from("dummy-sequence-generator"),
+                    String::from(DUMMY_SEQUENCE_GENERATOR),
                 ));
                 sender_to_kernel.send(BrokerEvent::ConfigUpdated(
                     Config::String("tcp://localhost:1883".to_string()),
-                    String::from("mqtt-output"),
+                    String::from(MQTT_OUTPUT),
                 ));
             }
             broker_event => warn!("event {} not implemented", broker_event),
@@ -46,10 +49,10 @@ fn main() {
         config_loader_start: static_config_loader_start,
         ports: Box::new([
             (
-                String::from("dummy-sequence-generator"),
+                String::from(DUMMY_SEQUENCE_GENERATOR),
                 port_sequence_generator_start,
             ),
-            (String::from("mqtt-output"), port_output_mqtt_start),
+            (String::from(MQTT_OUTPUT), port_output_mqtt_start),
         ]),
     };
     bootstrap(start_options);

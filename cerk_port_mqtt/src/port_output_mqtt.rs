@@ -59,7 +59,10 @@ pub fn port_output_mqtt_start(
             BrokerEvent::OutgoingCloudEvent(cloud_event, _) => {
                 debug!("{} cloudevent received", &id);
                 if let Some(cli) = cli.as_ref() {
-                    let msg_string = format!("Hello Rust MQTT world! {}", cloud_event.event_id());
+                    let msg_string = format!(
+                        "Hello Rust MQTT world! {}",
+                        get_event_field!(cloud_event, event_id)
+                    );
                     let msg = Message::new("test", msg_string, 0);
                     let tok = cli.publish(msg);
 
