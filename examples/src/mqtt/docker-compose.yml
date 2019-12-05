@@ -1,13 +1,15 @@
 version: '3.7'
 
 services:
-  hello-world:
-    image: rust:1.38
+  cerk-router:
+    build: 
+      context: ../../../
+      dockerfile: Dockerfile.example.mqtt
     volumes:
       - ../../../:/cerk/
     working_dir: /cerk
     command: cargo run --bin mqtt
-  mqtt_broker:
+  mqtt-broker:
     image: eclipse-mosquitto
     ports: 
       - 1883:1883

@@ -31,7 +31,7 @@ fn static_config_loader_start(
                     String::from(DUMMY_SEQUENCE_GENERATOR),
                 ));
                 sender_to_kernel.send(BrokerEvent::ConfigUpdated(
-                    Config::String("tcp://localhost:1883".to_string()),
+                    Config::String("tcp://mqtt-broker:1883".to_string()),
                     String::from(MQTT_OUTPUT),
                 ));
             }
