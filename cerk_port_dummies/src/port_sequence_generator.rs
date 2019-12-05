@@ -1,14 +1,14 @@
 use cerk::kernel::BrokerEvent;
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
-use cloudevents::v10::Data;
+use cloudevents::Data;
 use std::{thread, time};
 
 fn generate_events(id: InternalServerId, sender_to_kernel: BoxedSender) {
     for i in 1.. {
         debug!("send dummy event with sequence number {} to kernel", i);
 
-        let cloudevent = cloudevent_v10!(
+        let cloudevent = cloudevent!(
             event_id: format!("{}", i),
             event_type: "sequence-generator.counter",
             time: "now",

@@ -22,7 +22,7 @@ pub fn port_printer_start(
             BrokerEvent::OutgoingCloudEvent(cloud_event, _) => info!(
                 "{} received cloud event with id={}!",
                 id,
-                cloud_event.event_id()
+                get_event_field!(cloud_event, event_id)
             ),
             broker_event => warn!("event {} not implemented", broker_event),
         }

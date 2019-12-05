@@ -1,10 +1,12 @@
 use cerk::kernel::{BrokerEvent, Config};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
-use cloudevents::v10::CloudEvent;
+use cloudevents::CloudEvent;
 use serde_json;
 use std::io::Write;
 use std::os::unix::net::{UnixListener, UnixStream};
+
+
 
 fn write_to_stream(
     listener: &UnixListener,
@@ -20,18 +22,24 @@ fn write_to_stream(
             Ok((socket, _)) => write_to_stream(listener, Some(socket), event, max_tries - 1),
             Err(err) => panic!(err),
         },
-        Some(mut stream) => match serde_json::to_string(event) {
-            Ok(mut message) => {
-                message.push_str("\n");
-                if let Err(_) = stream.write_all(message.as_bytes()) {
-                    write_to_stream(listener, None, event, max_tries - 1)
-                } else {
+        Some(mut stream) => {
+                let serialized = match event {
+                    CloudEvent::V0_2(event) => serde_json::to_string(event),
+                    CloudEvent::V1_0(event) => serde_json::to_string(event),
+                };
+                match serialized {
+                Ok(mut message) => {
+                    message.push_str("\n");
+                    if let Err(_) = stream.write_all(message.as_bytes()) {
+                        write_to_stream(listener, None, event, max_tries - 1)
+                    } else {
+                        Some(stream)
+                    }
+                }
+                Err(err) => {
+                    error!("serialization filed: {:?}", err);
                     Some(stream)
                 }
-            }
-            Err(err) => {
-                error!("serialization filed: {:?}", err);
-                Some(stream)
             }
         },
     }
