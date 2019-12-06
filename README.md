@@ -21,6 +21,7 @@ CERK comes with a couple of prefabricated components, but implementing custom co
 |----------------------------------------------------------|--------|------------------|----------------|
 | [port_input_unix_socket_json](./cerk_port_unix_socket/)  | input  | JSON             | UNIX Socket    |
 | [port_output_unix_socket_json](./cerk_port_unix_socket/) | output | JSON             | UNIX Socket    |
+| [port_output_mqtt](./cerk_port_mqtt/)                    | input  | JSON             | MQTT           |
 | [port_sequence_generator](./cerk_port_dummies/)          | input  | -                | \<time based\> |
 | [port_printer](./cerk_port_dummies/)                     | output | TEXT             |                |
 
@@ -38,10 +39,11 @@ CERK comes with a couple of prefabricated components, but implementing custom co
 
 ## Examples
 
-| Name                                                     | Description                        |
-|----------------------------------------------------------|------------------------------------|
-| [Hello World](./examples/src/hello_world/)         | Routing CloudEvents that are generated from an input port to a output port, the output port print the result to the console. |
-| [UNIX Socket](./examples/src/unix_socket/)         | Routing CloudEvents that are generated from an input port to a output port, the output port forwards the events to a UNIX socket |
+| Name                                                          | Description                        |
+|---------------------------------------------------------------|------------------------------------|
+| [Hello World](./examples/src/hello_world/)                    | Routing CloudEvents that are generated from an input port to a output port, the output port print the result to the console. |
+| [UNIX Socket](./examples/src/unix_socket/)                    | Routs CloudEvents from an input UNIX Socket port to an output UNIX Socket port |
+| [Generator to MQTT](./examples/src/sequence_to_mqtt/)         | Routs CloudEvents that are generated from an input port to a output port, the output port publishes the events on a MQTT Topic |
 
 ## Update Readme
 
