@@ -22,8 +22,8 @@ path = "src/hello_world/main.rs"
 name = "unix_socket"
 path = "src/unix_socket/main.rs"
 [[bin]]
-name = "mqtt"
-path = "src/mqtt/main.rs"
+name = "sequence_to_mqtt"
+path = "src/sequence_to_mqtt/main.rs"
 
 
 [dependencies]

@@ -1,7 +1,9 @@
 use cerk::kernel::{BrokerEvent, Config};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
+use cloudevents::CloudEvent;
 use paho_mqtt::{AsyncClient, ConnectOptions, CreateOptionsBuilder, Message, PersistenceType};
+use serde_json;
 use std::time::Duration;
 
 fn setup_connection(
@@ -37,7 +39,38 @@ fn setup_connection(
     Some(cli)
 }
 
-/// MQTT Port
+fn send_cloud_event(id: &InternalServerId, cloud_event: &CloudEvent, cli: &Option<AsyncClient>) {
+    if let Some(cli) = cli.as_ref() {
+        let serialized = serde_json::to_string(cloud_event);
+        let msg = Message::new("test", serialized.unwrap(), 0);
+        let tok = cli.publish(msg);
+
+        if let Err(e) = tok.wait_for(Duration::from_secs(1)) {
+            panic!("Error sending message: {:?}", e);
+        }
+    } else {
+        error!(
+            "{} received event before it was configured -> message will be dropped",
+            id
+        );
+    }
+}
+
+/// This port publishes CloudEvents to a MQTT v3.1 topic.
+///
+/// The port is implemented with a [Eclipse Paho MQTT Rust Client](https://github.com/eclipse/paho.mqtt.rust)
+/// and sends messages according to the
+/// [MQTT Protocol Binding for CloudEvents v1.0](https://github.com/cloudevents/spec/blob/v1.0/mqtt-protocol-binding.md)
+/// specification
+///
+/// # Configurations
+///
+/// TODO
+///
+/// # Examples
+///
+/// * [Generator to MQTT](https://github.com/ce-rust/cerk/tree/master/examples/src/sequence_to_mqtt/)
+///
 pub fn port_output_mqtt_start(
     id: InternalServerId,
     inbox: BoxedReceiver,
@@ -58,23 +91,7 @@ pub fn port_output_mqtt_start(
             }
             BrokerEvent::OutgoingCloudEvent(cloud_event, _) => {
                 debug!("{} cloudevent received", &id);
-                if let Some(cli) = cli.as_ref() {
-                    let msg_string = format!(
-                        "Hello Rust MQTT world! {}",
-                        get_event_field!(cloud_event, event_id)
-                    );
-                    let msg = Message::new("test", msg_string, 0);
-                    let tok = cli.publish(msg);
-
-                    if let Err(e) = tok.wait_for(Duration::from_secs(1)) {
-                        panic!("Error sending message: {:?}", e);
-                    }
-                } else {
-                    error!(
-                        "{} received event before it was configured -> message will be dropped",
-                        id
-                    );
-                }
+                send_cloud_event(&id, &cloud_event, &cli);
             }
             broker_event => warn!("event {} not implemented", broker_event),
         }
