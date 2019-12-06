@@ -8,9 +8,6 @@ CERK is an open source [CloudEvents](https://github.com/cloudevents/spec) Router
 #[macro_use]
 extern crate log;
 
-#[macro_use]
-extern crate cloudevents;
-
 mod port_output_mqtt;
 
 pub use self::port_output_mqtt::port_output_mqtt_start;

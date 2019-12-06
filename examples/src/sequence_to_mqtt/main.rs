@@ -9,6 +9,7 @@ use cerk_port_dummies::port_sequence_generator_start;
 use cerk_port_mqtt::port_output_mqtt_start;
 use cerk_router_broadcast::router_start;
 use cerk_runtime_threading::threading_scheduler_start;
+use std::collections::HashMap;
 
 const DUMMY_SEQUENCE_GENERATOR: &'static str = "dummy-sequence-generator";
 const MQTT_OUTPUT: &'static str = "mqtt-output";
@@ -19,6 +20,18 @@ fn static_config_loader_start(
     sender_to_kernel: BoxedSender,
 ) {
     info!("start static config loader with id {}", id);
+
+    let mqtt_out_config: HashMap<String, Config> = [
+        (
+            "host".to_string(),
+            Config::String("tcp://mqtt-broker:1883".to_string()),
+        ),
+        ("topic".to_string(), Config::String("test".to_string())),
+    ]
+    .iter()
+    .cloned()
+    .collect();
+
     loop {
         match inbox.receive() {
             BrokerEvent::Init => {
@@ -31,7 +44,7 @@ fn static_config_loader_start(
                     String::from(DUMMY_SEQUENCE_GENERATOR),
                 ));
                 sender_to_kernel.send(BrokerEvent::ConfigUpdated(
-                    Config::String("tcp://mqtt-broker:1883".to_string()),
+                    Config::HashMap(mqtt_out_config.clone()),
                     String::from(MQTT_OUTPUT),
                 ));
             }
