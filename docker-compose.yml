@@ -2,13 +2,13 @@ version: '3.7'
 
 services:
   test:
-    image: rust:1.38
+    image: lazzaretti/docker-rust-cerk:0.1.0
     volumes:
       - .:/cerk/
     working_dir: /cerk
     command: cargo test --all
   doc:
-    image: rust:1.38
+    image: lazzaretti/docker-rust-cerk:0.1.0
     volumes:
       - .:/cerk/
     working_dir: /cerk
