@@ -136,6 +136,8 @@ fn send_cloud_event(
 /// ### qos
 ///
 /// The [quality of service](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718099) for message delivery.
+/// The quality of service is only for the MQTT broker and does not change any behavior of the router or the output port.
+/// The router only supports best effort at the moment.  
 ///
 /// * 0: At most once delivery (default)
 /// * 1: At least once delivery
