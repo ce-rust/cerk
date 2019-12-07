@@ -44,6 +44,7 @@ CERK comes with a couple of prefabricated components, but implementing custom co
 | [Hello World](./examples/src/hello_world/)                    | Routing CloudEvents that are generated from an input port to a output port, the output port print the result to the console. |
 | [UNIX Socket](./examples/src/unix_socket/)                    | Routs CloudEvents from an input UNIX Socket port to an output UNIX Socket port |
 | [Generator to MQTT](./examples/src/sequence_to_mqtt/)         | Routs CloudEvents that are generated from an input port to a output port, the output port publishes the events on a MQTT Topic |
+| [Router with UNIX Socket and MQTT for armv7](./examples/src/armv7_unix_mqtt/) | Routs CloudEvents that are generated from an input UNIX Socket port to a output UNIX Socket port and a MQTT output port. |
 
 ## Update Readme
 
