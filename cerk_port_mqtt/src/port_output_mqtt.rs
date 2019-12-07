@@ -104,25 +104,27 @@ fn send_cloud_event(
 ///
 /// The configurations should be of type `cerk::kernel::Config::HashMap` and have at least the entires:
 ///
-/// ## Required
+/// ## Required Fields
 ///
 /// ## host
 ///
-/// The value have to by of type `Config::String` and contain a host name with protocol and port.
+/// The value has to by of type `Config::String` and contain a host name with protocol and port.
+///
 /// E.g. `Config::String(String::from("tcp://mqtt-broker:1883"))`
 ///
 /// ## topic
 ///
-/// The value have to by of type `Config::String` and contain the MQTT topic name.
+/// The value has to by of type `Config::String` and contain the MQTT topic name.
+///
 /// E.g. `Config::String(String::from("test"))`
 ///
-/// ## optional
+/// ## Optional Fields
 ///
 /// The following configurations are optional.
 ///
 /// ### persistance
 ///
-/// The value have to by of type `Config::U8` and contain one of the following values.
+/// The value has to by of type `Config::U8` and contain one of the following values.
 ///
 /// The values are defined according to the Eclipse Paho MQTT Rust Client PersistenceType.
 ///
@@ -133,8 +135,7 @@ fn send_cloud_event(
 ///
 /// ### qos
 ///
-/// The quality of service for message delivery.
-/// http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718099
+/// The [quality of service](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718099) for message delivery.
 ///
 /// * 0: At most once delivery (default)
 /// * 1: At least once delivery
