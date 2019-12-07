@@ -21,12 +21,16 @@ fn static_config_loader_start(
 ) {
     info!("start static config loader with id {}", id);
 
-    let mut mqtt_out_config = HashMap::new();
-    mqtt_out_config.insert(
-        "host".to_string(),
-        Config::String("tcp://mqtt-broker:1883".to_string()),
-    );
-    mqtt_out_config.insert("topic".to_string(), Config::String("test".to_string()));
+    let mqtt_out_config: HashMap<String, Config> = [
+        (
+            "host".to_string(),
+            Config::String("tcp://mqtt-broker:1883".to_string()),
+        ),
+        ("topic".to_string(), Config::String("test".to_string())),
+    ]
+    .iter()
+    .cloned()
+    .collect();
 
     loop {
         match inbox.receive() {
