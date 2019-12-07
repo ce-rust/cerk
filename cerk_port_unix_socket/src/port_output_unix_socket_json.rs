@@ -21,11 +21,7 @@ fn write_to_stream(
             Err(err) => panic!(err),
         },
         Some(mut stream) => {
-            let serialized = match event {
-                CloudEvent::V0_2(event) => serde_json::to_string(event),
-                CloudEvent::V1_0(event) => serde_json::to_string(event),
-            };
-            match serialized {
+            match serde_json::to_string(event) {
                 Ok(mut message) => {
                     message.push_str("\n");
                     if let Err(_) = stream.write_all(message.as_bytes()) {
