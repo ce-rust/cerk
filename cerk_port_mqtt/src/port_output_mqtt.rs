@@ -148,15 +148,11 @@ fn send_cloud_event(
 /// use std::collections::HashMap;
 /// use cerk::kernel::Config;
 ///
-/// let map: HashMap<String, Config> = [
-///     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
-///     ("topic".to_string(), Config::String("test".to_string())),
-/// ]
-/// .iter()
-/// .cloned()
-/// .collect();
+/// let mut config_map = HashMap::new();
+/// config_map.insert("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string()));
+/// config_map.insert("topic".to_string(), Config::String("test".to_string()));
 ///
-/// let config = Config::HashMap(map);
+/// let config = Config::HashMap(config_map);
 /// ```
 ///
 /// ### Full Configuration
@@ -165,17 +161,13 @@ fn send_cloud_event(
 /// use std::collections::HashMap;
 /// use cerk::kernel::Config;
 ///
-/// let map: HashMap<String, Config> = [
-///     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
-///     ("topic".to_string(), Config::String("test".to_string())),
-///     ("persistance".to_string(), Config::U8(0)),
-///     ("qos".to_string(), Config::U8(2)),
-/// ]
-/// .iter()
-/// .cloned()
-/// .collect();
+/// let mut config_map = HashMap::new();
+/// config_map.insert("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string()));
+/// config_map.insert("topic".to_string(), Config::String("test".to_string()));
+/// config_map.insert("persistance".to_string(), Config::U8(0));
+/// config_map.insert("qos".to_string(), Config::U8(2));
 ///
-/// let config = Config::HashMap(map);
+/// let config = Config::HashMap(config_map);
 /// ```
 ///
 /// # Examples
@@ -220,18 +212,14 @@ mod tests {
     use std::collections::HashMap;
     #[test]
     fn setup_connection_with_minimal_config() {
-        let map: HashMap<String, Config> = [
-            (
-                "host".to_string(),
-                Config::String("tcp://mqtt-broker:1883".to_string()),
-            ),
-            ("topic".to_string(), Config::String("test".to_string())),
-        ]
-        .iter()
-        .cloned()
-        .collect();
+        let mut config_map = HashMap::new();
+        config_map.insert(
+            "host".to_string(),
+            Config::String("tcp://mqtt-broker:1883".to_string()),
+        );
+        config_map.insert("topic".to_string(), Config::String("test".to_string()));
 
-        let config = Config::HashMap(map);
+        let config = Config::HashMap(config_map);
 
         let (_, topic, qos) = build_configs(&"test".to_string(), config);
         assert_eq!(topic, "test".to_string());
@@ -239,20 +227,16 @@ mod tests {
     }
     #[test]
     fn setup_connection_with_full_config() {
-        let map: HashMap<String, Config> = [
-            (
-                "host".to_string(),
-                Config::String("tcp://mqtt-broker:1883".to_string()),
-            ),
-            ("topic".to_string(), Config::String("test".to_string())),
-            ("persistance".to_string(), Config::U8(0)),
-            ("qos".to_string(), Config::U8(2)),
-        ]
-        .iter()
-        .cloned()
-        .collect();
+        let mut config_map = HashMap::new();
+        config_map.insert(
+            "host".to_string(),
+            Config::String("tcp://mqtt-broker:1883".to_string()),
+        );
+        config_map.insert("topic".to_string(), Config::String("test".to_string()));
+        config_map.insert("persistance".to_string(), Config::U8(0));
+        config_map.insert("qos".to_string(), Config::U8(2));
 
-        let config = Config::HashMap(map);
+        let config = Config::HashMap(config_map);
 
         let (_, topic, qos) = build_configs(&"test".to_string(), config);
         assert_eq!(topic, "test".to_string());
