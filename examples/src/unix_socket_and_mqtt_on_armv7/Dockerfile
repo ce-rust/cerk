@@ -16,4 +16,4 @@ RUN rustup target add armv7-unknown-linux-gnueabihf
 
 WORKDIR /cerk/
 
-CMD cargo build --target armv7-unknown-linux-gnueabihf --release --bin hello_world
+CMD cargo build --target armv7-unknown-linux-gnueabihf --release --bin unix_socket_and_mqtt_on_armv7
