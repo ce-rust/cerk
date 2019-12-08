@@ -13,9 +13,26 @@ It is built with modularity and portability in mind.
 
 CERK comes with a couple of prefabricated components, but implementing custom components is easy.
 
+### MicroKernel
+
+The MicroKernel is responsible for starting the other components with the help of the Scheduler and brokering messages between them.
+
+The MicroKernel is implemented in the `cerk` crate.
+
 ### Runtimes
 
+The Runtime provides a Scheduler and a Channel (Sender/Receiver) implementation.
+
+The Scheduler is responsible for scheduling the internal servers with a platform specific scheduling strategy.
+
+| Name                                                 | Scheduling Strategy | Channel Strategy    | Compatible with |
+|------------------------------------------------------|---------------------|---------------------|-----------------|
+| [cerk_runtime_threading](./cerk_runtime_threading/)  | `std::thread`       | `std::sync::mpsc`   | Linux           |
+
 ### Ports
+
+The Port is responsible for exchanging CloudEvents with the outside world.
+A Port can be instantiated multiple times with different configurations.
 
 | Name                                                     | type          | Serialization    | Connection     |
 |----------------------------------------------------------|---------------|------------------|----------------|
@@ -27,14 +44,18 @@ CERK comes with a couple of prefabricated components, but implementing custom co
 
 ### Routers
 
+The Router is responsible for deciding to which port a received CloudEvent should be forwarded to.
+
 | Name                                                     | Description                        |
 |----------------------------------------------------------|------------------------------------|
 | [cerk_router_broadcast](./cerk_router_broadcast/)        | The broadcast router forwards all incomming CloudEvents to the configured ports |
 
 ### ConfigLoaders
 
-| Name                                                     | Description                        |
-|----------------------------------------------------------|------------------------------------|
+The ConfigLoader is responsible for providing the newest port configurations and routing rules.
+
+| Name                                                             | Description                                          |
+|------------------------------------------------------------------|------------------------------------------------------|
 | [static config loader](./examples/src/hello_world/main.rs)       | Have to be implemented for each project individually |
 
 ## Examples
