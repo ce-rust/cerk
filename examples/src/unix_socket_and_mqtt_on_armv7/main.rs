@@ -6,7 +6,7 @@ use std::env;
 use cerk::kernel::{bootstrap, BrokerEvent, Config, StartOptions};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
-use cerk_port_mqtt::port_output_mqtt_start;
+use cerk_port_mqtt::port_mqtt_start;
 use cerk_port_unix_socket::{
     port_input_unix_socket_json_start, port_output_unix_socket_json_start,
 };
@@ -32,7 +32,7 @@ fn static_config_loader_start(
         env::var("MQTT_BROKER_URL").unwrap_or(String::from("tcp://localhost:1883"));
     let mqtt_out_config: HashMap<String, Config> = [
         ("host".to_string(), Config::String(mqtt_broker_url)),
-        ("topic".to_string(), Config::String("test".to_string())),
+        ("send_topic".to_string(), Config::String("test".to_string())),
     ]
     .iter()
     .cloned()
@@ -87,7 +87,7 @@ fn main() {
                 String::from(PORT_UNIX_OUTPUT),
                 port_output_unix_socket_json_start,
             ),
-            (String::from(PORT_MQTT_OUTPUT), port_output_mqtt_start),
+            (String::from(PORT_MQTT_OUTPUT), port_mqtt_start),
         ]),
     };
     bootstrap(start_options);
