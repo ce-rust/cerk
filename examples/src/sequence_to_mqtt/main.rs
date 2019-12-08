@@ -55,7 +55,7 @@ fn static_config_loader_start(
 
 fn main() {
     env_logger::from_env(Env::default().default_filter_or("debug")).init();
-    info!("start hello world example");
+    info!("start sequenc generater to mqtt router");
     let start_options = StartOptions {
         scheduler_start: threading_scheduler_start,
         router_start: router_start,
