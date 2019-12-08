@@ -21,7 +21,6 @@ const PORT_MQTT_OUTPUT: &str = "mqtt-output";
 
 const SOCKET_PATH_IN: &str = "./cloud-events-in";
 const SOCKET_PATH_OUT: &str = "./cloud-events-out";
-const MQTT_BROKER_URL: &str = "tcp://192.168.1.102:1883";
 
 fn static_config_loader_start(
     id: InternalServerId,
@@ -29,12 +28,10 @@ fn static_config_loader_start(
     sender_to_kernel: BoxedSender,
 ) {
     info!("start static config loader with id {}", id);
-
+    let mqtt_broker_url: String =
+        env::var("MQTT_BROKER_URL").unwrap_or(String::from("tcp://localhost:1883"));
     let mqtt_out_config: HashMap<String, Config> = [
-        (
-            "host".to_string(),
-            Config::String(MQTT_BROKER_URL.to_string()),
-        ),
+        ("host".to_string(), Config::String(mqtt_broker_url)),
         ("topic".to_string(), Config::String("test".to_string())),
     ]
     .iter()
