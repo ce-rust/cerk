@@ -12,12 +12,14 @@ use std::time::Duration;
 struct MqttOptions {
     send_topic: Option<String>,
     send_qos: u8,
+    subscribe_topics: Vec<String>,
+    subscribe_qos: Vec<u8>,
 }
 
 fn build_configs(id: &InternalServerId, config: Config) -> (CreateOptions, MqttOptions) {
     match config {
         Config::HashMap(ref config_map) => {
-            let mut mqtt_config = CreateOptionsBuilder::new();
+            let mut mqtt_config = CreateOptionsBuilder::new().client_id(format!("cerk-{}", id));
             if let Config::String(host) = &config_map["host"] {
                 info!("new config");
                 mqtt_config = mqtt_config.server_uri(host);
@@ -37,15 +39,28 @@ fn build_configs(id: &InternalServerId, config: Config) -> (CreateOptions, MqttO
                 0
             };
 
-            let subscribe_topics =
-                if let Some(Config::Vec(topics)) = config_map.get("subscribe_topics") {
-                    topics.clone()
-                } else {
-                    vec![]
-                };
+            let subscribe_topics = if let Some(Config::Vec(topics)) =
+                config_map.get("subscribe_topics")
+            {
+                topics.into_iter().map(|item|{
+                        if let Config::String(item) = item {
+                            item.clone()
+                        }else{
+                            panic!("{} received invalide config, subscribe_topics is not Config::Vec of Strings", id);
+                        }
+                    }).collect()
+            } else {
+                vec![]
+            };
 
             let subscribe_qos = if let Some(Config::Vec(qos)) = config_map.get("subscribe_qos") {
-                qos.clone()
+                qos.into_iter().map(|item|{
+                    if let Config::U8(item) = item {
+                        *item
+                    }else{
+                        panic!("{} received invalide config, subscribe_qos is not Config::Vec of U8s", id);
+                    }
+                }).collect()
             } else {
                 vec![]
             };
@@ -68,6 +83,8 @@ fn build_configs(id: &InternalServerId, config: Config) -> (CreateOptions, MqttO
                 MqttOptions {
                     send_topic,
                     send_qos,
+                    subscribe_topics,
+                    subscribe_qos,
                 },
             )
         }
@@ -86,6 +103,9 @@ fn setup_connection(
     if let Some(cli) = old_cli {
         cli.disconnect(None);
     }
+
+    debug!("{} start connection to mqtt broker", id);
+
     let mut cli = AsyncClient::new(crate_configs).unwrap_or_else(|err| {
         panic!("Error creating the client: {}", err);
     });
@@ -108,6 +128,7 @@ fn setup_connection(
     let rc_id = Rc::new(id.clone());
     let rc_send = Rc::new((*sender_to_kernel).clone_boxed());
     cli.set_message_callback(move |_cli, msg| {
+        debug!("{} received message callback", rc_id);
         if let Some(msg) = msg {
             let topic = msg.topic();
             let payload_str = msg.payload_str();
@@ -126,6 +147,24 @@ fn setup_connection(
             }
         }
     });
+
+    if options.subscribe_topics.len() > 0 {
+        debug!(
+            "{} subscribes to {:?} with qos {:?}",
+            id,
+            options.subscribe_topics,
+            options.subscribe_qos,
+        );
+        let topics = options.subscribe_topics.iter().map(|s| &**s).collect::<Vec<&str>>();
+
+        // has not worked with subscribe_many
+        for i in 0 .. topics.len() {
+            let tok = cli.subscribe(topics[i], options.subscribe_qos[i] as i32);
+            if let Err(e) = tok.wait_for(Duration::from_secs(1)) {
+                panic!("Error sending message: {:?}", e);
+            }
+        }
+    }
 
     (cli, options)
 }
@@ -156,10 +195,10 @@ fn send_cloud_event(
     }
 }
 
-/// This port publishes CloudEvents to a MQTT v3.1 topic.
+/// This port publishes and/or subscribe CloudEvents to/from a MQTT v3.1 topic.
 ///
 /// The port is implemented with a [Eclipse Paho MQTT Rust Client](https://github.com/eclipse/paho.mqtt.rust)
-/// and sends messages according to the
+/// and sends and receives messages according to the
 /// [MQTT Protocol Binding for CloudEvents v1.0](https://github.com/cloudevents/spec/blob/v1.0/mqtt-protocol-binding.md)
 /// specification
 ///
@@ -250,11 +289,7 @@ fn send_cloud_event(
 ///
 /// * [Generator to MQTT](https://github.com/ce-rust/cerk/tree/master/examples/src/sequence_to_mqtt/)
 ///
-pub fn port_output_mqtt_start(
-    id: InternalServerId,
-    inbox: BoxedReceiver,
-    sender_to_kernel: BoxedSender,
-) {
+pub fn port_mqtt_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel: BoxedSender) {
     let mut cli: Option<AsyncClient> = None;
     let mut options: Option<MqttOptions> = None;
 

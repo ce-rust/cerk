@@ -6,7 +6,7 @@ use cerk::kernel::{bootstrap, BrokerEvent, Config, StartOptions};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
 use cerk_port_dummies::port_sequence_generator_start;
-use cerk_port_mqtt::port_output_mqtt_start;
+use cerk_port_mqtt::port_mqtt_start;
 use cerk_router_broadcast::router_start;
 use cerk_runtime_threading::threading_scheduler_start;
 use std::collections::HashMap;
@@ -65,7 +65,7 @@ fn main() {
                 String::from(DUMMY_SEQUENCE_GENERATOR),
                 port_sequence_generator_start,
             ),
-            (String::from(MQTT_OUTPUT), port_output_mqtt_start),
+            (String::from(MQTT_OUTPUT), port_mqtt_start),
         ]),
     };
     bootstrap(start_options);
