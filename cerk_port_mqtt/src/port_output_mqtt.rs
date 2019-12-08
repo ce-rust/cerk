@@ -56,7 +56,7 @@ fn setup_connection(
     if let Some(cli) = old_cli {
         cli.disconnect(None);
     }
-    let cli = AsyncClient::new(options).unwrap_or_else(|err| {
+    let mut cli = AsyncClient::new(options).unwrap_or_else(|err| {
         panic!("Error creating the client: {}", err);
     });
 
@@ -66,6 +66,14 @@ fn setup_connection(
     {
         panic!("Unable to connect: {:?}", e);
     }
+
+    cli.set_connection_lost_callback(|cli: &AsyncClient| {
+        warn!("Connection lost. Attempting reconnect.");
+        let tok = cli.reconnect();
+        if let Err(e) = tok.wait_for(Duration::from_secs(1)) {
+            panic!("Unable to reconnect: {:?}", e);
+        }
+    });
 
     (cli, topic, qos)
 }
