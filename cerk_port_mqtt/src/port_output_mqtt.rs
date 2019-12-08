@@ -6,9 +6,15 @@ use paho_mqtt::{
     AsyncClient, ConnectOptions, CreateOptions, CreateOptionsBuilder, Message, PersistenceType,
 };
 use serde_json;
+use std::rc::Rc;
 use std::time::Duration;
 
-fn build_configs(id: &InternalServerId, config: Config) -> (CreateOptions, String, u8) {
+struct MqttOptions {
+    send_topic: Option<String>,
+    send_qos: u8,
+}
+
+fn build_configs(id: &InternalServerId, config: Config) -> (CreateOptions, MqttOptions) {
     match config {
         Config::HashMap(ref config_map) => {
             let mut mqtt_config = CreateOptionsBuilder::new();
@@ -19,17 +25,34 @@ fn build_configs(id: &InternalServerId, config: Config) -> (CreateOptions, Strin
                 panic!("{} received invalide config, no host as String", id);
             }
 
-            let topic = if let Config::String(topic) = &config_map["topic"] {
-                topic.clone()
+            let send_topic = if let Some(Config::String(topic)) = config_map.get("send_topic") {
+                Some(topic.clone())
             } else {
-                panic!("{} received invalide config, no topic as String", id);
+                None
             };
 
-            let qos = if let Some(Config::U8(qos)) = config_map.get("qos") {
+            let send_qos = if let Some(Config::U8(qos)) = config_map.get("send_qos") {
                 *qos
             } else {
                 0
             };
+
+            let subscribe_topics =
+                if let Some(Config::Vec(topics)) = config_map.get("subscribe_topics") {
+                    topics.clone()
+                } else {
+                    vec![]
+                };
+
+            let subscribe_qos = if let Some(Config::Vec(qos)) = config_map.get("subscribe_qos") {
+                qos.clone()
+            } else {
+                vec![]
+            };
+
+            if subscribe_topics.len() != subscribe_qos.len() {
+                panic!("{} received invalide config: subscribe_topics and subscribe_qos needs to have the same size", id);
+            }
 
             if let Some(Config::U8(persistence)) = config_map.get("persistence") {
                 match persistence {
@@ -40,7 +63,13 @@ fn build_configs(id: &InternalServerId, config: Config) -> (CreateOptions, Strin
             } else {
                 mqtt_config = mqtt_config.persistence(PersistenceType::None);
             }
-            (mqtt_config.finalize(), topic, qos)
+            (
+                mqtt_config.finalize(),
+                MqttOptions {
+                    send_topic,
+                    send_qos,
+                },
+            )
         }
         _ => panic!("{} received invalide config", id),
     }
@@ -48,15 +77,16 @@ fn build_configs(id: &InternalServerId, config: Config) -> (CreateOptions, Strin
 
 fn setup_connection(
     id: &InternalServerId,
+    sender_to_kernel: &BoxedSender,
     old_cli: Option<AsyncClient>,
     config: Config,
-) -> (AsyncClient, String, u8) {
-    let (options, topic, qos) = build_configs(id, config);
+) -> (AsyncClient, MqttOptions) {
+    let (crate_configs, options) = build_configs(id, config);
 
     if let Some(cli) = old_cli {
         cli.disconnect(None);
     }
-    let mut cli = AsyncClient::new(options).unwrap_or_else(|err| {
+    let mut cli = AsyncClient::new(crate_configs).unwrap_or_else(|err| {
         panic!("Error creating the client: {}", err);
     });
 
@@ -75,19 +105,44 @@ fn setup_connection(
         }
     });
 
-    (cli, topic, qos)
+    let rc_id = Rc::new(id.clone());
+    let rc_send = Rc::new((*sender_to_kernel).clone_boxed());
+    cli.set_message_callback(move |_cli, msg| {
+        if let Some(msg) = msg {
+            let topic = msg.topic();
+            let payload_str = msg.payload_str();
+            debug!("{} received cloudevent on topic {}", rc_id, topic);
+            match serde_json::from_str::<CloudEvent>(&payload_str) {
+                Ok(cloud_event) => {
+                    debug!("{} deserialized event successfully", rc_id);
+                    rc_send.send(BrokerEvent::IncommingCloudEvent(
+                        (*rc_id).clone(),
+                        cloud_event,
+                    ))
+                }
+                Err(err) => {
+                    error!("{} while converting string to CloudEvent: {:?}", rc_id, err);
+                }
+            }
+        }
+    });
+
+    (cli, options)
 }
 
 fn send_cloud_event(
     id: &InternalServerId,
     cloud_event: &CloudEvent,
     cli: &Option<AsyncClient>,
-    topic: &Option<String>,
-    qos: u8,
+    options: &Option<MqttOptions>,
 ) {
-    if cli.is_some() && topic.is_some() {
+    if cli.is_some() && options.is_some() && options.as_ref().unwrap().send_topic.is_some() {
         let serialized = serde_json::to_string(cloud_event);
-        let msg = Message::new(topic.as_ref().unwrap(), serialized.unwrap(), qos as i32);
+        let msg = Message::new(
+            options.as_ref().unwrap().send_topic.as_ref().unwrap(),
+            serialized.unwrap(),
+            options.as_ref().unwrap().send_qos as i32,
+        );
         let tok = cli.as_ref().unwrap().publish(msg);
 
         if let Err(e) = tok.wait_for(Duration::from_secs(1)) {
@@ -95,7 +150,7 @@ fn send_cloud_event(
         }
     } else {
         error!(
-            "{} received event before it was configured -> message will be dropped",
+            "{} received event before the mqtt port was configured as output port -> message will be dropped",
             id
         );
     }
@@ -120,9 +175,9 @@ fn send_cloud_event(
 ///
 /// E.g. `Config::String(String::from("tcp://mqtt-broker:1883"))`
 ///
-/// ## topic
+/// ## send_topic
 ///
-/// The value has to by of type `Config::String` and contain the MQTT topic name.
+/// The value has to by of type `Config::String` and contain the MQTT topic name where the message will be sent to.
 ///
 /// E.g. `Config::String(String::from("test"))`
 ///
@@ -141,7 +196,7 @@ fn send_cloud_event(
 ///
 /// E.g. `Config::U8(0)`
 ///
-/// ### qos
+/// ### send_qos
 ///
 /// The [quality of service](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718099) for message delivery.
 /// The quality of service is only for the MQTT broker and does not change any behavior of the router or the output port.
@@ -151,9 +206,11 @@ fn send_cloud_event(
 /// * 1: At least once delivery
 /// * 2: Exactly once delivery
 ///
+/// E.g. `Config::U8(0)`
+///
 /// ## Configuration Examples
 ///
-/// ### Minimal Configuration
+/// ### Minimal Configuration to send events
 ///
 /// ```
 /// use std::collections::HashMap;
@@ -161,7 +218,7 @@ fn send_cloud_event(
 ///
 /// let map: HashMap<String, Config> = [
 ///     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
-///     ("topic".to_string(), Config::String("test".to_string())),
+///     ("send_topic".to_string(), Config::String("test".to_string())),
 /// ]
 /// .iter()
 /// .cloned()
@@ -170,7 +227,7 @@ fn send_cloud_event(
 /// let config = Config::HashMap(map);
 /// ```
 ///
-/// ### Full Configuration
+/// ### Full Configuration for sending events
 ///
 /// ```
 /// use std::collections::HashMap;
@@ -178,9 +235,9 @@ fn send_cloud_event(
 ///
 /// let map: HashMap<String, Config> = [
 ///     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
-///     ("topic".to_string(), Config::String("test".to_string())),
 ///     ("persistance".to_string(), Config::U8(0)),
-///     ("qos".to_string(), Config::U8(2)),
+///     ("send_topic".to_string(), Config::String("test".to_string())),
+///     ("send_qos".to_string(), Config::U8(2)),
 /// ]
 /// .iter()
 /// .cloned()
@@ -196,11 +253,10 @@ fn send_cloud_event(
 pub fn port_output_mqtt_start(
     id: InternalServerId,
     inbox: BoxedReceiver,
-    _sender_to_kernel: BoxedSender,
+    sender_to_kernel: BoxedSender,
 ) {
     let mut cli: Option<AsyncClient> = None;
-    let mut topic: Option<String> = None;
-    let mut qos: u8 = 0;
+    let mut options: Option<MqttOptions> = None;
 
     info!("start mqtt port with id {}", id);
 
@@ -211,14 +267,13 @@ pub fn port_output_mqtt_start(
             }
             BrokerEvent::ConfigUpdated(config, _) => {
                 info!("{} received ConfigUpdated", &id);
-                let (new_cli, new_topic, new_qos) = setup_connection(&id, cli, config);
+                let (new_cli, new_options) = setup_connection(&id, &sender_to_kernel, cli, config);
                 cli = Some(new_cli);
-                topic = Some(new_topic);
-                qos = new_qos;
+                options = Some(new_options);
             }
             BrokerEvent::OutgoingCloudEvent(cloud_event, _) => {
                 debug!("{} cloudevent received", &id);
-                send_cloud_event(&id, &cloud_event, &cli, &topic, qos);
+                send_cloud_event(&id, &cloud_event, &cli, &options);
             }
             broker_event => warn!("event {} not implemented", broker_event),
         }
@@ -230,13 +285,13 @@ mod tests {
     use super::*;
     use std::collections::HashMap;
     #[test]
-    fn setup_connection_with_minimal_config() {
+    fn setup_connection_with_minimal_send_config() {
         let map: HashMap<String, Config> = [
             (
                 "host".to_string(),
                 Config::String("tcp://mqtt-broker:1883".to_string()),
             ),
-            ("topic".to_string(), Config::String("test".to_string())),
+            ("send_topic".to_string(), Config::String("test".to_string())),
         ]
         .iter()
         .cloned()
@@ -244,9 +299,9 @@ mod tests {
 
         let config = Config::HashMap(map);
 
-        let (_, topic, qos) = build_configs(&"test".to_string(), config);
-        assert_eq!(topic, "test".to_string());
-        assert_eq!(qos, 0);
+        let (_, options) = build_configs(&"test".to_string(), config);
+        assert_eq!(options.send_topic, Some("test".to_string()));
+        assert_eq!(options.send_qos, 0);
     }
     #[test]
     fn setup_connection_with_full_config() {
@@ -255,9 +310,9 @@ mod tests {
                 "host".to_string(),
                 Config::String("tcp://mqtt-broker:1883".to_string()),
             ),
-            ("topic".to_string(), Config::String("test".to_string())),
+            ("send_topic".to_string(), Config::String("test".to_string())),
             ("persistance".to_string(), Config::U8(0)),
-            ("qos".to_string(), Config::U8(2)),
+            ("send_qos".to_string(), Config::U8(2)),
         ]
         .iter()
         .cloned()
@@ -265,8 +320,8 @@ mod tests {
 
         let config = Config::HashMap(map);
 
-        let (_, topic, qos) = build_configs(&"test".to_string(), config);
-        assert_eq!(topic, "test".to_string());
-        assert_eq!(qos, 2);
+        let (_, options) = build_configs(&"test".to_string(), config);
+        assert_eq!(options.send_topic, Some("test".to_string()));
+        assert_eq!(options.send_qos, 2);
     }
 }

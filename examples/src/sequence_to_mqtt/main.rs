@@ -26,7 +26,7 @@ fn static_config_loader_start(
             "host".to_string(),
             Config::String("tcp://mqtt-broker:1883".to_string()),
         ),
-        ("topic".to_string(), Config::String("test".to_string())),
+        ("send_topic".to_string(), Config::String("test".to_string())),
     ]
     .iter()
     .cloned()
