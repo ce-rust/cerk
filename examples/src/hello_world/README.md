@@ -1,5 +1,7 @@
 # Hello World Example
 
+Routing CloudEvents that are generated from an input port to a output port, the output port print the result to the console.
+
 ## Requirements
 
 * openbsd-netcat, command `nc`

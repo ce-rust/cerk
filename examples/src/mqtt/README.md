@@ -1,5 +1,8 @@
 # MQTT Example
 
+Routes CloudEvents that are generated from an input port to a output port, the output port publishes the events on a MQTT Topic.
+A second router subscribes to the same topic with a mqtt port and routs them to a port wich prints the event to stdout.
+
 ## Run
 
 1. run `docker-compose up`

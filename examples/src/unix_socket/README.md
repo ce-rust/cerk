@@ -1,5 +1,7 @@
 # UNIX Socket Example
 
+Routes CloudEvents from an input UNIX Socket port to an output UNIX Socket port.
+
 ## Requirements
 
 * openbsd-netcat, command `nc`
