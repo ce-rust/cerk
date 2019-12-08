@@ -151,14 +151,16 @@ fn setup_connection(
     if options.subscribe_topics.len() > 0 {
         debug!(
             "{} subscribes to {:?} with qos {:?}",
-            id,
-            options.subscribe_topics,
-            options.subscribe_qos,
+            id, options.subscribe_topics, options.subscribe_qos,
         );
-        let topics = options.subscribe_topics.iter().map(|s| &**s).collect::<Vec<&str>>();
+        let topics = options
+            .subscribe_topics
+            .iter()
+            .map(|s| &**s)
+            .collect::<Vec<&str>>();
 
         // has not worked with subscribe_many
-        for i in 0 .. topics.len() {
+        for i in 0..topics.len() {
             let tok = cli.subscribe(topics[i], options.subscribe_qos[i] as i32);
             if let Err(e) = tok.wait_for(Duration::from_secs(1)) {
                 panic!("Error sending message: {:?}", e);
@@ -214,13 +216,13 @@ fn send_cloud_event(
 ///
 /// E.g. `Config::String(String::from("tcp://mqtt-broker:1883"))`
 ///
-/// ## send_topic
+/// ## Optional Fields
+///
+/// ### send_topic
 ///
 /// The value has to by of type `Config::String` and contain the MQTT topic name where the message will be sent to.
 ///
 /// E.g. `Config::String(String::from("test"))`
-///
-/// ## Optional Fields
 ///
 /// The following configurations are optional.
 ///
@@ -238,7 +240,7 @@ fn send_cloud_event(
 /// ### send_qos
 ///
 /// The [quality of service](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718099) for message delivery.
-/// The quality of service is only for the MQTT broker and does not change any behavior of the router or the output port.
+/// The quality of service is only for the MQTT broker and does not change any behavior of the router or the port.
 /// The router only supports best effort at the moment.  
 ///
 /// * 0: At most once delivery (default)
@@ -247,9 +249,31 @@ fn send_cloud_event(
 ///
 /// E.g. `Config::U8(0)`
 ///
+/// ## subscribe_topics
+///
+/// The value has to by of type `Config::Vec([Config::String])` and must have the same length as `subscribe_qos`.
+/// The values in the vector contain the MQTT topic wich the router should subscribe to.
+///
+/// If multiple topics are subscribed in the same mqtt port,
+/// there is no possability at the moment to know let the router or the output port know from wich topic the an event was received.
+///
+/// ## subscribe_qos
+///
+/// The value has to by of type `Config::Vec([Config::U8])` and must have the same length as `subscribe_topics`.
+///
+/// The [quality of service](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718099) for the topic subscription.
+/// The quality of service is only for the MQTT broker and does not change any behavior of the router or the port.
+/// The router only supports best effort at the moment.  
+///
+/// * 0: At most once delivery
+/// * 1: At least once delivery
+/// * 2: Exactly once delivery
+///
 /// ## Configuration Examples
 ///
 /// ### Minimal Configuration to send events
+///
+/// This configuration will connect to the borker but nor send or receive events.
 ///
 /// ```
 /// use std::collections::HashMap;
@@ -257,7 +281,6 @@ fn send_cloud_event(
 ///
 /// let map: HashMap<String, Config> = [
 ///     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
-///     ("send_topic".to_string(), Config::String("test".to_string())),
 /// ]
 /// .iter()
 /// .cloned()
@@ -285,9 +308,61 @@ fn send_cloud_event(
 /// let config = Config::HashMap(map);
 /// ```
 ///
+/// ### Full Configuration for recieve events
+///
+/// ```
+/// use std::collections::HashMap;
+/// use cerk::kernel::Config;
+///
+/// let map: HashMap<String, Config> = [
+///     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
+///     ("persistance".to_string(), Config::U8(0)),
+///     (
+///       "subscribe_topics".to_string(),
+///       Config::Vec(vec![Config::String("test".to_string())]),
+///     ),
+///     (
+///       "subscribe_qos".to_string(),
+///       Config::Vec(vec![Config::U8(2)]),
+///     ),
+/// ]
+/// .iter()
+/// .cloned()
+/// .collect();
+///
+/// let config = Config::HashMap(map);
+/// ```
+///
+/// ### Full Configuration for receiving events
+///
+/// ```
+/// use std::collections::HashMap;
+/// use cerk::kernel::Config;
+///
+/// let map: HashMap<String, Config> = [
+///     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
+///     ("persistance".to_string(), Config::U8(0)),
+///     ("send_topic".to_string(), Config::String("test".to_string())),
+///     ("send_qos".to_string(), Config::U8(2)),
+///     (
+///       "subscribe_topics".to_string(),
+///       Config::Vec(vec![Config::String("test".to_string())]),
+///     ),
+///     (
+///       "subscribe_qos".to_string(),
+///       Config::Vec(vec![Config::U8(2)]),
+///     ),
+/// ]
+/// .iter()
+/// .cloned()
+/// .collect();
+///
+/// let config = Config::HashMap(map);
+/// ```
+///
 /// # Examples
 ///
-/// * [Generator to MQTT](https://github.com/ce-rust/cerk/tree/master/examples/src/sequence_to_mqtt/)
+/// * [Generator to MQTT](https://github.com/ce-rust/cerk/tree/master/examples/src/mqtt/)
 ///
 pub fn port_mqtt_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel: BoxedSender) {
     let mut cli: Option<AsyncClient> = None;
@@ -339,6 +414,32 @@ mod tests {
         assert_eq!(options.send_qos, 0);
     }
     #[test]
+    fn setup_connection_with_minimal_receive_config() {
+        let map: HashMap<String, Config> = [
+            (
+                "host".to_string(),
+                Config::String("tcp://mqtt-broker:1883".to_string()),
+            ),
+            (
+                "subscribe_topics".to_string(),
+                Config::Vec(vec![Config::String("test".to_string())]),
+            ),
+            (
+                "subscribe_qos".to_string(),
+                Config::Vec(vec![Config::U8(2)]),
+            ),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+
+        let config = Config::HashMap(map);
+
+        let (_, options) = build_configs(&"test".to_string(), config);
+        assert_eq!(options.subscribe_topics, ["test".to_string()]);
+        assert_eq!(options.subscribe_qos, [2]);
+    }
+    #[test]
     fn setup_connection_with_full_config() {
         let map: HashMap<String, Config> = [
             (
@@ -348,6 +449,14 @@ mod tests {
             ("send_topic".to_string(), Config::String("test".to_string())),
             ("persistance".to_string(), Config::U8(0)),
             ("send_qos".to_string(), Config::U8(2)),
+            (
+                "subscribe_topics".to_string(),
+                Config::Vec(vec![Config::String("test".to_string())]),
+            ),
+            (
+                "subscribe_qos".to_string(),
+                Config::Vec(vec![Config::U8(2)]),
+            ),
         ]
         .iter()
         .cloned()
@@ -357,6 +466,8 @@ mod tests {
 
         let (_, options) = build_configs(&"test".to_string(), config);
         assert_eq!(options.send_topic, Some("test".to_string()));
+        assert_eq!(options.subscribe_topics, ["test".to_string()]);
+        assert_eq!(options.subscribe_qos, [2]);
         assert_eq!(options.send_qos, 2);
     }
 }

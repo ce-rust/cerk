@@ -8,6 +8,7 @@ use cerk::runtime::InternalServerId;
 /// # Examples
 ///
 /// * [Hello World Example](https://github.com/ce-rust/cerk/tree/master/examples/src/hello_world)
+/// * [Generator to MQTT](https://github.com/ce-rust/cerk/tree/master/examples/src/mqtt/)
 ///
 pub fn port_printer_start(
     id: InternalServerId,
