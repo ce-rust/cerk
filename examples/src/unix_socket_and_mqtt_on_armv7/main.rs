@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate log;
 use env_logger::Env;
+use std::env;
 
 use cerk::kernel::{bootstrap, BrokerEvent, Config, StartOptions};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
