@@ -18,7 +18,7 @@ The MicroKernel is implemented in the `cerk` crate.
 
 ## Runtimes
 
-The Runtime provieds a Scheduler and a Cannel (Sender/Receiver) implementation.
+The Runtime provides a Scheduler and a Channel (Sender/Receiver) implementation.
 
 The Scheduler is responsible for scheduling the internal servers with a platform specific scheduling strategy.
 
