@@ -52,7 +52,7 @@ fn main() {
     let _ = remove_file(SOCKET_PATH_IN);
     let _ = remove_file(SOCKET_PATH_OUT);
 
-    info!("start hello world example");
+    info!("start UNIX Socket example");
     let start_options = StartOptions {
         scheduler_start: threading_scheduler_start,
         router_start: router_start,

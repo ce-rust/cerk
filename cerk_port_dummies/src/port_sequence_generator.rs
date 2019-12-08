@@ -29,7 +29,7 @@ fn generate_events(id: InternalServerId, sender_to_kernel: BoxedSender) {
 /// # Examples
 ///
 /// * [Hello World Example](https://github.com/ce-rust/cerk/tree/master/examples/src/hello_world)
-/// * [Generator to MQTT](https://github.com/ce-rust/cerk/tree/master/examples/src/sequence_to_mqtt/)
+/// * [Generator to MQTT](https://github.com/ce-rust/cerk/tree/master/examples/src/mqtt/)
 ///
 pub fn port_sequence_generator_start(
     id: InternalServerId,
