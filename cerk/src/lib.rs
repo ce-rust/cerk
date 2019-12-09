@@ -12,7 +12,7 @@ CERK comes with a couple of prefabricated components, but implementing custom co
 
 ## MicroKernel
 
-The MicroKernel is responsible for starting the other components with the help of the Scheduler and brokering messages between them. 
+The MicroKernel is responsible for starting the other components with the help of the Scheduler and brokering messages between them.
 
 The MicroKernel is implemented in the `cerk` crate.
 
