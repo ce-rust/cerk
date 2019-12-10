@@ -32,3 +32,11 @@ steps:
       - docker-compose run rule_based_routing | tee build.log | grep --line-buffered "dummy-logger-output received cloud event with id=10" | exit 0
     timeout_in_minutes: 15
     artifact_paths: "**/build.log"
+  - label: "setup: ubuntulinux"
+    commands: 
+        - cd setup
+        - docker-compose run ubuntulinux
+  - label: "setup: archlinux"
+    commands: 
+        - cd setup
+        - docker-compose run archlinux

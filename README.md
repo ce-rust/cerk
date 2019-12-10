@@ -69,6 +69,11 @@ The ConfigLoader is responsible for providing the newest port configurations and
 | [MQTT](./examples/src/sequence_to_mqtt/)                         | Routes CloudEvents that are generated from an input port to a output port, the output port publishes the events on a MQTT Topic. A second router subscribes to the same topic with a mqtt port and routs them to a port wich prints the event to stdout. |
 | [UNIX Socket and MQTT for armv7](./examples/src/unix_socket_and_mqtt_on_armv7/) | Routes CloudEvents that are received on an input UNIX Socket port to an output UNIX Socket port and an MQTT output port. |
 
+## Develop
+
+Different operating system setups could be fined [here](https://github.com/ce-rust/cerk/tree/master/setup).
+
+
 ## Update Readme
 
 The original readme text is an rust doc comment in the [lib.rs](./cloudevents/src/lib.rs) file
