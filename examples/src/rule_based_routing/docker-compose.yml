@@ -1,0 +1,9 @@
+version: '3.7'
+
+services:
+  rule-based-routing:
+    image: rust:1.38
+    volumes:
+      - ../../../:/cerk/
+    working_dir: /cerk
+    command: cargo run --bin rule_based_routing

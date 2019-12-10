@@ -26,3 +26,9 @@ steps:
     plugins:
       - artifacts#v1.2.0:
           upload: "target/armv7-unknown-linux-gnueabihf/release/unix_socket_and_mqtt_on_armv7"
+  - label: "example: execute rule based routing"
+    commands: 
+      - cd examples/src/rule_based_routing
+      - docker-compose run rule_based_routing | tee build.log | grep --line-buffered "dummy-logger-output received cloud event with id=10" | exit 0
+    timeout_in_minutes: 15
+    artifact_paths: "**/build.log"

@@ -12,7 +12,7 @@ CERK comes with a couple of prefabricated components, but implementing custom co
 
 ## MicroKernel
 
-The MicroKernel is responsible for starting the other components with the help of the Scheduler and brokering messages between them. 
+The MicroKernel is responsible for starting the other components with the help of the Scheduler and brokering messages between them.
 
 The MicroKernel is implemented in the `cerk` crate.
 
@@ -46,6 +46,7 @@ The Router is responsible for deciding to which port a received CloudEvent shoul
 | Name                                                     | Description                        |
 |----------------------------------------------------------|------------------------------------|
 | [cerk_router_broadcast](./cerk_router_broadcast/)        | The broadcast router forwards all incomming CloudEvents to the configured ports |
+| [cerk_router_rule_based](./cerk_router_rule_based/)      | The rule-based router routes event based on the given configuration. One configuration tree per output port should be configured. The configurations are given in a tree format. The operations and, or includes, starts with and more are possible. |
 
 ## ConfigLoaders
 
@@ -57,11 +58,14 @@ The ConfigLoader is responsible for providing the newest port configurations and
 
 # Examples
 
-| Name                                                          | Description                        |
-|---------------------------------------------------------------|------------------------------------|
-| [Hello World](./examples/src/hello_world/)                    | Routing CloudEvents that are generated from an input port to a output port, the output port print the result to the console. |
-| [UNIX Socket](./examples/src/unix_socket/)                    | Routes CloudEvents from an input UNIX Socket port to an output UNIX Socket port |
-| [MQTT](./examples/src/sequence_to_mqtt/)                      | Routes CloudEvents that are generated from an input port to a output port, the output port publishes the events on a MQTT Topic.
+| Name                                                             | Description                        |
+|------------------------------------------------------------------|------------------------------------|
+| [Hello World](./examples/src/hello_world/)                       | Routing CloudEvents that are generated from an input port to a output port, the output port print the result to the console. |
+| [Rule Based Routing Example](./examples/src/rule_based_routing/) | CloudEvents that are generated from an input port are routed to an output port, 
+but in this example only every thenth event gets routed to the output port because they are filterd by `id`.
+The `id` has to end with `0`, thus only 10,20,30,... are printed. |
+| [UNIX Socket](./examples/src/unix_socket/)                       | Routes CloudEvents from an input UNIX Socket port to an output UNIX Socket port |
+| [MQTT](./examples/src/sequence_to_mqtt/)                         | Routes CloudEvents that are generated from an input port to a output port, the output port publishes the events on a MQTT Topic.
 A second router subscribes to the same topic with a mqtt port and routs them to a port wich prints the event to stdout. |
 | [UNIX Socket and MQTT for armv7](./examples/src/unix_socket_and_mqtt_on_armv7/) | Routes CloudEvents that are received on an input UNIX Socket port to an output UNIX Socket port and an MQTT output port. |
 */

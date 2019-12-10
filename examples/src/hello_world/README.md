@@ -1,12 +1,6 @@
 # Hello World Example
 
-Routing CloudEvents that are generated from an input port to a output port, the output port print the result to the console.
-
-## Requirements
-
-* openbsd-netcat, command `nc`
-  * **arch linux**: install it from the arch repository with `yaourt -S openbsd-netcat`
-  * **mac**: install it with homebrew `brew install netcat`
+CloudEvents that are generated from an input port are routed to an output port, the output port print the result to the console.
 
 ## Run
 
