@@ -1,0 +1,11 @@
+version: '3.7'
+
+services:
+  archlinux:
+    build: archlinux
+    volumes: 
+      - ..:/cerk/
+  ubuntulinux:
+    build: ubuntulinux
+    volumes: 
+      - ..:/cerk/
