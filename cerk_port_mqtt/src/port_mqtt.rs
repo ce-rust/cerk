@@ -197,7 +197,7 @@ fn send_cloud_event(
     }
 }
 
-/// This port publishes and/or subscribe CloudEvents to/from a MQTT v3.1 topic.
+/// This port publishes and/or subscribe CloudEvents to/from an MQTT v3.1 topic.
 ///
 /// The port is implemented with a [Eclipse Paho MQTT Rust Client](https://github.com/eclipse/paho.mqtt.rust)
 /// and sends and receives messages according to the
@@ -254,7 +254,7 @@ fn send_cloud_event(
 /// The value has to by of type `Config::Vec([Config::String])` and must have the same length as `subscribe_qos`.
 /// The values in the vector contain the MQTT topic wich the router should subscribe to.
 ///
-/// If multiple topics are subscribed in the same mqtt port,
+/// If multiple topics are subscribed in the same MQTT port,
 /// there is no possability at the moment to know let the router or the output port know from wich topic the an event was received.
 ///
 /// ## subscribe_qos

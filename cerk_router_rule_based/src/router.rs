@@ -66,7 +66,7 @@ fn parse_config(config_update: String) -> Result<RoutingTable, SerdeErrorr> {
 /// The rule-based router routes event based on the given configuration.
 ///
 /// One configuration tree per output port should be configured. The configurations are given in a tree format.
-/// The operations and, or includes, starts with and more are possible.
+/// The operations `And`, `Or`, `Contains`, `StartsWith` and more are possible.
 ///
 /// # Configurations
 ///
