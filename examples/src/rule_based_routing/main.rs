@@ -25,7 +25,7 @@ fn static_config_loader_start(
         RoutingRules::And(vec![
             RoutingRules::Exact(
                 CloudEventFields::Source,
-                Some("dummy.sequence-generator".to_string()),
+                Some(DUMMY_SEQUENCE_GENERATOR.to_string()),
             ),
             RoutingRules::EndsWith(CloudEventFields::Id, "0".to_string()),
         ]),

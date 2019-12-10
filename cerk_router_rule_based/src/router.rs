@@ -63,14 +63,40 @@ fn parse_config(config_update: String) -> Result<RoutingTable, SerdeErrorr> {
     serde_json::from_str::<RoutingTable>(&config_update)
 }
 
-/// This router broadcasts all received CloudEvents to the configured ports.
+/// The rule-based router routes event based on the given configuration.
+///
+/// One configuration tree per output port should be configured. The configurations are given in a tree format.
+/// The operations and, or includes, starts with and more are possible.
 ///
 /// # Configurations
 ///
 /// The Socket expects a `Config::String` as configuration.
 /// The string should be a json deserialized `routing_rules::RoutingTable;`.
 ///
-/// e.g. `Config::String("{}".to_string())`
+/// minimal: `Config::String("{}".to_string())`
+///
+/// ## Example
+///
+/// ```
+/// use serde_json;
+/// use cerk_router_rule_based::{CloudEventFields, RoutingRules, RoutingTable};
+///
+/// let routing_rules: RoutingTable = [(
+///   "dummy-logger-output".to_string(),
+///   RoutingRules::And(vec![
+///     RoutingRules::Exact(
+///         CloudEventFields::Source,
+///         Some("dummy.sequence-generator".to_string()),
+///     ),
+///     RoutingRules::EndsWith(CloudEventFields::Id, "0".to_string()),
+///   ]),
+/// )]
+/// .iter()
+/// .cloned()
+/// .collect();
+///
+/// let routing_configs = serde_json::to_string(&routing_rules).unwrap();
+/// ```
 ///
 /// # Examples
 ///
