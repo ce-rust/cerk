@@ -25,6 +25,9 @@ path = "src/unix_socket/main.rs"
 name = "sequence_to_mqtt"
 path = "src/mqtt/sequence_to_mqtt/main.rs"
 [[bin]]
+name = "unix_socket_and_mqtt_on_armv7"
+path = "src/unix_socket_and_mqtt_on_armv7/main.rs"
+[[bin]]
 name = "mqtt-to-printer"
 path = "src/mqtt/mqtt-to-printer/main.rs"
 [[bin]]
