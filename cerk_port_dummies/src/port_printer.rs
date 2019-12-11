@@ -1,6 +1,7 @@
 use cerk::kernel::BrokerEvent;
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
+use serde_json;
 
 /// This port prints the CloudEvent id to the logger.
 /// This port is for testing!
@@ -21,9 +22,9 @@ pub fn port_printer_start(
             BrokerEvent::Init => info!("{} initiated", id),
             BrokerEvent::ConfigUpdated(_, _) => info!("{} received ConfigUpdated", id),
             BrokerEvent::OutgoingCloudEvent(cloud_event, _) => info!(
-                "{} received cloud event with id={}!",
+                "{} received cloud event: {}!",
                 id,
-                get_event_field!(cloud_event, event_id)
+                serde_json::to_string(&cloud_event).unwrap(),
             ),
             broker_event => warn!("event {} not implemented", broker_event),
         }
