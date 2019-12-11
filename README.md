@@ -38,7 +38,7 @@ A Port can be instantiated multiple times with different configurations.
 |----------------------------------------------------------|---------------|------------------|----------------|
 | [port_input_unix_socket_json](./cerk_port_unix_socket/)  | input         | JSON             | UNIX Socket    |
 | [port_output_unix_socket_json](./cerk_port_unix_socket/) | output        | JSON             | UNIX Socket    |
-| [port_output_mqtt](./cerk_port_mqtt/)                    | input/output  | JSON             | MQTT           |
+| [port_mqtt](./cerk_port_mqtt/)                           | input/output  | JSON             | MQTT           |
 | [port_sequence_generator](./cerk_port_dummies/)          | input         | -                | \<time based\> |
 | [port_printer](./cerk_port_dummies/)                     | output        | TEXT             |                |
 
@@ -48,8 +48,8 @@ The Router is responsible for deciding to which port a received CloudEvent shoul
 
 | Name                                                     | Description                        |
 |----------------------------------------------------------|------------------------------------|
-| [cerk_router_broadcast](./cerk_router_broadcast/)        | The broadcast router forwards all incomming CloudEvents to the configured ports |
-| [cerk_router_rule_based](./cerk_router_rule_based/)      | The rule-based router routes event based on the given configuration. One configuration tree per output port should be configured. The configurations are given in a tree format. The operations and, or includes, starts with and more are possible. |
+| [cerk_router_broadcast](./cerk_router_broadcast/)        | The broadcast router forwards all incomming CloudEvents to the configured ports. |
+| [cerk_router_rule_based](./cerk_router_rule_based/)      | The rule-based router routes events based on the given configuration. The configurations are structured in a tree format. One configuration tree per output port needs to be configured. The operations  `And`, `Or`, `Contains`, `StartsWith` and more are supported. |
 
 ### ConfigLoaders
 
@@ -63,10 +63,10 @@ The ConfigLoader is responsible for providing the newest port configurations and
 
 | Name                                                             | Description                        |
 |------------------------------------------------------------------|------------------------------------|
-| [Hello World](./examples/src/hello_world/)                       | Routing CloudEvents that are generated from an input port to a output port, the output port print the result to the console. |
-| [Rule Based Routing Example](./examples/src/rule_based_routing/) | CloudEvents that are generated from an input port are routed to an output port, but in this example only every thenth event gets routed to the output port because they are filterd by `id`. The `id` has to end with `0`, thus only 10,20,30,... are printed. |
+| [Hello World](./examples/src/hello_world/)                       | Routing CloudEvents that are generated from an input port to an output port, the output port print the result to the console. |
+| [Rule Based Routing Example](./examples/src/rule_based_routing/) | CloudEvents that are generated from an input port are routed to an output port, but in this example only every tenth event gets routed to the output port because they are filterd by `id`. The `id` has to end with `0`, thus only 10,20,30,... are printed. |
 | [UNIX Socket](./examples/src/unix_socket/)                       | Routes CloudEvents from an input UNIX Socket port to an output UNIX Socket port |
-| [MQTT](./examples/src/sequence_to_mqtt/)                         | Routes CloudEvents that are generated from an input port to a output port, the output port publishes the events on a MQTT Topic. A second router subscribes to the same topic with a mqtt port and routs them to a port wich prints the event to stdout. |
+| [MQTT](./examples/src/sequence_to_mqtt/)                         | Routes CloudEvents that are generated from an input port to an output port, the output port publishes the events on an MQTT topic. A second router subscribes to the same topic with an MQTT port and routes them to a port which prints the event to stdout. |
 | [UNIX Socket and MQTT for armv7](./examples/src/unix_socket_and_mqtt_on_armv7/) | Routes CloudEvents that are received on an input UNIX Socket port to an output UNIX Socket port and an MQTT output port. |
 
 ## Develop
@@ -76,7 +76,7 @@ Different operating system setups could be fined [here](https://github.com/ce-ru
 
 ## Update Readme
 
-The original readme text is an rust doc comment in the [lib.rs](./cloudevents/src/lib.rs) file
+The original readme text is a Rust doc comment in the [lib.rs](./cloudevents/src/lib.rs) file
 
 1. `cargo install cargo-readme`
 2. `cargo readme  -r cerk > README.md`

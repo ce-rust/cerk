@@ -63,10 +63,11 @@ fn parse_config(config_update: String) -> Result<RoutingTable, SerdeErrorr> {
     serde_json::from_str::<RoutingTable>(&config_update)
 }
 
-/// The rule-based router routes event based on the given configuration.
+/// The rule-based router routes events based on the given configuration.
 ///
-/// One configuration tree per output port should be configured. The configurations are given in a tree format.
-/// The operations and, or includes, starts with and more are possible.
+/// The configurations are structured in a tree format. 
+/// One configuration tree per output port needs to be configured.
+/// The operations `And`, `Or`, `Contains`, `StartsWith` and more are supported.
 ///
 /// # Configurations
 ///
