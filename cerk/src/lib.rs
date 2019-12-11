@@ -35,7 +35,7 @@ A Port can be instantiated multiple times with different configurations.
 |----------------------------------------------------------|---------------|------------------|----------------|
 | [port_input_unix_socket_json](./cerk_port_unix_socket/)  | input         | JSON             | UNIX Socket    |
 | [port_output_unix_socket_json](./cerk_port_unix_socket/) | output        | JSON             | UNIX Socket    |
-| [port_output_mqtt](./cerk_port_mqtt/)                    | input/output  | JSON             | MQTT           |
+| [port_mqtt](./cerk_port_mqtt/)                           | input/output  | JSON             | MQTT           |
 | [port_sequence_generator](./cerk_port_dummies/)          | input         | -                | \<time based\> |
 | [port_printer](./cerk_port_dummies/)                     | output        | TEXT             |                |
 
