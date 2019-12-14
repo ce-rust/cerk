@@ -45,11 +45,11 @@ fn static_config_loader_start(
             RoutingRules::Or(vec![
                 RoutingRules::Exact(
                     CloudEventFields::Type,
-                    Some("ClassifierKeywordHelpDetectedEvent".to_string()),
+                    Some("event.demo.A".to_string()),
                 ),
                 RoutingRules::Exact(
                     CloudEventFields::Type,
-                    Some("ClassifierKeywordVoiceMessageDetectedEvent".to_string()),
+                    Some("event.demo.B".to_string()),
                 ),
             ]),
         ),
@@ -57,7 +57,7 @@ fn static_config_loader_start(
             PORT_MQTT_OUTPUT.to_string(),
             RoutingRules::Exact(
                 CloudEventFields::Type,
-                Some("ClassifierKeywordHelpDetectedEvent".to_string()),
+                Some("event.demo.A".to_string()),
             ),
         ),
     ]
