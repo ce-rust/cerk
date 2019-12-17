@@ -85,29 +85,21 @@ Optional Tooling:
 
 ### Run Tests
 
-```rust
-cargo test --all
-```
+`cargo test --all`
 
 ### Run Example
 
-```rust
-cargo run --bin $EXAMPLE_NAME
-```
+`cargo run --bin $EXAMPLE_NAME`
 
 Check out the README in the folder of each [example](./examples/src/) for more details.
 
 ### Format Code
 
-```rust
-cargo fmt --all
-```
+`cargo fmt --all`
 
 ### Generate Documentation
 
-```rust
-cargo doc --no-deps --open
-```
+`cargo doc --no-deps --open`
 
 
 ## Update Readme
