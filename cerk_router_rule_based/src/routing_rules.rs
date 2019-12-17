@@ -9,8 +9,8 @@ use std::collections::HashMap;
 pub enum CloudEventFields {
     Id,
     Type,
-    /// not implemented in V0.2
     Source,
+    /// not implemented in V0.2
     Subject,
     Dataschema,
 }
