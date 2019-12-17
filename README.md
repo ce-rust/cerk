@@ -95,7 +95,7 @@ cargo test --all
 cargo run --bin $EXAMPLE_NAME
 ```
 
-Check out the README of the [examples](./examples/src/) for more details.
+Check out the README in the folder of each [example](./examples/src/) for more details.
 
 ### Format Code
 
