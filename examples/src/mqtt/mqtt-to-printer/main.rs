@@ -10,6 +10,7 @@ use cerk_port_mqtt::port_mqtt_start;
 use cerk_router_broadcast::router_start;
 use cerk_runtime_threading::threading_scheduler_start;
 use std::collections::HashMap;
+use std::env;
 
 const MQTT_INPUT: &'static str = "mqtt-input";
 const DUMMY_LOGGER_OUTPUT: &'static str = "dummy-logger-output";
@@ -20,12 +21,10 @@ fn static_config_loader_start(
     sender_to_kernel: BoxedSender,
 ) {
     info!("start static config loader with id {}", id);
-
+    let mqtt_broker_url: String =
+        env::var("MQTT_BROKER_URL").unwrap_or(String::from("tcp://mqtt-broker:1883"));
     let mqtt_in_config: HashMap<String, Config> = [
-        (
-            "host".to_string(),
-            Config::String("tcp://mqtt-broker:1883".to_string()),
-        ),
+        ("host".to_string(), Config::String(mqtt_broker_url)),
         (
             "subscribe_topics".to_string(),
             Config::Vec(vec![Config::String("test".to_string())]),

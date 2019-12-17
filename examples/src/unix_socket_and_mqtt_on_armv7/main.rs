@@ -10,7 +10,7 @@ use cerk_port_mqtt::port_mqtt_start;
 use cerk_port_unix_socket::{
     port_input_unix_socket_json_start, port_output_unix_socket_json_start,
 };
-use cerk_router_broadcast::router_start;
+use cerk_router_rule_based::{router_start, CloudEventFields, RoutingRules, RoutingTable};
 use cerk_runtime_threading::threading_scheduler_start;
 use std::collections::HashMap;
 use std::fs::remove_file;
@@ -33,10 +33,39 @@ fn static_config_loader_start(
     let mqtt_out_config: HashMap<String, Config> = [
         ("host".to_string(), Config::String(mqtt_broker_url)),
         ("send_topic".to_string(), Config::String("test".to_string())),
+        ("persistance".to_string(), Config::U8(1)),
     ]
     .iter()
     .cloned()
     .collect();
+
+    let routing_rules: RoutingTable = [
+        (
+            PORT_UNIX_OUTPUT.to_string(),
+            RoutingRules::Or(vec![
+                RoutingRules::Exact(
+                    CloudEventFields::Type,
+                    Some("event.demo.A".to_string()),
+                ),
+                RoutingRules::Exact(
+                    CloudEventFields::Type,
+                    Some("event.demo.B".to_string()),
+                ),
+            ]),
+        ),
+        (
+            PORT_MQTT_OUTPUT.to_string(),
+            RoutingRules::Exact(
+                CloudEventFields::Type,
+                Some("event.demo.A".to_string()),
+            ),
+        ),
+    ]
+    .iter()
+    .cloned()
+    .collect();
+
+    let routing_configs = serde_json::to_string(&routing_rules).unwrap();
 
     loop {
         match inbox.receive() {
@@ -47,10 +76,7 @@ fn static_config_loader_start(
                         String::from(PORT_MQTT_OUTPUT),
                     ),
                     BrokerEvent::ConfigUpdated(
-                        Config::Vec(vec![
-                            Config::String(String::from(PORT_UNIX_OUTPUT)),
-                            Config::String(String::from(PORT_MQTT_OUTPUT)),
-                        ]),
+                        Config::String(routing_configs.clone()),
                         String::from("router"),
                     ),
                     BrokerEvent::ConfigUpdated(
