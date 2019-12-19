@@ -3,7 +3,8 @@
 
 # Introduction
 
-CERK lets you route your [CloudEvents](https://github.com/cloudevents/spec) between different sources and sinks.
+CERK lets you route your [CloudEvents](https://github.com/cloudevents/spec) between different different ports.
+Ports are transport layer bindings over which CloudEvents can be exchanged.
 It is built with modularity and portability in mind.
 
 # Components
@@ -14,7 +15,7 @@ CERK comes with a couple of prefabricated components, but implementing custom co
 
 The MicroKernel is responsible for starting the other components with the help of the Scheduler and brokering messages between them.
 
-The MicroKernel is implemented in the `cerk` crate.
+The MicroKernel is implemented in the [`cerk`](./cerk/) crate.
 
 ## Runtimes
 
@@ -24,7 +25,7 @@ The Scheduler is responsible for scheduling the internal servers with a platform
 
 | Name                                                 | Scheduling Strategy | Channel Strategy    | Compatible with |
 |------------------------------------------------------|---------------------|---------------------|-----------------|
-| [cerk_runtime_threading](./cerk_runtime_threading/)  | `std::thread`       | `std::sync::mpsc`   | Linux           |
+| [cerk_runtime_threading](./cerk_runtime_threading/)  | `std::thread`       | `std::sync::mpsc`   | Linux / MacOS   |
 
 ## Ports
 
@@ -58,6 +59,8 @@ The ConfigLoader is responsible for providing the newest port configurations and
 
 # Examples
 
+Check out the README in the folder of each example for more details and setup instructions.
+
 | Name                                                             | Description                        |
 |------------------------------------------------------------------|------------------------------------|
 | [Hello World](./examples/src/hello_world/)                       | Routing CloudEvents that are generated from an input port to an output port, the output port print the result to the console. |
@@ -66,9 +69,36 @@ The ConfigLoader is responsible for providing the newest port configurations and
 | [MQTT](./examples/src/sequence_to_mqtt/)                         | Routes CloudEvents that are generated from an input port to an output port, the output port publishes the events on an MQTT topic. A second router subscribes to the same topic with an MQTT port and routes them to a port which prints the event to stdout. |
 | [UNIX Socket and MQTT for armv7](./examples/src/unix_socket_and_mqtt_on_armv7/) | Routes CloudEvents that are received on an input UNIX Socket port to an output UNIX Socket port and an MQTT output port. |
 
-# Develop
+# Development Setup
 
-Different operating system setups could be fined [here](https://github.com/ce-rust/cerk/tree/master/setup).
+Different Docker-based development environments can be found [here](https://github.com/ce-rust/cerk/tree/master/setup).
+
+## Prerequisites without Docker
+
+1. latest version of [rustup](https://www.rust-lang.org/tools/install)
+2. Rust version 1.38.0: `rustup install 1.38.0`
+
+Optional Tooling:
+1. rustfmt: `rustup component add rustfmt`
+2. cargo-readme: `cargo install cargo-readme`
+
+## Run Tests
+
+```rust
+cargo test --all
+```
+
+## Format Code
+
+```rust
+cargo fmt --all
+```
+
+## Generate Documentation
+
+```rust
+cargo doc --no-deps --open
+```
 
 */
 
