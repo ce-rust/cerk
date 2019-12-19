@@ -88,19 +88,19 @@ Optional Tooling:
 
 ### Run Tests
 
-```rust
+```bash
 cargo test --all
 ```
 
 ### Format Code
 
-```rust
+```bash
 cargo fmt --all
 ```
 
 ### Generate Documentation
 
-```rust
+```bash
 cargo doc --no-deps --open
 ```
 
