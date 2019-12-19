@@ -77,6 +77,7 @@ Different Docker-based development environments can be found [here](https://gith
 
 1. latest version of [rustup](https://www.rust-lang.org/tools/install)
 2. Rust version 1.38.0: `rustup install 1.38.0`
+3. Additional C libraries depending on the platform (examples can be found in the Docker containers)
 
 Optional Tooling:
 1. rustfmt: `rustup component add rustfmt`
