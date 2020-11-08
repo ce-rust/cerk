@@ -20,4 +20,5 @@ env_logger = "0.7.1"
 cerk = { version = "0.2", path = "../cerk" }
 cloudevents-sdk = "0.3.0"
 serde_json = "1.0"
-paho-mqtt = { version = "0.6.0", features = ["bundled", "build_bindgen"], default-features = false }
+paho-mqtt = { git = "https://github.com/ce-rust/paho.mqtt.rust", branch = "feat/ack-after-processing", features=["bundled", "build_bindgen"], default-features = false}
+
