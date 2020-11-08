@@ -31,7 +31,7 @@ fn static_config_loader_start(
         ),
         (
             "subscribe_qos".to_string(),
-            Config::Vec(vec![Config::U8(0)]),
+            Config::Vec(vec![Config::U8(1)]),
         ),
     ]
     .iter()
