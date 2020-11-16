@@ -28,6 +28,12 @@ path = "src/mqtt/sequence_to_mqtt/main.rs"
 name = "amqp_to_printer"
 path = "src/amqp_to_printer/main.rs"
 [[bin]]
+name = "sequence_to_amqp_to_printer_consumer"
+path = "src/sequence_to_amqp_to_printer/amqp_to_printer/main.rs"
+[[bin]]
+name = "sequence_to_amqp_to_printer_publisher"
+path = "src/sequence_to_amqp_to_printer/sequence_to_amqp/main.rs"
+[[bin]]
 name = "unix_socket_and_mqtt_on_armv7"
 path = "src/unix_socket_and_mqtt_on_armv7/main.rs"
 [[bin]]

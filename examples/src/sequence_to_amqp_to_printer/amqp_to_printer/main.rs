@@ -34,13 +34,6 @@ fn static_config_loader_start(
                 ("bind_to_exchange".to_string(), Config::String("test".to_string()))
             ].iter().cloned().collect())]),
         ),
-        (
-            "publish_channels".to_string(),
-            Config::Vec(vec![Config::HashMap([
-                ("name".to_string(), Config::String("test".to_string())),
-                ("ensure_exchange".to_string(), Config::Bool(true)),
-            ].iter().cloned().collect())]),
-        )
     ]
         .iter()
         .cloned()

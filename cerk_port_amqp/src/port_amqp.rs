@@ -190,12 +190,9 @@ async fn send_cloud_event(id: &InternalServerId, cloud_event: &CloudEvent, confi
             Some(ref channel) => {
                 let result = publish_cloud_event(&payload, &name, channel)
                     .await;
-                if let Ok(ok_result) = result {
-                    if ok_result.is_ack() {
-                        Ok(())
-                    } else {
-                        Err("ack was not received")
-                    }
+                if let Ok(_) = result {
+                    // todo shoud we check for acks?  ok_result.is_ack()
+                    Ok(())
                 } else {
                     Err("message was not sent successful")
                 }
@@ -220,6 +217,15 @@ async fn publish_cloud_event(payload: &String, name: &String, channel: &Channel)
     Ok(confirmation)
 }
 
+/// This port publishes and/or subscribe CloudEvents to/from an AMQP broker with protocol version v0.9.1.
+///
+/// The port is implemented with [lapin](https://github.com/CleverCloud/lapin).
+///
+/// # Examples
+///
+/// * [Sequence to AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/src/sequence_to_amqp_to_printer/)
+/// * [AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/src/amqp_to_printer/)
+///
 pub fn port_amqp_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel: BoxedSender) {
     let mut connection_option: Option<Connection> = None;
     let mut configuration_option: Option<AmqpOptions> = None;
@@ -247,9 +253,13 @@ pub fn port_amqp_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
             }
             BrokerEvent::OutgoingCloudEvent(cloud_event, _) => {
                 debug!("{} CloudEvent received", &id);
-                let result = future::block_on(send_cloud_event(&id, &cloud_event, configuration_option.as_ref().unwrap()));
-                if result.is_err() {
-                    error!("{} was not able to send CloudEvent", &id);
+                if let Some(configuration) = configuration_option.as_ref() {
+                    let result = future::block_on(send_cloud_event(&id, &cloud_event, configuration));
+                    if result.is_err() {
+                        error!("{} was not able to send CloudEvent", &id);
+                    }
+                } else {
+                    error!("received CloudEvent before connection was  set up - message will not be delivered")
                 }
             }
             broker_event => warn!("event {} not implemented", broker_event),
