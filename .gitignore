@@ -11,3 +11,5 @@ Cargo.lock
 **/*.log
 .DS_Store
 .vscode
+.idea
+**/clion-log.txt
