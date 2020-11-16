@@ -31,6 +31,7 @@ fn static_config_loader_start(
             Config::Vec(vec![Config::HashMap([
                 ("name".to_string(), Config::String("test".to_string())),
                 ("ensure_queue".to_string(), Config::Bool(true)),
+                ("bind_to_exchange".to_string(), Config::String("test".to_string()))
             ].iter().cloned().collect())]),
         ),
         (

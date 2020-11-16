@@ -2,15 +2,15 @@ use cerk::kernel::{BrokerEvent, Config};
 use cerk::runtime::InternalServerId;
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use futures_lite::stream::StreamExt;
-use lapin::{options::*, publisher_confirm::Confirmation, types::FieldTable, BasicProperties, Connection, ConnectionProperties, Result, Channel, ExchangeKind, Error};
+use lapin::{options::*, publisher_confirm::Confirmation, types::FieldTable, BasicProperties, Connection, ConnectionProperties, Result, Channel, ExchangeKind};
 use std::collections::HashMap;
 use cloudevents::CloudEvent;
 use std::result::Result as stdresult;
-use lapin::protocol::channel::Open;
 use futures_lite::future;
 
 struct AmqpConsumeOptions {
     ensure_queue: bool,
+    bind_to_exchange: Option<String>,
 }
 
 struct AmqpPublishOptions {
@@ -44,7 +44,11 @@ fn build_config(id: &InternalServerId, config: &Config) -> stdresult<AmqpOptions
                             ensure_queue: match consumer.get("ensure_queue") {
                                 Some(Config::Bool(b)) => *b,
                                 _ => false,
-                            }
+                            },
+                            bind_to_exchange: match consumer.get("bind_to_exchange") {
+                                Some(Config::String(s)) => Some(s.to_string()),
+                                _ => None,
+                            },
                         };
 
                         if let Some(Config::String(name)) = consumer.get("name") {
@@ -87,7 +91,7 @@ fn build_config(id: &InternalServerId, config: &Config) -> stdresult<AmqpOptions
 }
 
 fn setup_connection(id: InternalServerId, sender_to_kernel: BoxedSender, connection: &Option<Connection>, config: Config) -> Result<(Connection, AmqpOptions)> {
-    let mut  config = match build_config(&id.clone(), &config) {
+    let mut config = match build_config(&id.clone(), &config) {
         Ok(c) => c,
         Err(e) => panic!(e),
     };
@@ -127,6 +131,15 @@ fn setup_connection(id: InternalServerId, sender_to_kernel: BoxedSender, connect
                     )
                     .await?;
                 info!("Declared queue {:?}", queue);
+
+                if let Some(exchange) = &channel_options.bind_to_exchange {
+                    channel.queue_bind(name.as_str(),
+                                       exchange.as_str(),
+                                       "",
+                                       QueueBindOptions::default(),
+                                       FieldTable::default())
+                        .await?;
+                }
             }
 
             let mut consumer = channel
@@ -227,7 +240,7 @@ pub fn port_amqp_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
                 if let Ok(as_ok) = result {
                     connection_option = Some(as_ok.0);
                     configuration_option = Some(as_ok.1);
-                }else{
+                } else {
                     connection_option = None;
                     configuration_option = None;
                 }
