@@ -29,7 +29,7 @@ The Scheduler is responsible for scheduling the internal servers with a platform
 | Name                                                 | Scheduling Strategy | Channel Strategy    | Compatible with |
 |------------------------------------------------------|---------------------|---------------------|-----------------|
 | [cerk_runtime_threading](./cerk_runtime_threading/)  | `std::thread`       | `std::sync::mpsc`   | Linux / MacOS   |
-version
+
 ### Ports
 
 The Port is responsible for exchanging CloudEvents with the outside world.

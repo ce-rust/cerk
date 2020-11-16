@@ -37,6 +37,7 @@ A Port can be instantiated multiple times with different configurations.
 | [port_input_unix_socket_json](./cerk_port_unix_socket/)  | input         | JSON             | UNIX Socket    |
 | [port_output_unix_socket_json](./cerk_port_unix_socket/) | output        | JSON             | UNIX Socket    |
 | [port_mqtt](./cerk_port_mqtt/)                           | input/output  | JSON             | MQTT           |
+| [port_amqp](./cerk_port_amqp)                            | input/output  | JSON             | AMQP           |
 | [port_sequence_generator](./cerk_port_dummies/)          | input         | -                | \<time based\> |
 | [port_printer](./cerk_port_dummies/)                     | output        | TEXT             |                |
 
@@ -67,6 +68,8 @@ Check out the README in the folder of each example for more details and setup in
 | [Rule Based Routing Example](./examples/src/rule_based_routing/) | CloudEvents that are generated from an input port are routed to an output port, but in this example only every tenth event gets routed to the output port because they are filterd by `id`. The `id` has to end with `0`, thus only 10,20,30,... are printed. |
 | [UNIX Socket](./examples/src/unix_socket/)                       | Routes CloudEvents from an input UNIX Socket port to an output UNIX Socket port |
 | [MQTT](./examples/src/sequence_to_mqtt/)                         | Routes CloudEvents that are generated from an input port to an output port, the output port publishes the events on an MQTT topic. A second router subscribes to the same topic with an MQTT port and routes them to a port which prints the event to stdout. |
+| [AMQP to Printer](./examples/src/amqp_to_printer/)               | Routes CloudEvents from a RabbitMQ exchange to a queue to CERK and finally prints them to the console. |
+| [Sequence to AMQP to Printer](./examples/src/sequence_to_amqp_to_printer/)   | The setup contains two routers. One Router generates events and routs them to a RabbitMQ exchange. Another router consumes the CloudEvents from a bound queue and prints them to the console. |
 | [UNIX Socket and MQTT for armv7](./examples/src/unix_socket_and_mqtt_on_armv7/) | Routes CloudEvents that are received on an input UNIX Socket port to an output UNIX Socket port and an MQTT output port. |
 
 # Development Setup
