@@ -25,6 +25,9 @@ path = "src/unix_socket/main.rs"
 name = "sequence_to_mqtt"
 path = "src/mqtt/sequence_to_mqtt/main.rs"
 [[bin]]
+name = "amqp_to_printer"
+path = "src/amqp_to_printer/main.rs"
+[[bin]]
 name = "unix_socket_and_mqtt_on_armv7"
 path = "src/unix_socket_and_mqtt_on_armv7/main.rs"
 [[bin]]
@@ -43,5 +46,6 @@ cerk_router_broadcast = { path = "../cerk_router_broadcast" }
 cerk_port_dummies = { path = "../cerk_port_dummies" }
 cerk_port_unix_socket = { path = "../cerk_port_unix_socket" }
 cerk_port_mqtt = { path = "../cerk_port_mqtt" }
+cerk_port_amqp = { path = "../cerk_port_amqp" }
 cerk_router_rule_based = { path = "../cerk_router_rule_based" }
 serde_json = "1.0.42"

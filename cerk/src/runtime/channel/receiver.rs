@@ -18,4 +18,4 @@ pub trait Receiver: Send {
 }
 
 /// Boxed wrapper for a platform-specific channel receiver.
-pub type BoxedReceiver = Box<dyn Receiver>;
+pub type BoxedReceiver = Box<dyn Receiver + Send>;

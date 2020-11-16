@@ -18,7 +18,7 @@ impl CerkSender for ThreadingSender {
     fn send(&self, event: BrokerEvent) {
         self.sender.send(event).unwrap();
     }
-    fn clone_boxed(&self) -> Box<dyn CerkSender> {
+    fn clone_boxed(&self) -> Box<dyn CerkSender + Send> {
         Box::new(ThreadingSender {
             sender: self.sender.clone(),
         })
