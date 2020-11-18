@@ -21,7 +21,7 @@ services:
     volumes:
       - ../../:/cerk/
     working_dir: /cerk/integration-tests/reliable-amqp/test-executor
-    command: cargo run
+    command: cargo test -- --test-threads 1 --nocapture # have side effects -> run in sequentially
     environment:
       - "AMQP_BROKER_URL=amqp://rabbitmq:5672/%2f"
     depends_on:
