@@ -32,6 +32,13 @@ steps:
       - docker-compose run rule_based_routing | tee build.log | grep --line-buffered "dummy-logger-output received cloud event with id=10" | exit 0
     timeout_in_minutes: 15
     artifact_paths: "**/build.log"
+  - label: "example: execute sequence_to_amqp_to_printer"
+    commands:
+      - cd examples/src/sequence_to_amqp_to_printer
+      - docker-compose up -d
+      - if docker logs sequence_to_amqp_to_printer_cerk-consumer_1 -f 2>&1 | grep -m5 'dummy-logger-output received cloud event'; then exit 0; else echo 1; fi;
+    timeout_in_minutes: 15
+    artifact_paths: "**/build.log"
   - label: "setup: ubuntulinux"
     commands: 
         - cd setup
