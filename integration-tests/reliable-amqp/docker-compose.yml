@@ -1,0 +1,30 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.8.9-management-alpine
+    ports:
+      - 5672:5672
+      - 15672:15672
+  cerk-amqp:
+    image: lazzaretti/docker-rust-cerk:0.3.0
+    volumes:
+      - ../../:/cerk/
+    working_dir: /cerk/integration-tests/reliable-amqp/cerk-amqp
+    command: cargo run
+    environment:
+      - "AMQP_BROKER_URL=amqp://rabbitmq:5672/%2f"
+    depends_on:
+      - rabbitmq
+    links:
+      - rabbitmq
+  test-executor:
+    image: lazzaretti/docker-rust-cerk:0.3.0
+    volumes:
+      - ../../:/cerk/
+    working_dir: /cerk/integration-tests/reliable-amqp/test-executor
+    command: cargo run
+    environment:
+      - "AMQP_BROKER_URL=amqp://rabbitmq:5672/%2f"
+    depends_on:
+      - rabbitmq
+    links:
+      - rabbitmq

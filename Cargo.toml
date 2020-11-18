@@ -9,4 +9,6 @@ members = [
     "cerk_router_rule_based",
     "cerk_runtime_threading",
     "examples",
+    "integration-tests/reliable-amqp/cerk-amqp",
+    "integration-tests/reliable-amqp/test-executor"
 ]
