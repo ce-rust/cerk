@@ -1,0 +1,30 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.8.9-management-alpine
+    ports:
+      - 5672:5672
+      - 15672:15672
+  cerk-consumer:
+    image: lazzaretti/docker-rust-cerk:0.3.0
+    volumes:
+      - ../../../:/cerk/
+    working_dir: /cerk
+    command: cargo run --bin sequence_to_amqp_to_printer_consumer
+    environment:
+      - "AMQP_BROKER_URL=amqp://rabbitmq:5672/%2f"
+    depends_on:
+      - rabbitmq
+    links:
+      - rabbitmq
+  cerk-publisher:
+    image: lazzaretti/docker-rust-cerk:0.3.0
+    volumes:
+      - ../../../:/cerk/
+    working_dir: /cerk
+    command: cargo run --bin sequence_to_amqp_to_printer_publisher
+    environment:
+      - "AMQP_BROKER_URL=amqp://rabbitmq:5672/%2f"
+    depends_on:
+      - rabbitmq
+    links:
+      - rabbitmq
