@@ -7,6 +7,9 @@ use std::collections::HashMap;
 use cloudevents::CloudEvent;
 use std::result::Result as stdresult;
 use futures_lite::future;
+use lapin::protocol::AMQPClass;
+use lapin::protocol::basic::{AMQPMethod, Return};
+
 
 struct AmqpConsumeOptions {
     ensure_queue: bool,
@@ -107,6 +110,7 @@ fn setup_connection(id: InternalServerId, sender_to_kernel: BoxedSender, connect
 
         for (name, channel_options) in config.publish_channels.iter_mut() {
             let channel = conn.create_channel().await?;
+            channel.confirm_select(ConfirmSelectOptions{nowait: false}).await?;
             if channel_options.ensure_exchange {
                 let exchange = channel.exchange_declare(
                     name.as_str(),
@@ -122,6 +126,7 @@ fn setup_connection(id: InternalServerId, sender_to_kernel: BoxedSender, connect
 
         for (name, channel_options) in config.consume_channels.iter() {
             let channel = conn.create_channel().await?;
+            channel.confirm_select(ConfirmSelectOptions{nowait: false}).await?;
             if channel_options.ensure_queue {
                 let queue = channel
                     .queue_declare(
@@ -190,9 +195,14 @@ async fn send_cloud_event(id: &InternalServerId, cloud_event: &CloudEvent, confi
             Some(ref channel) => {
                 let result = publish_cloud_event(&payload, &name, channel)
                     .await;
-                if let Ok(_) = result {
-                    // todo shoud we check for acks?  ok_result.is_ack()
-                    Ok(())
+                if let Ok(result) = result {
+                    if result.is_ack() {
+                        Ok(())
+                    }else {
+                        // todo foramt does not work -> with &'static str -> wait for refactoring to other error type
+                        // Err(format!("Message was not acknowledged: {:?}", result).as_str())
+                        Err("Message was not acknowledged")
+                    }
                 } else {
                     Err("message was not sent successful")
                 }
@@ -211,7 +221,8 @@ async fn publish_cloud_event(payload: &String, name: &String, channel: &Channel)
                                              "",
                                              BasicPublishOptions { mandatory: true, immediate: false },
                                              Vec::from(payload.as_str()),
-                                             BasicProperties::default().with_delivery_mode(2))//persistent
+                                             BasicProperties::default()
+                                                 .with_delivery_mode(2))//persistent
         .await?
         .await?;
     Ok(confirmation)
@@ -255,7 +266,9 @@ pub fn port_amqp_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
                 debug!("{} CloudEvent received", &id);
                 if let Some(configuration) = configuration_option.as_ref() {
                     let result = future::block_on(send_cloud_event(&id, &cloud_event, configuration));
-                    if result.is_err() {
+                    if result.is_ok() {
+                        info!("sent cloud event to queue");
+                    } else {
                         error!("{} was not able to send CloudEvent", &id);
                     }
                 } else {
