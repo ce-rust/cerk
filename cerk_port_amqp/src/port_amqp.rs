@@ -1,12 +1,15 @@
 use cerk::kernel::{BrokerEvent, Config};
-use cerk::runtime::InternalServerId;
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
-use futures_lite::stream::StreamExt;
-use lapin::{options::*, publisher_confirm::Confirmation, types::FieldTable, BasicProperties, Connection, ConnectionProperties, Result, Channel, ExchangeKind};
-use std::collections::HashMap;
+use cerk::runtime::InternalServerId;
 use cloudevents::CloudEvent;
-use std::result::Result as stdresult;
 use futures_lite::future;
+use futures_lite::stream::StreamExt;
+use lapin::{
+    options::*, publisher_confirm::Confirmation, types::FieldTable, BasicProperties, Channel,
+    Connection, ConnectionProperties, ExchangeKind, Result,
+};
+use std::collections::HashMap;
+use std::result::Result as stdresult;
 
 struct AmqpConsumeOptions {
     ensure_queue: bool,
@@ -52,7 +55,9 @@ fn build_config(id: &InternalServerId, config: &Config) -> stdresult<AmqpOptions
                         };
 
                         if let Some(Config::String(name)) = consumer.get("name") {
-                            options.consume_channels.insert(name.to_string(), consumer_options);
+                            options
+                                .consume_channels
+                                .insert(name.to_string(), consumer_options);
                         } else {
                             return Err("consume_channels name is not set");
                         }
@@ -74,7 +79,9 @@ fn build_config(id: &InternalServerId, config: &Config) -> stdresult<AmqpOptions
                         };
 
                         if let Some(Config::String(name)) = publisher.get("name") {
-                            options.publish_channels.insert(name.to_string(), publish_options);
+                            options
+                                .publish_channels
+                                .insert(name.to_string(), publish_options);
                         } else {
                             return Err("publish_channels name is not set");
                         }
@@ -90,7 +97,12 @@ fn build_config(id: &InternalServerId, config: &Config) -> stdresult<AmqpOptions
     }
 }
 
-fn setup_connection(id: InternalServerId, sender_to_kernel: BoxedSender, connection: &Option<Connection>, config: Config) -> Result<(Connection, AmqpOptions)> {
+fn setup_connection(
+    id: InternalServerId,
+    sender_to_kernel: BoxedSender,
+    connection: &Option<Connection>,
+    config: Config,
+) -> Result<(Connection, AmqpOptions)> {
     let mut config = match build_config(&id.clone(), &config) {
         Ok(c) => c,
         Err(e) => panic!(e),
@@ -101,7 +113,7 @@ fn setup_connection(id: InternalServerId, sender_to_kernel: BoxedSender, connect
             &config.uri,
             ConnectionProperties::default().with_default_executor(8),
         )
-            .await?;
+        .await?;
 
         info!("CONNECTED");
 
@@ -133,11 +145,14 @@ fn setup_connection(id: InternalServerId, sender_to_kernel: BoxedSender, connect
                 info!("Declared queue {:?}", queue);
 
                 if let Some(exchange) = &channel_options.bind_to_exchange {
-                    channel.queue_bind(name.as_str(),
-                                       exchange.as_str(),
-                                       "",
-                                       QueueBindOptions::default(),
-                                       FieldTable::default())
+                    channel
+                        .queue_bind(
+                            name.as_str(),
+                            exchange.as_str(),
+                            "",
+                            QueueBindOptions::default(),
+                            FieldTable::default(),
+                        )
                         .await?;
                 }
             }
@@ -157,7 +172,11 @@ fn setup_connection(id: InternalServerId, sender_to_kernel: BoxedSender, connect
                 info!("will consume");
                 while let Some(delivery) = consumer.next().await {
                     let (channel, delivery) = delivery.expect("error in consumer");
-                    debug!("{} received CloudEvent on queue {}", cloned_id, channel.id());
+                    debug!(
+                        "{} received CloudEvent on queue {}",
+                        cloned_id,
+                        channel.id()
+                    );
                     let payload_str = std::str::from_utf8(&delivery.data).unwrap();
                     match serde_json::from_str::<CloudEvent>(&payload_str) {
                         Ok(cloud_event) => {
@@ -168,7 +187,10 @@ fn setup_connection(id: InternalServerId, sender_to_kernel: BoxedSender, connect
                             ));
                         }
                         Err(err) => {
-                            error!("{} while converting string to CloudEvent: {:?}", cloned_id, err);
+                            error!(
+                                "{} while converting string to CloudEvent: {:?}",
+                                cloned_id, err
+                            );
                         }
                     };
                     channel
@@ -176,20 +198,24 @@ fn setup_connection(id: InternalServerId, sender_to_kernel: BoxedSender, connect
                         .await
                         .expect("ack");
                 }
-            }).detach();
+            })
+            .detach();
         }
 
         Ok((conn, config))
     })
 }
 
-async fn send_cloud_event(id: &InternalServerId, cloud_event: &CloudEvent, configurations: &AmqpOptions) -> stdresult<(), &'static str> {
+async fn send_cloud_event(
+    id: &InternalServerId,
+    cloud_event: &CloudEvent,
+    configurations: &AmqpOptions,
+) -> stdresult<(), &'static str> {
     let payload = serde_json::to_string(cloud_event).unwrap();
     for (name, options) in configurations.publish_channels.iter() {
         let result = match options.channel {
             Some(ref channel) => {
-                let result = publish_cloud_event(&payload, &name, channel)
-                    .await;
+                let result = publish_cloud_event(&payload, &name, channel).await;
                 if let Ok(_) = result {
                     // todo shoud we check for acks?  ok_result.is_ack()
                     Ok(())
@@ -206,12 +232,22 @@ async fn send_cloud_event(id: &InternalServerId, cloud_event: &CloudEvent, confi
     Ok(())
 }
 
-async fn publish_cloud_event(payload: &String, name: &String, channel: &Channel) -> Result<Confirmation> {
-    let confirmation = channel.basic_publish(name.as_str(),
-                                             "",
-                                             BasicPublishOptions { mandatory: true, immediate: false },
-                                             Vec::from(payload.as_str()),
-                                             BasicProperties::default().with_delivery_mode(2))//persistent
+async fn publish_cloud_event(
+    payload: &String,
+    name: &String,
+    channel: &Channel,
+) -> Result<Confirmation> {
+    let confirmation = channel
+        .basic_publish(
+            name.as_str(),
+            "",
+            BasicPublishOptions {
+                mandatory: true,
+                immediate: false,
+            },
+            Vec::from(payload.as_str()),
+            BasicProperties::default().with_delivery_mode(2),
+        ) //persistent
         .await?
         .await?;
     Ok(confirmation)
@@ -239,7 +275,12 @@ pub fn port_amqp_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
             }
             BrokerEvent::ConfigUpdated(config, _) => {
                 info!("{} received ConfigUpdated", &id);
-                let result = setup_connection(id.clone(), sender_to_kernel.clone_boxed(), &connection_option, config);
+                let result = setup_connection(
+                    id.clone(),
+                    sender_to_kernel.clone_boxed(),
+                    &connection_option,
+                    config,
+                );
                 if result.is_err() {
                     warn!("{} was not able to establish a connection", &id);
                 }
@@ -254,7 +295,8 @@ pub fn port_amqp_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
             BrokerEvent::OutgoingCloudEvent(cloud_event, _) => {
                 debug!("{} CloudEvent received", &id);
                 if let Some(configuration) = configuration_option.as_ref() {
-                    let result = future::block_on(send_cloud_event(&id, &cloud_event, configuration));
+                    let result =
+                        future::block_on(send_cloud_event(&id, &cloud_event, configuration));
                     if result.is_err() {
                         error!("{} was not able to send CloudEvent", &id);
                     }

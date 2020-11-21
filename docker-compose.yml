@@ -6,7 +6,12 @@ services:
     volumes:
       - .:/cerk/
     working_dir: /cerk
-    command: cargo test --all
+    command: >
+      /bin/bash -c "
+      cargo test --all
+      && rustup component add rustfmt
+      && cargo fmt -- --check
+      "
   doc:
     image: lazzaretti/docker-rust-cerk:0.3.0
     volumes:
