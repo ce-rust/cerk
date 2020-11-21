@@ -43,22 +43,13 @@ fn static_config_loader_start(
         (
             PORT_UNIX_OUTPUT.to_string(),
             RoutingRules::Or(vec![
-                RoutingRules::Exact(
-                    CloudEventFields::Type,
-                    Some("event.demo.A".to_string()),
-                ),
-                RoutingRules::Exact(
-                    CloudEventFields::Type,
-                    Some("event.demo.B".to_string()),
-                ),
+                RoutingRules::Exact(CloudEventFields::Type, Some("event.demo.A".to_string())),
+                RoutingRules::Exact(CloudEventFields::Type, Some("event.demo.B".to_string())),
             ]),
         ),
         (
             PORT_MQTT_OUTPUT.to_string(),
-            RoutingRules::Exact(
-                CloudEventFields::Type,
-                Some("event.demo.A".to_string()),
-            ),
+            RoutingRules::Exact(CloudEventFields::Type, Some("event.demo.A".to_string())),
         ),
     ]
     .iter()

@@ -6,8 +6,8 @@ use env_logger::Env;
 use cerk::kernel::{bootstrap, BrokerEvent, Config, StartOptions};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
-use cerk_port_dummies::port_printer_start;
 use cerk_port_amqp::port_amqp_start;
+use cerk_port_dummies::port_printer_start;
 use cerk_router_broadcast::router_start;
 use cerk_runtime_threading::threading_scheduler_start;
 use std::collections::HashMap;
@@ -28,16 +28,24 @@ fn static_config_loader_start(
         ("uri".to_string(), Config::String(amqp_broker_uri)),
         (
             "consume_channels".to_string(),
-            Config::Vec(vec![Config::HashMap([
-                ("name".to_string(), Config::String("test".to_string())),
-                ("ensure_queue".to_string(), Config::Bool(true)),
-                ("bind_to_exchange".to_string(), Config::String("test".to_string()))
-            ].iter().cloned().collect())]),
+            Config::Vec(vec![Config::HashMap(
+                [
+                    ("name".to_string(), Config::String("test".to_string())),
+                    ("ensure_queue".to_string(), Config::Bool(true)),
+                    (
+                        "bind_to_exchange".to_string(),
+                        Config::String("test".to_string()),
+                    ),
+                ]
+                .iter()
+                .cloned()
+                .collect(),
+            )]),
         ),
     ]
-        .iter()
-        .cloned()
-        .collect();
+    .iter()
+    .cloned()
+    .collect();
 
     loop {
         match inbox.receive() {
