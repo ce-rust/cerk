@@ -19,3 +19,4 @@ edition = "2018"
 log = "0.4.0"
 cloudevents = { git = "https://github.com/ce-rust/rust-cloudevents/", branch = "feat/cloudevents-v1-refactored" }
 strum_macros = "0.19.4"
+anyhow = "1.0"

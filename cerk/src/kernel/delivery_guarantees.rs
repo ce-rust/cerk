@@ -1,5 +1,6 @@
 use super::Config;
 use std::convert::TryFrom;
+use anyhow::Error;
 
 /// Message delivery guarantees for the routing (defined per port channel)
 #[repr(u8)]
@@ -28,23 +29,23 @@ impl Default for DeliveryGuarantee {
 }
 
 impl TryFrom<Config> for DeliveryGuarantee {
-    type Error = &'static str;
+    type Error = anyhow::Error;
     fn try_from(value: Config) -> Result<Self, Self::Error> {
         DeliveryGuarantee::try_from(&value)
     }
 }
 
 impl TryFrom<&Config> for DeliveryGuarantee {
-    type Error = &'static str;
+    type Error = anyhow::Error;
     fn try_from(value: &Config) -> Result<Self, Self::Error> {
         if let Config::U8(number) = value {
             match number {
                 0 => Ok(DeliveryGuarantee::Unspecified),
                 2 => Ok(DeliveryGuarantee::AtLeastOnce),
-                _ => Err("number out of range"),
+                _ => bail!("number out of range"),
             }
         } else {
-            Err("Config not of type Config::U8")
+            bail!("Config not of type Config::U8")
         }
     }
 }
