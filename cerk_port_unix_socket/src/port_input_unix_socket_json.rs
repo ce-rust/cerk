@@ -1,4 +1,4 @@
-use cerk::kernel::{BrokerEvent, Config};
+use cerk::kernel::{BrokerEvent, Config, CloudEventRoutingArgs};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
 use cloudevents::CloudEvent;
@@ -42,7 +42,7 @@ fn liten_to_stream(
                             Ok(cloud_event) => {
                                 debug!("{} deserialized event successfully", id);
                                 sender_to_kernel
-                                    .send(BrokerEvent::IncommingCloudEvent(id.clone(), cloud_event))
+                                    .send(BrokerEvent::IncomingCloudEvent(id.clone(), cloud_event, CloudEventRoutingArgs::default()))
                             }
                             Err(err) => {
                                 error!("{} while converting string to CloudEvent: {:?}", id, err);

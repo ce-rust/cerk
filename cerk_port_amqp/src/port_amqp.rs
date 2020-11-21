@@ -1,4 +1,4 @@
-use cerk::kernel::{BrokerEvent, Config};
+use cerk::kernel::{BrokerEvent, Config, DeliveryGuarantee, CloudEventRoutingArgs, ProcessingResult};
 use cerk::runtime::InternalServerId;
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use futures_lite::stream::StreamExt;
@@ -9,22 +9,33 @@ use std::result::Result as stdresult;
 use futures_lite::future;
 use lapin::protocol::AMQPClass;
 use lapin::protocol::basic::{AMQPMethod, Return};
+use std::convert::TryFrom;
+use amq_protocol_types::LongLongUInt;
 
 
 struct AmqpConsumeOptions {
     ensure_queue: bool,
     bind_to_exchange: Option<String>,
+    delivery_guarantee: DeliveryGuarantee,
 }
 
 struct AmqpPublishOptions {
     channel: Option<Channel>,
     ensure_exchange: bool,
+    delivery_guarantee: DeliveryGuarantee,
 }
 
 struct AmqpOptions {
     uri: String,
     consume_channels: HashMap<String, AmqpConsumeOptions>,
     publish_channels: HashMap<String, AmqpPublishOptions>,
+}
+
+fn try_get_delivery_option(config: &HashMap<String, Config>) -> stdresult<DeliveryGuarantee, &'static str> {
+    Ok(match config.get("delivery_guarantee") {
+        Some(config) => DeliveryGuarantee::try_from(config)?,
+        _ => DeliveryGuarantee::Unspecified,
+    })
 }
 
 fn build_config(id: &InternalServerId, config: &Config) -> stdresult<AmqpOptions, &'static str> {
@@ -52,6 +63,7 @@ fn build_config(id: &InternalServerId, config: &Config) -> stdresult<AmqpOptions
                                 Some(Config::String(s)) => Some(s.to_string()),
                                 _ => None,
                             },
+                            delivery_guarantee: try_get_delivery_option(consumer)?,
                         };
 
                         if let Some(Config::String(name)) = consumer.get("name") {
@@ -73,6 +85,7 @@ fn build_config(id: &InternalServerId, config: &Config) -> stdresult<AmqpOptions
                                 Some(Config::Bool(b)) => *b,
                                 _ => false,
                             },
+                            delivery_guarantee: try_get_delivery_option(publisher)?,
                             channel: None,
                         };
 
@@ -110,7 +123,9 @@ fn setup_connection(id: InternalServerId, sender_to_kernel: BoxedSender, connect
 
         for (name, channel_options) in config.publish_channels.iter_mut() {
             let channel = conn.create_channel().await?;
-            channel.confirm_select(ConfirmSelectOptions{nowait: false}).await?;
+            if channel_options.delivery_guarantee.requires_acknowledgment() {
+                channel.confirm_select(ConfirmSelectOptions { nowait: false }).await?;
+            }
             if channel_options.ensure_exchange {
                 let exchange = channel.exchange_declare(
                     name.as_str(),
@@ -126,7 +141,9 @@ fn setup_connection(id: InternalServerId, sender_to_kernel: BoxedSender, connect
 
         for (name, channel_options) in config.consume_channels.iter() {
             let channel = conn.create_channel().await?;
-            channel.confirm_select(ConfirmSelectOptions{nowait: false}).await?;
+            if channel_options.delivery_guarantee.requires_acknowledgment() {
+                channel.confirm_select(ConfirmSelectOptions { nowait: false }).await?;
+            }
             if channel_options.ensure_queue {
                 let queue = channel
                     .queue_declare(
@@ -158,6 +175,7 @@ fn setup_connection(id: InternalServerId, sender_to_kernel: BoxedSender, connect
 
             let cloned_sender = sender_to_kernel.clone_boxed();
             let cloned_id = id.clone();
+            let cloned_delivery_guarantee = channel_options.delivery_guarantee.clone();
             async_global_executor::spawn(async move {
                 info!("will consume");
                 while let Some(delivery) = consumer.next().await {
@@ -167,9 +185,11 @@ fn setup_connection(id: InternalServerId, sender_to_kernel: BoxedSender, connect
                     match serde_json::from_str::<CloudEvent>(&payload_str) {
                         Ok(cloud_event) => {
                             debug!("{} deserialized event successfully", cloned_id);
-                            cloned_sender.send(BrokerEvent::IncommingCloudEvent(
+                            cloned_sender.send(BrokerEvent::IncomingCloudEvent(
                                 cloned_id.clone(),
+                                get_event_id(&cloud_event, &delivery.delivery_tag),
                                 cloud_event,
+                                CloudEventRoutingArgs { delivery_guarantee: cloned_delivery_guarantee.clone() },
                             ));
                         }
                         Err(err) => {
@@ -188,7 +208,14 @@ fn setup_connection(id: InternalServerId, sender_to_kernel: BoxedSender, connect
     })
 }
 
-async fn send_cloud_event(id: &InternalServerId, cloud_event: &CloudEvent, configurations: &AmqpOptions) -> stdresult<(), &'static str> {
+fn get_event_id(cloud_event: &CloudEvent, delivery_tag: &LongLongUInt) -> String {
+    match cloud_event {
+        CloudEvent::V0_2(event) => format!("{}--{}", event.event_id(), delivery_tag),
+        CloudEvent::V1_0(event) => format!("{}--{}", event.event_id(), delivery_tag),
+    }
+}
+
+async fn send_cloud_event(cloud_event: &CloudEvent, configurations: &AmqpOptions) -> stdresult<(), &'static str> {
     let payload = serde_json::to_string(cloud_event).unwrap();
     for (name, options) in configurations.publish_channels.iter() {
         let result = match options.channel {
@@ -196,12 +223,12 @@ async fn send_cloud_event(id: &InternalServerId, cloud_event: &CloudEvent, confi
                 let result = publish_cloud_event(&payload, &name, channel)
                     .await;
                 if let Ok(result) = result {
-                    if result.is_ack() {
+                    if !options.delivery_guarantee.requires_acknowledgment() || result.is_ack() {
                         Ok(())
-                    }else {
+                    } else {
                         // todo foramt does not work -> with &'static str -> wait for refactoring to other error type
                         // Err(format!("Message was not acknowledged: {:?}", result).as_str())
-                        Err("Message was not acknowledged")
+                        Err("Message was not acknowledged, but channel delivery_guarantee requires it")
                     }
                 } else {
                     Err("message was not sent successful")
@@ -262,14 +289,24 @@ pub fn port_amqp_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
                     configuration_option = None;
                 }
             }
-            BrokerEvent::OutgoingCloudEvent(cloud_event, _) => {
+            BrokerEvent::OutgoingCloudEvent(event_id, cloud_event, _, args) => {
                 debug!("{} CloudEvent received", &id);
                 if let Some(configuration) = configuration_option.as_ref() {
-                    let result = future::block_on(send_cloud_event(&id, &cloud_event, configuration));
-                    if result.is_ok() {
+                    let result = future::block_on(send_cloud_event(&cloud_event, configuration));
+                    let result = if result.is_ok() {
                         info!("sent cloud event to queue");
+                        ProcessingResult::Successful
                     } else {
                         error!("{} was not able to send CloudEvent", &id);
+                        // todo transient or permanent?
+                        ProcessingResult::TransientError
+                    };
+                    if args.delivery_guarantee.requires_acknowledgment() {
+                        sender_to_kernel.send(BrokerEvent::OutgoingCloudEventProcessed(
+                            id.clone(),
+                            event_id,
+                            result,
+                        ));
                     }
                 } else {
                     error!("received CloudEvent before connection was  set up - message will not be delivered")

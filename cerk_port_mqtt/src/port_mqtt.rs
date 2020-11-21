@@ -1,4 +1,4 @@
-use cerk::kernel::{BrokerEvent, Config};
+use cerk::kernel::{BrokerEvent, Config, CloudEventRoutingArgs};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
 use cloudevents::CloudEvent;
@@ -136,9 +136,10 @@ fn setup_connection(
             match serde_json::from_str::<CloudEvent>(&payload_str) {
                 Ok(cloud_event) => {
                     debug!("{} deserialized event successfully", rc_id);
-                    rc_send.send(BrokerEvent::IncommingCloudEvent(
+                    rc_send.send(BrokerEvent::IncomingCloudEvent(
                         (*rc_id).clone(),
                         cloud_event,
+                        CloudEventRoutingArgs::default(), // todo correct args
                     ))
                 }
                 Err(err) => {

@@ -1,4 +1,4 @@
-use cerk::kernel::BrokerEvent;
+use cerk::kernel::{BrokerEvent, CloudEventRoutingArgs};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
 use cloudevents::Data;
@@ -18,7 +18,7 @@ fn generate_events(id: InternalServerId, sender_to_kernel: BoxedSender) {
         )
         .unwrap();
 
-        sender_to_kernel.send(BrokerEvent::IncommingCloudEvent(id.clone(), cloudevent));
+        sender_to_kernel.send(BrokerEvent::IncomingCloudEvent(id.clone(), cloudevent, CloudEventRoutingArgs::default() ));
         thread::sleep(time::Duration::from_secs(1));
     }
 }

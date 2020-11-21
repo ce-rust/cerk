@@ -11,9 +11,32 @@ pub enum DeliveryGuarantee {
     AtLeastOnce = 2,
 }
 
+impl DeliveryGuarantee {
+    /// Does the selected delivery guarantee requires an acknowledgment?
+    pub fn requires_acknowledgment(&self) -> bool {
+        match self {
+            DeliveryGuarantee::Unspecified => false,
+            _ => true,
+        }
+    }
+}
+
+impl Default for DeliveryGuarantee {
+    fn default() -> Self {
+        DeliveryGuarantee::Unspecified
+    }
+}
+
 impl TryFrom<Config> for DeliveryGuarantee {
     type Error = &'static str;
     fn try_from(value: Config) -> Result<Self, Self::Error> {
+        DeliveryGuarantee::try_from(&value)
+    }
+}
+
+impl TryFrom<&Config> for DeliveryGuarantee {
+    type Error = &'static str;
+    fn try_from(value: &Config) -> Result<Self, Self::Error> {
         if let Config::U8(number) = value {
             match number {
                 0 => Ok(DeliveryGuarantee::Unspecified),
@@ -21,7 +44,7 @@ impl TryFrom<Config> for DeliveryGuarantee {
                 _ => Err("number out of range"),
             }
         } else {
-            Err("Config not of type U8")
+            Err("Config not of type Config::U8")
         }
     }
 }
