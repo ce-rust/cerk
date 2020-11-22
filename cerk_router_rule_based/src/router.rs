@@ -54,8 +54,8 @@ fn route_event(
 ) {
     let routing: Vec<_> = port_config
         .iter()
-        .filter(|(port_id, rules)| route_to_port(rules, cloud_event))
-        .map(|(port_id, rules)| {
+        .filter(|(_, rules)| route_to_port(rules, cloud_event))
+        .map(|(port_id, _)| {
             BrokerEvent::OutgoingCloudEvent(
                 event_id.clone(),
                 cloud_event.clone(),

@@ -1,5 +1,4 @@
 use super::Config;
-use anyhow::Error;
 use std::convert::TryFrom;
 
 /// Message delivery guarantees for the routing (defined per port channel)

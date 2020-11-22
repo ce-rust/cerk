@@ -7,7 +7,7 @@ use cerk::kernel::{bootstrap, BrokerEvent, Config, StartOptions};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
 use cerk_port_amqp::port_amqp_start;
-use cerk_port_dummies::{port_printer_start, port_sequence_generator_start};
+use cerk_port_dummies::port_sequence_generator_start;
 use cerk_router_broadcast::router_start;
 use cerk_runtime_threading::threading_scheduler_start;
 use std::collections::HashMap;

@@ -1,7 +1,6 @@
 use super::Config;
 use crate::kernel::outgoing_processing_result::ProcessingResult;
 use crate::kernel::CloudEventRoutingArgs;
-use crate::kernel::DeliveryGuarantee;
 use crate::runtime::channel::BoxedSender;
 use crate::runtime::{InternalServerFn, InternalServerId};
 use cloudevents::CloudEvent;

@@ -1,5 +1,3 @@
-use std::fmt;
-use std::fmt::Formatter;
 use strum_macros::Display;
 
 /// result of the processing of the send attempt

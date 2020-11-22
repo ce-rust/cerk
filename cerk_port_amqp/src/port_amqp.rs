@@ -1,6 +1,6 @@
 use amq_protocol_types::LongLongUInt;
-use amq_protocol_types::{AMQPValue, ShortString};
-use anyhow::{Context, Error, Result};
+use amq_protocol_types::ShortString;
+use anyhow::{Context, Result};
 use cerk::kernel::{
     BrokerEvent, CloudEventMessageRoutingId, CloudEventRoutingArgs, Config, DeliveryGuarantee,
     ProcessingResult,
@@ -9,7 +9,7 @@ use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
 use cloudevents::CloudEvent;
 use futures_lite::stream::StreamExt;
-use futures_lite::{future, FutureExt};
+use futures_lite::future;
 use lapin::message::Delivery;
 use lapin::{
     options::*, publisher_confirm::Confirmation, types::FieldTable, BasicProperties, Channel,
@@ -53,7 +53,7 @@ fn try_get_delivery_option(config: &HashMap<String, Config>) -> Result<DeliveryG
     })
 }
 
-fn build_config(id: &InternalServerId, config: &Config) -> Result<AmqpOptions> {
+fn build_config(config: &Config) -> Result<AmqpOptions> {
     match config {
         Config::HashMap(config_map) => {
             let mut options = if let Some(Config::String(uri)) = config_map.get("uri") {
@@ -129,11 +129,11 @@ fn build_config(id: &InternalServerId, config: &Config) -> Result<AmqpOptions> {
 fn setup_connection(
     id: InternalServerId,
     sender_to_kernel: BoxedSender,
-    connection: &Option<Connection>,
+    _connection: &Option<Connection>, // todo reuse connection, if there is already one
     config: Config,
     pending_deliveries: Arc<Mutex<HashMap<String, PendingDelivery>>>,
 ) -> Result<(Connection, AmqpOptions)> {
-    let mut config = match build_config(&id.clone(), &config) {
+    let mut config = match build_config(&config) {
         Ok(c) => c,
         Err(e) => panic!(e),
     };
@@ -215,14 +215,16 @@ fn setup_connection(
             async_global_executor::spawn(async move {
                 info!("will consume");
                 while let Some(delivery) = consumer.next().await {
-                    receive_message(
+                    if let Err(e) = receive_message(
                         &cloned_name,
                         &cloned_sender,
                         &cloned_id,
                         weak_clone.clone(),
                         &delivery,
                         &cloned_delivery_guarantee,
-                    );
+                    ){
+                        warn!("{} error while receive_message: {:?}", &cloned_id, e)
+                    }
                 }
             })
             .detach();
@@ -412,7 +414,7 @@ async fn ack_nack_pending_event(
 pub fn port_amqp_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel: BoxedSender) {
     let mut connection_option: Option<Connection> = None;
     let mut configuration_option: Option<AmqpOptions> = None;
-    let mut pending_deliveries: PendingDeliveries = HashMap::new();
+    let pending_deliveries: PendingDeliveries = HashMap::new();
     let arc_pending_deliveries: Arc<Mutex<HashMap<String, PendingDelivery>>> =
         Arc::new(Mutex::new(pending_deliveries));
 
