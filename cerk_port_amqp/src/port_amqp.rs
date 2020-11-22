@@ -1,6 +1,9 @@
-use amq_protocol_types::LongLongUInt;
+use crate::lapin_helper::{assert_queue, assert_exchange};
+use amq_protocol_types::LongString;
 use amq_protocol_types::ShortString;
+use amq_protocol_types::{AMQPValue, LongLongUInt};
 use anyhow::{Context, Result};
+use async_std::future::timeout;
 use cerk::kernel::{
     BrokerEvent, CloudEventMessageRoutingId, CloudEventRoutingArgs, Config, DeliveryGuarantee,
     ProcessingResult,
@@ -8,8 +11,8 @@ use cerk::kernel::{
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
 use cloudevents::CloudEvent;
-use futures_lite::stream::StreamExt;
 use futures_lite::future;
+use futures_lite::stream::StreamExt;
 use lapin::message::Delivery;
 use lapin::{
     options::*, publisher_confirm::Confirmation, types::FieldTable, BasicProperties, Channel,
@@ -19,6 +22,7 @@ use std::borrow::BorrowMut;
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 struct PendingDelivery {
     consume_channel_id: String,
@@ -30,6 +34,7 @@ type PendingDeliveries = HashMap<CloudEventMessageRoutingId, PendingDelivery>;
 struct AmqpConsumeOptions {
     channel: Option<Channel>,
     ensure_queue: bool,
+    ensure_dlx: bool,
     bind_to_exchange: Option<String>,
     delivery_guarantee: DeliveryGuarantee,
 }
@@ -69,11 +74,13 @@ fn build_config(config: &Config) -> Result<AmqpOptions> {
             if let Some(Config::Vec(ref consumers)) = config_map.get("consume_channels") {
                 for consumer_config in consumers.iter() {
                     if let Config::HashMap(consumer) = consumer_config {
+                        let ensure_queue = match consumer.get("ensure_queue") {
+                            Some(Config::Bool(b)) => *b,
+                            _ => false,
+                        };
                         let consumer_options = AmqpConsumeOptions {
-                            ensure_queue: match consumer.get("ensure_queue") {
-                                Some(Config::Bool(b)) => *b,
-                                _ => false,
-                            },
+                            ensure_queue,
+                            ensure_dlx: ensure_queue,
                             bind_to_exchange: match consumer.get("bind_to_exchange") {
                                 Some(Config::String(s)) => Some(s.to_string()),
                                 _ => None,
@@ -139,99 +146,204 @@ fn setup_connection(
     };
 
     async_global_executor::block_on(async {
-        let conn = Connection::connect(
-            &config.uri,
-            ConnectionProperties::default().with_default_executor(8),
+        let setup =
+            setup_connection_async(&id, &sender_to_kernel, &pending_deliveries, &mut config);
+        let result = timeout(Duration::from_secs(1), setup)
+            .await
+            .map_err(|_| anyhow!("setup_connection timed out"))??;
+        Ok((result, config))
+    })
+}
+
+async fn setup_connection_async(
+    id: &String,
+    sender_to_kernel: &BoxedSender,
+    pending_deliveries: &Arc<Mutex<HashMap<String, PendingDelivery>>>,
+    config: &mut AmqpOptions,
+) -> Result<Connection> {
+    let connection = Connection::connect(
+        &config.uri,
+        ConnectionProperties::default().with_default_executor(8),
+    )
+    .await?;
+
+    info!("CONNECTED");
+
+    for (name, channel_options) in config.publish_channels.iter_mut() {
+        let channel = setup_publish_channel(&connection, &name, channel_options)
+            .await
+            .with_context(|| format!("failed to setup publish channel {}", &name))?;
+
+        channel_options.channel = Some(channel);
+    }
+
+    for (name, channel_options) in config.consume_channels.iter_mut() {
+        let channel = setup_consume_channel(
+            &connection,
+            id,
+            sender_to_kernel,
+            pending_deliveries,
+            &connection,
+            name,
+            channel_options,
         )
-        .await?;
+        .await
+        .with_context(|| format!("failed to setup consume channel {}", &name))?;
+        channel_options.channel = Some(channel);
+    }
+    Ok(connection)
+}
 
-        info!("CONNECTED");
-
-        for (name, channel_options) in config.publish_channels.iter_mut() {
-            let channel = conn.create_channel().await?;
-            if channel_options.delivery_guarantee.requires_acknowledgment() {
-                channel
-                    .confirm_select(ConfirmSelectOptions { nowait: false })
-                    .await?;
-            }
-            if channel_options.ensure_exchange {
-                let exchange = channel.exchange_declare(
-                    name.as_str(),
-                    ExchangeKind::Fanout,
-                    ExchangeDeclareOptions::default(),
-                    FieldTable::default(),
-                );
-                info!("Declared exchange {:?}", exchange);
-            }
-
-            channel_options.channel = Some(channel);
+async fn setup_consume_channel(
+    connection: &Connection,
+    id: &String,
+    sender_to_kernel: &BoxedSender,
+    pending_deliveries: &Arc<Mutex<HashMap<String, PendingDelivery>>>,
+    conn: &Connection,
+    name: &String,
+    channel_options: &mut AmqpConsumeOptions,
+) -> Result<Channel> {
+    let mut channel = conn.create_channel().await?;
+    if channel_options.delivery_guarantee.requires_acknowledgment() {
+        channel
+            .confirm_select(ConfirmSelectOptions { nowait: false })
+            .await?;
+    }
+    if channel_options.ensure_queue {
+        let mut queue_args = FieldTable::default();
+        if channel_options.ensure_dlx {
+            let dlx = setup_dlx(conn, &name, &mut channel)
+                .await
+                .context("failed to setup dlx")?;
+            queue_args.insert(
+                ShortString::from("x-dead-letter-exchange"),
+                AMQPValue::LongString(LongString::from(dlx)),
+            );
         }
 
-        for (name, channel_options) in config.consume_channels.iter_mut() {
-            let channel = conn.create_channel().await?;
-            if channel_options.delivery_guarantee.requires_acknowledgment() {
-                channel
-                    .confirm_select(ConfirmSelectOptions { nowait: false })
-                    .await?;
-            }
-            if channel_options.ensure_queue {
-                let queue = channel
-                    .queue_declare(
-                        name.as_str(),
-                        QueueDeclareOptions::default(),
-                        FieldTable::default(),
-                    )
-                    .await?;
-                info!("Declared queue {:?}", queue);
+        let mut queue_options = QueueDeclareOptions::default();
+        queue_options.durable = true;
+        let queue = assert_queue(
+            connection,
+            &mut channel,
+            name.as_str(),
+            queue_options,
+            queue_args,
+        )
+        .await?;
+        info!("Declared queue {:?}", queue);
 
-                if let Some(exchange) = &channel_options.bind_to_exchange {
-                    channel
-                        .queue_bind(
-                            name.as_str(),
-                            exchange.as_str(),
-                            "",
-                            QueueBindOptions::default(),
-                            FieldTable::default(),
-                        )
-                        .await?;
-                }
-            }
-
-            let mut consumer = channel
-                .basic_consume(
+        if let Some(exchange) = &channel_options.bind_to_exchange {
+            channel
+                .queue_bind(
                     name.as_str(),
-                    format!("cerk-{}", id.clone()).as_str(),
-                    BasicConsumeOptions::default(),
+                    exchange.as_str(),
+                    "",
+                    QueueBindOptions::default(),
                     FieldTable::default(),
                 )
                 .await?;
-            channel_options.channel = Some(channel);
-
-            let cloned_sender = sender_to_kernel.clone_boxed();
-            let cloned_id = id.clone();
-            let cloned_delivery_guarantee = channel_options.delivery_guarantee.clone();
-            let cloned_name = name.clone();
-            let weak_clone = pending_deliveries.clone();
-            async_global_executor::spawn(async move {
-                info!("will consume");
-                while let Some(delivery) = consumer.next().await {
-                    if let Err(e) = receive_message(
-                        &cloned_name,
-                        &cloned_sender,
-                        &cloned_id,
-                        weak_clone.clone(),
-                        &delivery,
-                        &cloned_delivery_guarantee,
-                    ){
-                        warn!("{} error while receive_message: {:?}", &cloned_id, e)
-                    }
-                }
-            })
-            .detach();
         }
+    }
 
-        Ok((conn, config))
+    let mut consumer = channel
+        .basic_consume(
+            name.as_str(),
+            format!("cerk-{}", id.clone()).as_str(),
+            BasicConsumeOptions::default(),
+            FieldTable::default(),
+        )
+        .await?;
+
+    let cloned_sender = sender_to_kernel.clone_boxed();
+    let cloned_id = id.clone();
+    let cloned_delivery_guarantee = channel_options.delivery_guarantee.clone();
+    let cloned_name = name.clone();
+    let weak_clone = pending_deliveries.clone();
+    async_global_executor::spawn(async move {
+        info!("will consume");
+        while let Some(delivery) = consumer.next().await {
+            if let Err(e) = receive_message(
+                &cloned_name,
+                &cloned_sender,
+                &cloned_id,
+                weak_clone.clone(),
+                &delivery,
+                &cloned_delivery_guarantee,
+            ) {
+                warn!("{} error while receive_message: {:?}", &cloned_id, e)
+            }
+        }
     })
+    .detach();
+
+    Ok(channel)
+}
+
+async fn setup_dlx(
+    connection: &Connection,
+    name: &&String,
+    channel: &mut Channel,
+) -> Result<String> {
+    let dlx_name = format!("{}-dlx", &name);
+    let mut exchange_options = ExchangeDeclareOptions::default();
+    exchange_options.durable =  true;
+    let mut queue_options = QueueDeclareOptions::default();
+    queue_options.durable = true;
+
+    assert_exchange(
+        connection,
+            channel,
+            dlx_name.as_str(),
+            ExchangeKind::Fanout,
+            exchange_options,
+            FieldTable::default(),
+        )
+        .await?;
+    assert_queue(
+        connection,
+        channel,
+        dlx_name.as_str(),
+        queue_options,
+        FieldTable::default(),
+    )
+    .await?;
+    channel
+        .queue_bind(
+            dlx_name.as_str(),
+            dlx_name.as_str(),
+            "",
+            QueueBindOptions::default(),
+            FieldTable::default(),
+        )
+        .await?;
+    Ok(dlx_name)
+}
+
+async fn setup_publish_channel(
+    conn: &Connection,
+    name: &&String,
+    channel_options: &mut AmqpPublishOptions,
+) -> Result<Channel> {
+    let mut channel = conn.create_channel().await?;
+    if channel_options.delivery_guarantee.requires_acknowledgment() {
+        channel
+            .confirm_select(ConfirmSelectOptions { nowait: false })
+            .await?;
+    }
+    if channel_options.ensure_exchange {
+        assert_exchange(
+            conn,
+                &mut channel,
+                name.as_str(),
+                ExchangeKind::Fanout,
+                ExchangeDeclareOptions::default(),
+                FieldTable::default(),
+            )
+            .await?;
+        info!("Declared exchange {}", &name);
+    }
+    Ok(channel)
 }
 
 fn receive_message(
@@ -249,7 +361,10 @@ fn receive_message(
         Ok(cloud_event) => {
             debug!("{} deserialized event successfully", id);
             let event_id = get_event_id(&cloud_event, &delivery.delivery_tag);
-            info!("size: {}", pending_deliveries.clone().lock().unwrap().len());
+            info!(
+                "pending_deliveries size: {}",
+                pending_deliveries.clone().lock().unwrap().len()
+            );
             if pending_deliveries
                 .clone()
                 .lock()
@@ -432,15 +547,16 @@ pub fn port_amqp_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
                     config,
                     arc_pending_deliveries.clone(),
                 );
-                if result.is_err() {
-                    warn!("{} was not able to establish a connection", &id);
-                }
-                if let Ok(as_ok) = result {
-                    connection_option = Some(as_ok.0);
-                    configuration_option = Some(as_ok.1);
-                } else {
-                    connection_option = None;
-                    configuration_option = None;
+                match result {
+                    Ok(as_ok) => {
+                        connection_option = Some(as_ok.0);
+                        configuration_option = Some(as_ok.1);
+                    }
+                    Err(e) => {
+                        warn!("{} was not able to establish a connection: {:?}", &id, e);
+                        connection_option = None;
+                        configuration_option = None;
+                    }
                 }
             }
             BrokerEvent::OutgoingCloudEvent(event_id, cloud_event, _, args) => {
@@ -455,7 +571,7 @@ pub fn port_amqp_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
                         Err(e) => {
                             error!("{} was not able to send CloudEvent {}", &id, e);
                             // todo transient or permanent?
-                            ProcessingResult::TransientError
+                            ProcessingResult::PermanentError
                         }
                     };
                     if args.delivery_guarantee.requires_acknowledgment() {
