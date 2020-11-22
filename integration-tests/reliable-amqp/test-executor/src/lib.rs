@@ -15,8 +15,9 @@ use lapin::{
 use std::env;
 use std::{thread, time};
 
-const TEST_QUEUE: &'static str = "test_queue_router_output";
+const ROUTER_OUTPUT_QUEUE: &'static str = "test_queue_router_output";
 const ROUTER_INPUT_QUEUE: &'static str = "router_input";
+const ROUTER_INPUT_DLX_QUEUE: &'static str = "router_input-dlx";
 const ROUTER_OUTPUT_EXCHANGE: &'static str = "router_output";
 
 async fn connect() -> LapinResult<Connection> {
@@ -55,7 +56,7 @@ async fn create_test_and_bind_queue(
     assert_queue(
         connection,
         &mut channel,
-        TEST_QUEUE,
+        ROUTER_OUTPUT_QUEUE,
         QueueDeclareOptions {
             nowait: false,
             auto_delete: false,
@@ -66,12 +67,12 @@ async fn create_test_and_bind_queue(
         test_queue_options.clone(),
     )
     .await
-    .with_context(|| format!("was not able to create {} queue", TEST_QUEUE))?;
+    .with_context(|| format!("was not able to create {} queue", ROUTER_OUTPUT_QUEUE))?;
     info!("test queue created");
 
     channel
         .queue_bind(
-            TEST_QUEUE,
+            ROUTER_OUTPUT_QUEUE,
             ROUTER_OUTPUT_EXCHANGE,
             "",
             QueueBindOptions::default(),
@@ -98,31 +99,28 @@ async fn set_up(test_queue_options: &FieldTable) -> Result<Channel> {
 
     let channel = open_channel(&connection).await?;
 
-    channel
-        .queue_purge(TEST_QUEUE, QueuePurgeOptions::default())
-        .await?;
-    channel
-        .queue_purge(ROUTER_INPUT_QUEUE, QueuePurgeOptions::default())
-        .await?;
+    for queue in vec![
+        ROUTER_INPUT_QUEUE,
+        ROUTER_INPUT_DLX_QUEUE,
+        ROUTER_OUTPUT_QUEUE,
+    ] {
+        channel
+            .queue_purge(queue, QueuePurgeOptions::default())
+            .await?;
+        let count_before = has_message_on_output(&channel, queue).await?;
+        assert_eq!(
+            count_before, 0,
+            "should not have any message after prune {}",
+            queue
+        );
+    }
 
-    let count_before = has_message_on_output(&channel, TEST_QUEUE).await?;
-    assert_eq!(
-        count_before, 0,
-        "should not have any message after prune {}",
-        TEST_QUEUE
-    );
-    let count_before = has_message_on_output(&channel, ROUTER_INPUT_QUEUE).await?;
-    assert_eq!(
-        count_before, 0,
-        "should not have any message after prune on {}",
-        ROUTER_INPUT_QUEUE
-    );
     Ok(channel)
 }
 
 struct AssertQueues {
     queue_with_massage: &'static str,
-    queue_without_massage: &'static str,
+    queues_without_massage: Vec<&'static str>,
 }
 
 async fn try_wait_for_message(channel: &Channel, assert: AssertQueues) -> Result<(), Error> {
@@ -136,13 +134,14 @@ async fn try_wait_for_message(channel: &Channel, assert: AssertQueues) -> Result
         let count = has_message_on_output(&channel, assert.queue_with_massage).await?;
         if count == 1 {
             result = Ok::<(), Error>(()); // https://github.com/rust-lang/rust/issues/63502
-            let second_count =
-                has_message_on_output(&channel, assert.queue_without_massage).await?;
-            assert_eq!(
-                second_count, 0,
-                "there should be no message on queue {} but it has count {}",
-                assert.queue_without_massage, second_count
-            );
+            for count in assert.queues_without_massage {
+                let second_count = has_message_on_output(&channel, count).await?;
+                assert_eq!(
+                    second_count, 0,
+                    "there should be no message on queue {} but it has count {}",
+                    count, second_count
+                );
+            }
             break;
         } else if count > 1 {
             assert_eq!(
@@ -200,8 +199,8 @@ mod test {
         execute(
             &test_queue_options,
             AssertQueues {
-                queue_with_massage: TEST_QUEUE,
-                queue_without_massage: ROUTER_INPUT_QUEUE,
+                queue_with_massage: ROUTER_OUTPUT_QUEUE,
+                queues_without_massage: vec![ROUTER_INPUT_QUEUE, ROUTER_INPUT_DLX_QUEUE],
             },
         )
     }
@@ -217,8 +216,8 @@ mod test {
         execute(
             &test_queue_options,
             AssertQueues {
-                queue_with_massage: ROUTER_INPUT_QUEUE,
-                queue_without_massage: TEST_QUEUE,
+                queue_with_massage: ROUTER_INPUT_DLX_QUEUE,
+                queues_without_massage: vec![ROUTER_INPUT_QUEUE, ROUTER_OUTPUT_QUEUE],
             },
         )
     }
