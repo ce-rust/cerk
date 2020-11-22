@@ -1,3 +1,4 @@
+use amq_protocol_types::{AMQPValue, ShortString};
 use amq_protocol_types::LongLongUInt;
 use anyhow::{Context, Error, Result};
 use cerk::kernel::{
@@ -328,8 +329,12 @@ async fn publish_cloud_event(
                 immediate: false,
             },
             Vec::from(payload.as_str()),
-            BasicProperties::default().with_delivery_mode(2),
-        ) //persistent
+            BasicProperties::default()
+                .with_delivery_mode(2) //persistent
+                .with_content_type(ShortString::from(
+                    "application/cloudevents+json; charset=UTF-8",
+                )),
+        )
         .await?
         .await?;
     Ok(confirmation)
@@ -391,6 +396,13 @@ async fn ack_nack_pending_event(
 /// This port publishes and/or subscribe CloudEvents to/from an AMQP broker with protocol version v0.9.1.
 ///
 /// The port is implemented with [lapin](https://github.com/CleverCloud/lapin).
+///
+/// # Content Modes
+///
+/// The port supports the structured content mode with the JSON event format.
+/// However, it does not support the binary content mode.
+///
+/// <https://github.com/cloudevents/spec/blob/master/amqp-protocol-binding.md#2-use-of-cloudevents-attributes>
 ///
 /// # Examples
 ///
