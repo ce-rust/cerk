@@ -10,3 +10,8 @@ members = [
     "cerk_runtime_threading",
     "examples",
 ]
+
+exclude = [
+    "integration-tests/reliable-amqp/cerk-amqp",
+    "integration-tests/reliable-amqp/test-executor"
+]
