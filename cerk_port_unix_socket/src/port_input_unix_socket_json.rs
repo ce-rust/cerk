@@ -42,7 +42,7 @@ fn liten_to_stream(
                             Ok(cloud_event) => {
                                 debug!("{} deserialized event successfully", id);
                                 sender_to_kernel
-                                    .send(BrokerEvent::IncomingCloudEvent(id.clone(), cloud_event, CloudEventRoutingArgs::default()))
+                                    .send(BrokerEvent::IncomingCloudEvent(id.clone(), id.clone(), cloud_event, CloudEventRoutingArgs::default()))
                             }
                             Err(err) => {
                                 error!("{} while converting string to CloudEvent: {:?}", id, err);
@@ -69,6 +69,10 @@ fn liten_to_stream(
 /// # Examples
 ///
 /// * [UNIX Socket Example](https://github.com/ce-rust/cerk/tree/master/examples/src/unix_socket)
+///
+/// # Limitations
+///
+/// * **reliability** this port does not support any `DeliveryGuarantee` other then `Unspecified` and so does never send a `IncomingCloudEventProcessed` message
 ///
 /// # open issues
 ///

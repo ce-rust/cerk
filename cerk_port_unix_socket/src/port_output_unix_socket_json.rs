@@ -51,6 +51,10 @@ fn write_to_stream(
 ///
 /// * [UNIX Socket Example](https://github.com/ce-rust/cerk/tree/master/examples/src/unix_socket)
 ///
+/// # Limitations
+///
+/// * **reliability** this port does not support any `DeliveryGuarantee` other then `Unspecified` and so does never send a `OutgoingCloudEventProcessed` message
+///
 pub fn port_output_unix_socket_json_start(
     id: InternalServerId,
     inbox: BoxedReceiver,
@@ -74,7 +78,7 @@ pub fn port_output_unix_socket_json_start(
                     _ => error!("{} received invalide config", id),
                 };
             }
-            BrokerEvent::OutgoingCloudEvent(cloud_event, _) => {
+            BrokerEvent::OutgoingCloudEvent(_, cloud_event, _, _) => {
                 debug!("{} cloudevent received", id);
                 match listener.as_ref() {
                     Some(listener) => {

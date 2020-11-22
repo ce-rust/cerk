@@ -18,7 +18,7 @@ fn generate_events(id: InternalServerId, sender_to_kernel: BoxedSender) {
         )
         .unwrap();
 
-        sender_to_kernel.send(BrokerEvent::IncomingCloudEvent(id.clone(), cloudevent, CloudEventRoutingArgs::default() ));
+        sender_to_kernel.send(BrokerEvent::IncomingCloudEvent(id.clone(), id.clone(), cloudevent, CloudEventRoutingArgs::default()));
         thread::sleep(time::Duration::from_secs(1));
     }
 }
