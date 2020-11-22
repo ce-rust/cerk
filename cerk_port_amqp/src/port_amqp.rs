@@ -302,9 +302,7 @@ async fn send_cloud_event(cloud_event: &CloudEvent, configurations: &AmqpOptions
                     if !options.delivery_guarantee.requires_acknowledgment() || result.is_ack() {
                         Ok(())
                     } else {
-                        // todo foramt does not work -> with &'static str -> wait for refactoring to other error type
-                        // Err(format!("Message was not acknowledged: {:?}", result).as_str())
-                        Err(anyhow!("Message was not acknowledged, but channel delivery_guarantee requires it"))
+                        bail!("Message was not acknowledged, but channel delivery_guarantee requires it: {:?}", result)
                     }
                 } else {
                     Err(anyhow!("message was not sent successful"))
