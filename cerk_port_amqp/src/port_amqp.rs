@@ -1,4 +1,4 @@
-use crate::lapin_helper::{assert_queue, assert_exchange};
+use crate::lapin_helper::{assert_exchange, assert_queue};
 use amq_protocol_types::LongString;
 use amq_protocol_types::ShortString;
 use amq_protocol_types::{AMQPValue, LongLongUInt};
@@ -287,19 +287,19 @@ async fn setup_dlx(
 ) -> Result<String> {
     let dlx_name = format!("{}-dlx", &name);
     let mut exchange_options = ExchangeDeclareOptions::default();
-    exchange_options.durable =  true;
+    exchange_options.durable = true;
     let mut queue_options = QueueDeclareOptions::default();
     queue_options.durable = true;
 
     assert_exchange(
         connection,
-            channel,
-            dlx_name.as_str(),
-            ExchangeKind::Fanout,
-            exchange_options,
-            FieldTable::default(),
-        )
-        .await?;
+        channel,
+        dlx_name.as_str(),
+        ExchangeKind::Fanout,
+        exchange_options,
+        FieldTable::default(),
+    )
+    .await?;
     assert_queue(
         connection,
         channel,
@@ -334,13 +334,13 @@ async fn setup_publish_channel(
     if channel_options.ensure_exchange {
         assert_exchange(
             conn,
-                &mut channel,
-                name.as_str(),
-                ExchangeKind::Fanout,
-                ExchangeDeclareOptions::default(),
-                FieldTable::default(),
-            )
-            .await?;
+            &mut channel,
+            name.as_str(),
+            ExchangeKind::Fanout,
+            ExchangeDeclareOptions::default(),
+            FieldTable::default(),
+        )
+        .await?;
         info!("Declared exchange {}", &name);
     }
     Ok(channel)
