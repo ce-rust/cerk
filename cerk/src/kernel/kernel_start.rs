@@ -94,18 +94,20 @@ fn process_broker_event(
                 "received OutgoingCloudEventProcessed from={} event_id={}",
                 service_id, event_id
             );
-            if let Some(delivery) = pending_deliveries.get_mut(&event_id) {
+            let mut resolved_missing_delivery = false;
+                if let Some(delivery) = pending_deliveries.get_mut(&event_id) {
                 match state {
                     ProcessingResult::Successful => {
                         let size_before = delivery.missing_receivers.len();
-                        delivery.missing_receivers.retain(|i| i.eq(&service_id));
+                        delivery.missing_receivers.retain(|i| !i.eq(&service_id));
                         let size = delivery.missing_receivers.len();
                         if size == 0 {
                             debug!("delivery for event_id={} was successful (all out port processing were successful) -> ack to sender", event_id);
                             outboxes
                                 .get(&delivery.sender)
                                 .unwrap()
-                                .send(BrokerEvent::IncomingCloudEventProcessed(event_id, state));
+                                .send(BrokerEvent::IncomingCloudEventProcessed(event_id.clone(), state));
+                            resolved_missing_delivery = true
                         } else if size_before == size {
                             warn!("{} sent OutgoingCloudEventProcessed for event_id={}, but was not expected to send this", service_id, event_id);
                         }
@@ -116,7 +118,8 @@ fn process_broker_event(
                             outboxes
                                 .get(&delivery.sender)
                                 .unwrap()
-                                .send(BrokerEvent::IncomingCloudEventProcessed(event_id, state));
+                                .send(BrokerEvent::IncomingCloudEventProcessed(event_id.clone(), state));
+                            resolved_missing_delivery = true
                         } else {
                             warn!("{} sent OutgoingCloudEventProcessed for event_id={}, but no response was expected", service_id, event_id);
                         }
@@ -124,6 +127,12 @@ fn process_broker_event(
                 }
             } else {
                 debug!("there was no pending delivery for event_id {}", event_id);
+            }
+
+            if resolved_missing_delivery {
+                if pending_deliveries.remove_entry(&event_id).is_none() {
+                    warn!("failed to delete pending_deliveries for event_id={}", event_id);
+                }
             }
         }
         BrokerEvent::ConfigUpdated(config, destionation_server_id) => {
@@ -172,6 +181,7 @@ pub fn kernel_start(
     sender_to_scheduler: BoxedSender,
 ) {
     let mut outboxes = Outboxes::new();
+    // todo this list could grow and entries could potentially be there for ever - TTL at kernel level?
     let mut pending_deliveries = PendingDeliveries::new();
 
     sender_to_scheduler.send(BrokerEvent::ScheduleInternalServer(
