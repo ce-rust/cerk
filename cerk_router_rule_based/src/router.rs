@@ -1,5 +1,5 @@
 use crate::routing_rules::{CloudEventFields, RoutingRules, RoutingTable};
-use cerk::kernel::{BrokerEvent, CloudEventMessageRoutingId, CloudEventRoutingArgs, Config};
+use cerk::kernel::{BrokerEvent, Config, IncomingCloudEvent, OutgoingCloudEvent, RoutingResult};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
 use cloudevents::CloudEvent;
@@ -45,31 +45,32 @@ fn route_to_port(rules: &RoutingRules, cloud_event: &CloudEvent) -> bool {
 }
 
 fn route_event(
-    incoming_port: InternalServerId,
-    event_id: CloudEventMessageRoutingId,
+    event: IncomingCloudEvent,
     sender_to_kernel: &BoxedSender,
     port_config: &RoutingTable,
-    cloud_event: &CloudEvent,
-    args: CloudEventRoutingArgs,
 ) {
+    let IncomingCloudEvent {
+        cloud_event,
+        routing_id,
+        incoming_id,
+        args,
+    } = event;
     let routing: Vec<_> = port_config
         .iter()
-        .filter(|(_, rules)| route_to_port(rules, cloud_event))
-        .map(|(port_id, _)| {
-            BrokerEvent::OutgoingCloudEvent(
-                event_id.clone(),
-                cloud_event.clone(),
-                port_id.clone(),
-                args.clone(),
-            )
+        .filter(|(_, rules)| route_to_port(rules, &cloud_event))
+        .map(|(port_id, _)| OutgoingCloudEvent {
+            routing_id: routing_id.clone(),
+            cloud_event: cloud_event.clone(),
+            destination_id: port_id.clone(),
+            args: args.clone(),
         })
         .collect();
-    sender_to_kernel.send(BrokerEvent::RoutingResult(
-        event_id,
-        incoming_port,
+    sender_to_kernel.send(BrokerEvent::RoutingResult(RoutingResult {
+        routing_id,
+        incoming_id,
         routing,
         args,
-    ))
+    }))
 }
 
 fn parse_config(config_update: String) -> Result<RoutingTable, SerdeErrorr> {
@@ -122,16 +123,9 @@ pub fn router_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel
     loop {
         match inbox.receive() {
             BrokerEvent::Init => info!("{} initiated", id),
-            BrokerEvent::IncomingCloudEvent(incoming_service_id, event_id, cloud_event, args) => {
+            BrokerEvent::IncomingCloudEvent(event) => {
                 if let Some(config) = config.as_ref() {
-                    route_event(
-                        incoming_service_id,
-                        event_id,
-                        &sender_to_kernel,
-                        config,
-                        &cloud_event,
-                        args,
-                    );
+                    route_event(event, &sender_to_kernel, config);
                 } else {
                     error!("No configs defined yet, event will be droped");
                 }
@@ -165,7 +159,7 @@ mod tests {
                 event_type: "test type",
                 source: "testi",
             )
-            .unwrap()
+            .unwrap(),
         ));
         // negative
         assert!(!route_to_port(
@@ -175,7 +169,7 @@ mod tests {
                 event_type: "test type",
                 source: "testi",
             )
-            .unwrap()
+            .unwrap(),
         ));
     }
 
@@ -193,7 +187,7 @@ mod tests {
                 event_type: "testtype1",
                 source: "1testsource1",
             )
-            .unwrap()
+            .unwrap(),
         ));
         // negative
         // positive
@@ -204,7 +198,7 @@ mod tests {
                 event_type: "1testtype",
                 source: "1test1source1",
             )
-            .unwrap()
+            .unwrap(),
         ));
     }
 }

@@ -1,4 +1,7 @@
-use cerk::kernel::{BrokerEvent, CloudEventMessageRoutingId, CloudEventRoutingArgs, Config};
+use cerk::kernel::{
+    BrokerEvent, CloudEventMessageRoutingId, CloudEventRoutingArgs, Config, OutgoingCloudEvent,
+    RoutingResult,
+};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
 use cloudevents::CloudEvent;
@@ -14,12 +17,12 @@ fn route_event(
     let routing: Vec<_> = port_ids
         .iter()
         .filter_map(|port_id| match port_id {
-            Config::String(port_id) => Some(BrokerEvent::OutgoingCloudEvent(
-                event_id.clone(),
-                cloud_event.clone(),
-                port_id.clone(),
-                args.clone(),
-            )),
+            Config::String(port_id) => Some(OutgoingCloudEvent {
+                routing_id: event_id.clone(),
+                cloud_event: cloud_event.clone(),
+                destination_id: port_id.clone(),
+                args: args.clone(),
+            }),
             _ => {
                 error!("No valid routing config found, message could not be routed!");
                 None
@@ -27,12 +30,12 @@ fn route_event(
         })
         .collect();
 
-    sender_to_kernel.send(BrokerEvent::RoutingResult(
-        event_id,
-        incoming_port,
+    sender_to_kernel.send(BrokerEvent::RoutingResult(RoutingResult {
+        routing_id: event_id,
+        incoming_id: incoming_port,
         routing,
         args,
-    ))
+    }))
 }
 
 /// This router broadcasts all received CloudEvents to the configured ports.
@@ -61,19 +64,17 @@ pub fn router_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel
     loop {
         match inbox.receive() {
             BrokerEvent::Init => info!("{} initiated", id),
-            BrokerEvent::IncomingCloudEvent(incoming_port, event_id, cloud_event, args) => {
-                match &config {
-                    Config::Vec(port_ids) => route_event(
-                        incoming_port,
-                        &sender_to_kernel,
-                        &port_ids,
-                        event_id,
-                        cloud_event,
-                        args,
-                    ),
-                    _ => error!("No valid routing config found, message could not be routed!"),
-                }
-            }
+            BrokerEvent::IncomingCloudEvent(event) => match &config {
+                Config::Vec(port_ids) => route_event(
+                    event.incoming_id,
+                    &sender_to_kernel,
+                    &port_ids,
+                    event.routing_id,
+                    event.cloud_event,
+                    event.args,
+                ),
+                _ => error!("No valid routing config found, message could not be routed!"),
+            },
             BrokerEvent::ConfigUpdated(updated_config, _) => config = updated_config,
             broker_event => warn!("event {} not implemented", broker_event),
         }

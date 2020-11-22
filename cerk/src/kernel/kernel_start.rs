@@ -1,6 +1,7 @@
 //! Implementation of the Kernel
 
 use super::{BrokerEvent, StartOptions};
+use crate::kernel::broker_event::{OutgoingCloudEventProcessed, RoutingResult};
 use crate::kernel::{CloudEventMessageRoutingId, ProcessingResult};
 use crate::runtime::channel::{BoxedReceiver, BoxedSender};
 use crate::runtime::InternalServerId;
@@ -17,6 +18,114 @@ struct PendingDelivery {
 type Outboxes = HashMap<InternalServerId, BoxedSender>;
 type PendingDeliveries = HashMap<CloudEventMessageRoutingId, PendingDelivery>;
 
+fn process_routing_result(
+    event: RoutingResult,
+    outboxes: &mut Outboxes,
+    pending_deliveries: &mut PendingDeliveries,
+) {
+    let RoutingResult {
+        routing_id,
+        routing,
+        incoming_id: receiver_id,
+        args,
+    } = event;
+    debug!("received RoutingResult for event_id={}", &routing_id);
+
+    if routing.is_empty() {
+        debug!("routing is empty - nothing to do");
+    } else {
+        if args.delivery_guarantee.requires_acknowledgment() {
+            let missing_receivers: Vec<_> = routing
+                .iter()
+                .map(|event| event.destination_id.clone())
+                .collect();
+
+            if pending_deliveries
+                .insert(
+                    routing_id.clone(),
+                    PendingDelivery {
+                        sender: receiver_id,
+                        missing_receivers,
+                    },
+                )
+                .is_some()
+            {
+                error!(
+                    "a routing for event_id={} already existed, the old one was overwritten",
+                    &routing_id
+                );
+            }
+        } else {
+            debug!("no acknowledgments needed for event_id={}", &routing_id)
+        }
+
+        for subevent in routing {
+            outboxes
+                .get(&subevent.destination_id)
+                .unwrap()
+                .send(BrokerEvent::OutgoingCloudEvent(subevent));
+        }
+        debug!("all routings sent for event_id={}", routing_id);
+    }
+}
+
+fn process_outgoing_cloud_event_processed(
+    event: OutgoingCloudEventProcessed,
+    outboxes: &mut Outboxes,
+    pending_deliveries: &mut PendingDeliveries,
+) {
+    let OutgoingCloudEventProcessed {
+        routing_id,
+        sender_id,
+        result,
+    } = event;
+    debug!(
+        "received OutgoingCloudEventProcessed from={} event_id={}",
+        sender_id, routing_id
+    );
+    let mut resolved_missing_delivery = false;
+    if let Some(delivery) = pending_deliveries.get_mut(&routing_id) {
+        match result {
+            ProcessingResult::Successful => {
+                let size_before = delivery.missing_receivers.len();
+                delivery.missing_receivers.retain(|i| !i.eq(&sender_id));
+                let size = delivery.missing_receivers.len();
+                if size == 0 {
+                    debug!("delivery for event_id={} was successful (all out port processing were successful) -> ack to sender", routing_id);
+                    outboxes.get(&delivery.sender).unwrap().send(
+                        BrokerEvent::IncomingCloudEventProcessed(routing_id.clone(), result),
+                    );
+                    resolved_missing_delivery = true
+                } else if size_before == size {
+                    warn!("{} sent OutgoingCloudEventProcessed for event_id={}, but was not expected to send this", sender_id, routing_id);
+                }
+            }
+            _ => {
+                if delivery.missing_receivers.contains(&sender_id) {
+                    debug!("delivery for event_id={} was NOT successful ({}) -> immediately notify the sender", routing_id, result);
+                    outboxes.get(&delivery.sender).unwrap().send(
+                        BrokerEvent::IncomingCloudEventProcessed(routing_id.clone(), result),
+                    );
+                    resolved_missing_delivery = true
+                } else {
+                    warn!("{} sent OutgoingCloudEventProcessed for event_id={}, but no response was expected", sender_id, routing_id);
+                }
+            }
+        }
+    } else {
+        debug!("there was no pending delivery for event_id {}", routing_id);
+    }
+
+    if resolved_missing_delivery {
+        if pending_deliveries.remove_entry(&routing_id).is_none() {
+            warn!(
+                "failed to delete pending_deliveries for event_id={}",
+                routing_id
+            );
+        }
+    }
+}
+
 fn process_broker_event(
     broker_event: BrokerEvent,
     outboxes: &mut Outboxes,
@@ -27,114 +136,17 @@ fn process_broker_event(
         BrokerEvent::InternalServerScheduled(id, sender_to_server) => {
             init_internal_server(outboxes, number_of_servers, id, sender_to_server);
         }
-        broker_event @ BrokerEvent::IncomingCloudEvent(_, _, _, _) => {
+        broker_event @ BrokerEvent::IncomingCloudEvent(_) => {
             outboxes
                 .get(&String::from(ROUTER_ID))
                 .unwrap()
                 .send(broker_event) // if the router is not present: panic! we cant work without it
         }
-        BrokerEvent::RoutingResult(event_id, incoming_port, outgoing_ports, args) => {
-            debug!("received RoutingResult for event_id={}", &event_id);
-
-            if outgoing_ports.is_empty() {
-                debug!("routing is empty - nothing to do");
-            } else {
-                if args.delivery_guarantee.requires_acknowledgment() {
-                    let missing_receivers: Vec<_> = outgoing_ports.iter().filter_map(|event| {
-                        if let BrokerEvent::OutgoingCloudEvent(_,_, destination, _) = event {
-                            Some(destination.clone())
-                        }else{
-                            error!("RoutingResult contained an event that is not of type OutgoingCloudEvent, but {}", event);
-                            None
-                        }
-                    })
-                        .collect();
-
-                    if pending_deliveries
-                        .insert(
-                            event_id.clone(),
-                            PendingDelivery {
-                                sender: incoming_port,
-                                missing_receivers,
-                            },
-                        )
-                        .is_some()
-                    {
-                        error!("a routing for event_id={} already existed, the old one was overwritten", &event_id);
-                    }
-                } else {
-                    debug!("no acknowledgments needed for event_id={}", &event_id)
-                }
-
-                for subevent in outgoing_ports {
-                    if let BrokerEvent::OutgoingCloudEvent(
-                        event_id,
-                        cloud_event,
-                        destination_server_id,
-                        args,
-                    ) = subevent
-                    {
-                        outboxes.get(&destination_server_id).unwrap().send(
-                            BrokerEvent::OutgoingCloudEvent(
-                                event_id,
-                                cloud_event,
-                                destination_server_id,
-                                args,
-                            ),
-                        );
-                    } else {
-                        error!("RoutingResult contained an event that is not of type OutgoingCloudEvent, but {}", subevent);
-                    }
-                }
-                debug!("all routings sent for event_id={}", event_id);
-            }
+        BrokerEvent::RoutingResult(event) => {
+            process_routing_result(event, outboxes, pending_deliveries)
         }
-        BrokerEvent::OutgoingCloudEventProcessed(service_id, event_id, state) => {
-            debug!(
-                "received OutgoingCloudEventProcessed from={} event_id={}",
-                service_id, event_id
-            );
-            let mut resolved_missing_delivery = false;
-            if let Some(delivery) = pending_deliveries.get_mut(&event_id) {
-                match state {
-                    ProcessingResult::Successful => {
-                        let size_before = delivery.missing_receivers.len();
-                        delivery.missing_receivers.retain(|i| !i.eq(&service_id));
-                        let size = delivery.missing_receivers.len();
-                        if size == 0 {
-                            debug!("delivery for event_id={} was successful (all out port processing were successful) -> ack to sender", event_id);
-                            outboxes.get(&delivery.sender).unwrap().send(
-                                BrokerEvent::IncomingCloudEventProcessed(event_id.clone(), state),
-                            );
-                            resolved_missing_delivery = true
-                        } else if size_before == size {
-                            warn!("{} sent OutgoingCloudEventProcessed for event_id={}, but was not expected to send this", service_id, event_id);
-                        }
-                    }
-                    _ => {
-                        if delivery.missing_receivers.contains(&service_id) {
-                            debug!("delivery for event_id={} was NOT successful ({}) -> immediately notify the sender", event_id, state);
-                            outboxes.get(&delivery.sender).unwrap().send(
-                                BrokerEvent::IncomingCloudEventProcessed(event_id.clone(), state),
-                            );
-                            resolved_missing_delivery = true
-                        } else {
-                            warn!("{} sent OutgoingCloudEventProcessed for event_id={}, but no response was expected", service_id, event_id);
-                        }
-                    }
-                }
-            } else {
-                debug!("there was no pending delivery for event_id {}", event_id);
-            }
-
-            if resolved_missing_delivery {
-                if pending_deliveries.remove_entry(&event_id).is_none() {
-                    warn!(
-                        "failed to delete pending_deliveries for event_id={}",
-                        event_id
-                    );
-                }
-            }
+        BrokerEvent::OutgoingCloudEventProcessed(event) => {
+            process_outgoing_cloud_event_processed(event, outboxes, pending_deliveries)
         }
         BrokerEvent::ConfigUpdated(config, destionation_server_id) => {
             debug!(

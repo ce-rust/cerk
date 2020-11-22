@@ -21,10 +21,10 @@ pub fn port_printer_start(
         match inbox.receive() {
             BrokerEvent::Init => info!("{} initiated", id),
             BrokerEvent::ConfigUpdated(_, _) => info!("{} received ConfigUpdated", id),
-            BrokerEvent::OutgoingCloudEvent(_, cloud_event, _, _) => info!(
+            BrokerEvent::OutgoingCloudEvent(event) => info!(
                 "{} received cloud event: {}!",
                 id,
-                serde_json::to_string(&cloud_event).unwrap(),
+                serde_json::to_string(&event.cloud_event).unwrap(),
             ),
             broker_event => warn!("event {} not implemented", broker_event),
         }

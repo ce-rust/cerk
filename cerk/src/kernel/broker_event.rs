@@ -55,72 +55,23 @@ pub enum BrokerEvent {
 
     /// The IncomingCloudEvent event indicates to the receiver that a new CloudEvent has been received from the outside world.
     /// The event is produced by an input port and is sent to the Kernel. The Kernel sends the same event to the router.
-    ///
-    /// # Arguments
-    ///
-    /// * `InternalServerId` - id of the component which received the CloudEvent
-    /// * `CloudEventMessageRoutingId` - the unique identifier of the CloudEvent routing attempt
-    /// * `CloudEvent` - the deserialized CloudEvent that the component has received
-    /// * `CloudEventRoutingArgs` - routing arguments to define how a CloudEvent should be routed
-    ///
-    IncomingCloudEvent(
-        InternalServerId,
-        CloudEventMessageRoutingId,
-        CloudEvent,
-        CloudEventRoutingArgs,
-    ),
+    IncomingCloudEvent(IncomingCloudEvent),
 
     /// The `RoutingResult` is the result of a routing from one `IncomingCloudEvent`.
     /// The event is sent from the router to the kernel and there forwarded as `OutgoingCloudEvent` to the ports.
     ///
     /// The `RoutingResult` doesn't have to be sent if there are no destinations (`Vec<OutgoingCloudEvent>.len() == 0`)
-    ///
-    /// # Arguments
-    ///
-    /// * `CloudEventMessageRoutingId` - the unique identifier of the CloudEvent routing attempt
-    /// * `InternalServerId` - the id of the component that received the event from the outside world
-    /// * `Vec<OutgoingCloudEvent>` - the list of events that should be forwarded to the outgoing ports. This vec must only contain `BrokerEvent::OutgoingCloudEvent`. `CloudEventMessageRoutingId` in every message has to be the same as the main `CloudEventMessageRoutingId`.
-    /// * `CloudEventRoutingArgs` - routing arguments to define how a CloudEvent should be routed - this config is used by the kernel; the args for the ports are inside the `Vec<OutgoingCloudEvent>`
-    ///
-    RoutingResult(
-        CloudEventMessageRoutingId,
-        InternalServerId,
-        Vec<BrokerEvent>,
-        CloudEventRoutingArgs,
-    ),
+    RoutingResult(RoutingResult),
 
     /// The OutgoingCloudEvent event indicates to the receiver that a CloudEvent has been routed and is ready to be forwarded to the outside world.
     /// The event is created by the router, send to the Kernel (in a badge as `RoutingResult`) and then to the output port(s).
     /// One event for every output port which should forward the data is created.
-    ///
-    /// # Arguments
-    ///
-    /// * `CloudEventMessageRoutingId` - the unique identifier of the CloudEvent routing attempt
-    /// * `CloudEvent` - the CloudEvent which should be forwarded
-    /// * `InternalServerId` - the id of the component that should send the event
-    /// * `CloudEventRoutingArgs` - routing arguments to define how a CloudEvent should be routed
-    ///
-    OutgoingCloudEvent(
-        CloudEventMessageRoutingId,
-        CloudEvent,
-        InternalServerId,
-        CloudEventRoutingArgs,
-    ),
+    OutgoingCloudEvent(OutgoingCloudEvent),
 
     /// The OutgoingCloudEvent was processed.
     /// The OutgoingCloudEventProcessed notifies the kernel about the end of the processing and indicates whether the outcome was successful.
     /// This response is only used if the `CloudEventRoutingArgs` in the `OutgoingCloudEvent` event indicates  that a response is used  (`CloudEventRoutingArgs.delivery_guarantee.requires_acknowledgment()`).
-    ///
-    /// # Arguments
-    /// * `InternalServerId` - the id of the component that processed the event (mostly sent to a queue)
-    /// * `CloudEventMessageRoutingId` - the unique identifier of the CloudEvent routing attempt
-    /// * `OutgoingProcessingResult` - result of the processing, was the processing successful? Error?
-    ///
-    OutgoingCloudEventProcessed(
-        InternalServerId,
-        CloudEventMessageRoutingId,
-        ProcessingResult,
-    ),
+    OutgoingCloudEventProcessed(OutgoingCloudEventProcessed),
 
     /// The IncomingCloudEvent was processed.
     /// The IncomingCloudEventProcessed notifies the receiver port that the routing is completed and a response to the sender can be sent.
@@ -151,16 +102,20 @@ impl fmt::Display for BrokerEvent {
             BrokerEvent::InternalServerScheduled(id, _) => {
                 write!(f, "InternalServerScheduled server_id={}", id)
             }
-            BrokerEvent::IncomingCloudEvent(id, _, _, _) => {
-                write!(f, "IncomingCloudEvent source_id={}", id)
+            BrokerEvent::IncomingCloudEvent(event) => {
+                write!(f, "IncomingCloudEvent receiver_id={}", event.incoming_id)
             }
-            BrokerEvent::RoutingResult(id, _, _, _) => write!(f, "RoutingResult source_id={}", id),
+            BrokerEvent::RoutingResult(event) => {
+                write!(f, "RoutingResult receiver_id={}", event.incoming_id)
+            }
             BrokerEvent::ConfigUpdated(_, id) => write!(f, "ConfigUpdated destination_id={}", id),
-            BrokerEvent::OutgoingCloudEvent(_, _, id, _) => {
-                write!(f, "OutgoingCloudEvent destination_id={}", id)
-            }
-            BrokerEvent::OutgoingCloudEventProcessed(_, _, state) => {
-                write!(f, "OutgoingCloudEventProcessed state={}", state)
+            BrokerEvent::OutgoingCloudEvent(event) => write!(
+                f,
+                "OutgoingCloudEvent destination_id={}",
+                event.destination_id
+            ),
+            BrokerEvent::OutgoingCloudEventProcessed(event) => {
+                write!(f, "OutgoingCloudEventProcessed result={}", event.result)
             }
             BrokerEvent::IncomingCloudEventProcessed(_, state) => {
                 write!(f, "IncomingCloudEventProcessed state={}", state)
@@ -168,4 +123,51 @@ impl fmt::Display for BrokerEvent {
             BrokerEvent::Batch(_) => write!(f, "Batch"),
         }
     }
+}
+
+/// Struct for `BrokerEvent::IncomingCloudEvent`
+pub struct IncomingCloudEvent {
+    /// id of the component which received the CloudEvent
+    pub incoming_id: InternalServerId,
+    /// the unique identifier of the CloudEvent routing attempt
+    pub routing_id: CloudEventMessageRoutingId,
+    /// the deserialized CloudEvent that the component has received
+    pub cloud_event: CloudEvent,
+    /// routing arguments to define how a CloudEvent should be routed
+    pub args: CloudEventRoutingArgs,
+}
+
+/// Struct for `BrokerEvent::RoutingResult`
+pub struct RoutingResult {
+    /// the id of the component that received the event from the outside world
+    pub incoming_id: InternalServerId,
+    /// the unique identifier of the CloudEvent routing attempt
+    pub routing_id: CloudEventMessageRoutingId,
+    /// The list of events that should be forwarded to the outgoing ports.
+    /// Multiple routing to the same destination_id with a `delivery_guarantee.requires_acknowledgment()` are currently not supported by the kernel.
+    pub routing: Vec<OutgoingCloudEvent>,
+    /// routing arguments to define how a CloudEvent should be routed - this config is used by the kernel; the args for the ports are inside the `Vec<OutgoingCloudEvent>`
+    pub args: CloudEventRoutingArgs,
+}
+
+/// Struct for `BrokerEvent::OutgoingCloudEvent`
+pub struct OutgoingCloudEvent {
+    /// the unique identifier of the CloudEvent routing attempt
+    pub routing_id: CloudEventMessageRoutingId,
+    /// the CloudEvent which should be forwarded
+    pub cloud_event: CloudEvent,
+    /// the id of the component that should send the event
+    pub destination_id: InternalServerId,
+    /// routing arguments to define how a CloudEvent should be routed
+    pub args: CloudEventRoutingArgs,
+}
+
+/// Struct for `BrokerEvent::OutgoingCloudEventProcessed`
+pub struct OutgoingCloudEventProcessed {
+    /// the id of the component that processed the event (mostly sent to a queue)
+    pub sender_id: InternalServerId,
+    /// the unique identifier of the CloudEvent routing attempt
+    pub routing_id: CloudEventMessageRoutingId,
+    /// result of the processing, was the processing successful? Error?
+    pub result: ProcessingResult,
 }

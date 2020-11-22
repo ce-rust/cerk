@@ -10,7 +10,10 @@ mod outgoing_processing_result;
 mod start_options;
 
 pub use self::bootstrap::{bootstrap, KernelFn};
-pub use self::broker_event::{BrokerEvent, CloudEventMessageRoutingId};
+pub use self::broker_event::{
+    BrokerEvent, CloudEventMessageRoutingId, IncomingCloudEvent, OutgoingCloudEvent,
+    OutgoingCloudEventProcessed, RoutingResult,
+};
 pub use self::cloud_event_routing_args::CloudEventRoutingArgs;
 pub use self::config::Config;
 pub use self::delivery_guarantees::DeliveryGuarantee;

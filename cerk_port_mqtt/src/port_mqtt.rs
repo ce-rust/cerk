@@ -1,4 +1,4 @@
-use cerk::kernel::{BrokerEvent, CloudEventRoutingArgs, Config};
+use cerk::kernel::{BrokerEvent, CloudEventRoutingArgs, Config, IncomingCloudEvent};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
 use cloudevents::CloudEvent;
@@ -136,12 +136,17 @@ fn setup_connection(
             match serde_json::from_str::<CloudEvent>(&payload_str) {
                 Ok(cloud_event) => {
                     debug!("{} deserialized event successfully", rc_id);
-                    rc_send.send(BrokerEvent::IncomingCloudEvent(
-                        (*rc_id).clone(), // todo add delivery attempt to routing id
-                        (*rc_id).clone(),
+                    // todo add delivery attempt to routing id
+                    let routing_id = match cloud_event {
+                        CloudEvent::V1_0(ref e) => e.event_id().to_string(),
+                        CloudEvent::V0_2(ref e) => e.event_id().to_string(),
+                    };
+                    rc_send.send(BrokerEvent::IncomingCloudEvent(IncomingCloudEvent {
+                        routing_id,
+                        incoming_id: (*rc_id).clone(),
                         cloud_event,
-                        CloudEventRoutingArgs::default(), // todo correct args
-                    ))
+                        args: CloudEventRoutingArgs::default(), // todo correct args
+                    }))
                 }
                 Err(err) => {
                     error!("{} while converting string to CloudEvent: {:?}", rc_id, err);
@@ -387,9 +392,9 @@ pub fn port_mqtt_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
                 cli = Some(new_cli);
                 options = Some(new_options);
             }
-            BrokerEvent::OutgoingCloudEvent(id, cloud_event, _, _) => {
+            BrokerEvent::OutgoingCloudEvent(event) => {
                 debug!("{} cloudevent received", &id);
-                send_cloud_event(&id, &cloud_event, &cli, &options);
+                send_cloud_event(&id, &event.cloud_event, &cli, &options);
             }
             broker_event => warn!("event {} not implemented", broker_event),
         }

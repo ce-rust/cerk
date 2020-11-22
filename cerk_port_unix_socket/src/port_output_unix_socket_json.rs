@@ -78,11 +78,11 @@ pub fn port_output_unix_socket_json_start(
                     _ => error!("{} received invalide config", id),
                 };
             }
-            BrokerEvent::OutgoingCloudEvent(_, cloud_event, _, _) => {
+            BrokerEvent::OutgoingCloudEvent(event) => {
                 debug!("{} cloudevent received", id);
                 match listener.as_ref() {
                     Some(listener) => {
-                        stream = write_to_stream(listener, stream, &cloud_event, 10);
+                        stream = write_to_stream(listener, stream, &event.cloud_event, 10);
                     }
                     None => panic!("No valid port config found, message could not be sent!"),
                 };

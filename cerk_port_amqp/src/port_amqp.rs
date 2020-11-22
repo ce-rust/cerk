@@ -6,7 +6,7 @@ use anyhow::{Context, Result};
 use async_std::future::timeout;
 use cerk::kernel::{
     BrokerEvent, CloudEventMessageRoutingId, CloudEventRoutingArgs, Config, DeliveryGuarantee,
-    ProcessingResult,
+    IncomingCloudEvent, OutgoingCloudEvent, OutgoingCloudEventProcessed, ProcessingResult,
 };
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
@@ -360,7 +360,7 @@ fn receive_message(
     match serde_json::from_str::<CloudEvent>(&payload_str) {
         Ok(cloud_event) => {
             debug!("{} deserialized event successfully", id);
-            let event_id = get_event_id(&cloud_event, &delivery.delivery_tag);
+            let routing_id = get_event_id(&cloud_event, &delivery.delivery_tag);
             info!(
                 "pending_deliveries size: {}",
                 pending_deliveries.clone().lock().unwrap().len()
@@ -370,7 +370,7 @@ fn receive_message(
                 .lock()
                 .unwrap()
                 .insert(
-                    event_id.to_string(),
+                    routing_id.to_string(),
                     PendingDelivery {
                         delivery_tag: delivery.delivery_tag.clone(),
                         consume_channel_id: name.to_string(),
@@ -380,17 +380,17 @@ fn receive_message(
             {
                 error!(
                     "failed event_id={} was already in the table - this should not happen",
-                    &event_id
+                    &routing_id
                 );
             }
-            sender.send(BrokerEvent::IncomingCloudEvent(
-                id.clone(),
-                event_id,
+            sender.send(BrokerEvent::IncomingCloudEvent(IncomingCloudEvent {
+                incoming_id: id.clone(),
+                routing_id,
                 cloud_event,
-                CloudEventRoutingArgs {
+                args: CloudEventRoutingArgs {
                     delivery_guarantee: delivery_guarantee.clone(),
                 },
-            ));
+            }));
         }
         Err(err) => {
             bail!("{} while converting string to CloudEvent: {:?}", id, err);
@@ -559,7 +559,13 @@ pub fn port_amqp_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
                     }
                 }
             }
-            BrokerEvent::OutgoingCloudEvent(event_id, cloud_event, _, args) => {
+            BrokerEvent::OutgoingCloudEvent(event) => {
+                let OutgoingCloudEvent {
+                    routing_id,
+                    cloud_event,
+                    destination_id: _,
+                    args,
+                } = event;
                 debug!("{} CloudEvent received", &id);
                 if let Some(configuration) = configuration_option.as_ref() {
                     let result = future::block_on(send_cloud_event(&cloud_event, configuration));
@@ -576,9 +582,11 @@ pub fn port_amqp_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
                     };
                     if args.delivery_guarantee.requires_acknowledgment() {
                         sender_to_kernel.send(BrokerEvent::OutgoingCloudEventProcessed(
-                            id.clone(),
-                            event_id,
-                            result,
+                            OutgoingCloudEventProcessed {
+                                sender_id: id.clone(),
+                                routing_id,
+                                result,
+                            },
                         ));
                     }
                 } else {
