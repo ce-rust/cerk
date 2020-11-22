@@ -1,5 +1,5 @@
-use amq_protocol_types::{AMQPValue, ShortString};
 use amq_protocol_types::LongLongUInt;
+use amq_protocol_types::{AMQPValue, ShortString};
 use anyhow::{Context, Error, Result};
 use cerk::kernel::{
     BrokerEvent, CloudEventMessageRoutingId, CloudEventRoutingArgs, Config, DeliveryGuarantee,

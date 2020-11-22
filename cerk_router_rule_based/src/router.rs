@@ -1,5 +1,5 @@
 use crate::routing_rules::{CloudEventFields, RoutingRules, RoutingTable};
-use cerk::kernel::{BrokerEvent, Config, CloudEventRoutingArgs, CloudEventMessageRoutingId};
+use cerk::kernel::{BrokerEvent, CloudEventMessageRoutingId, CloudEventRoutingArgs, Config};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
 use cloudevents::CloudEvent;
@@ -52,18 +52,24 @@ fn route_event(
     cloud_event: &CloudEvent,
     args: CloudEventRoutingArgs,
 ) {
-    let routing: Vec<_> = port_config.iter()
+    let routing: Vec<_> = port_config
+        .iter()
         .filter(|(port_id, rules)| route_to_port(rules, cloud_event))
-        .map(|(port_id, rules)|
-    {
-        BrokerEvent::OutgoingCloudEvent(
-            event_id.clone(),
-            cloud_event.clone(),
-            port_id.clone(),
-            args.clone(),
-        )
-    }).collect();
-    sender_to_kernel.send(BrokerEvent::RoutingResult(event_id, incoming_port, routing, args))
+        .map(|(port_id, rules)| {
+            BrokerEvent::OutgoingCloudEvent(
+                event_id.clone(),
+                cloud_event.clone(),
+                port_id.clone(),
+                args.clone(),
+            )
+        })
+        .collect();
+    sender_to_kernel.send(BrokerEvent::RoutingResult(
+        event_id,
+        incoming_port,
+        routing,
+        args,
+    ))
 }
 
 fn parse_config(config_update: String) -> Result<RoutingTable, SerdeErrorr> {
@@ -118,7 +124,14 @@ pub fn router_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel
             BrokerEvent::Init => info!("{} initiated", id),
             BrokerEvent::IncomingCloudEvent(incoming_service_id, event_id, cloud_event, args) => {
                 if let Some(config) = config.as_ref() {
-                    route_event(incoming_service_id, event_id, &sender_to_kernel, config, &cloud_event, args);
+                    route_event(
+                        incoming_service_id,
+                        event_id,
+                        &sender_to_kernel,
+                        config,
+                        &cloud_event,
+                        args,
+                    );
                 } else {
                     error!("No configs defined yet, event will be droped");
                 }

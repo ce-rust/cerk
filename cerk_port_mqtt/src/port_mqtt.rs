@@ -1,4 +1,4 @@
-use cerk::kernel::{BrokerEvent, Config, CloudEventRoutingArgs};
+use cerk::kernel::{BrokerEvent, CloudEventRoutingArgs, Config};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
 use cloudevents::CloudEvent;

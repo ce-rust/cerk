@@ -1,6 +1,6 @@
 use super::Config;
-use std::convert::TryFrom;
 use anyhow::Error;
+use std::convert::TryFrom;
 
 /// Message delivery guarantees for the routing (defined per port channel)
 #[repr(u8)]

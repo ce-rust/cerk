@@ -1,11 +1,11 @@
 use super::Config;
+use crate::kernel::outgoing_processing_result::ProcessingResult;
+use crate::kernel::CloudEventRoutingArgs;
+use crate::kernel::DeliveryGuarantee;
 use crate::runtime::channel::BoxedSender;
 use crate::runtime::{InternalServerFn, InternalServerId};
 use cloudevents::CloudEvent;
 use std::fmt;
-use crate::kernel::DeliveryGuarantee;
-use crate::kernel::CloudEventRoutingArgs;
-use crate::kernel::outgoing_processing_result::ProcessingResult;
 
 /// the unique identifier of the CloudEvent routing attempt
 /// this id is generated on a receiver per CloudEvent and routing attempt.
@@ -64,7 +64,12 @@ pub enum BrokerEvent {
     /// * `CloudEvent` - the deserialized CloudEvent that the component has received
     /// * `CloudEventRoutingArgs` - routing arguments to define how a CloudEvent should be routed
     ///
-    IncomingCloudEvent(InternalServerId, CloudEventMessageRoutingId, CloudEvent, CloudEventRoutingArgs),
+    IncomingCloudEvent(
+        InternalServerId,
+        CloudEventMessageRoutingId,
+        CloudEvent,
+        CloudEventRoutingArgs,
+    ),
 
     /// The `RoutingResult` is the result of a routing from one `IncomingCloudEvent`.
     /// The event is sent from the router to the kernel and there forwarded as `OutgoingCloudEvent` to the ports.
@@ -78,7 +83,12 @@ pub enum BrokerEvent {
     /// * `Vec<OutgoingCloudEvent>` - the list of events that should be forwarded to the outgoing ports. This vec must only contain `BrokerEvent::OutgoingCloudEvent`. `CloudEventMessageRoutingId` in every message has to be the same as the main `CloudEventMessageRoutingId`.
     /// * `CloudEventRoutingArgs` - routing arguments to define how a CloudEvent should be routed - this config is used by the kernel; the args for the ports are inside the `Vec<OutgoingCloudEvent>`
     ///
-    RoutingResult(CloudEventMessageRoutingId, InternalServerId, Vec<BrokerEvent>, CloudEventRoutingArgs),
+    RoutingResult(
+        CloudEventMessageRoutingId,
+        InternalServerId,
+        Vec<BrokerEvent>,
+        CloudEventRoutingArgs,
+    ),
 
     /// The OutgoingCloudEvent event indicates to the receiver that a CloudEvent has been routed and is ready to be forwarded to the outside world.
     /// The event is created by the router, send to the Kernel (in a badge as `RoutingResult`) and then to the output port(s).
@@ -91,7 +101,12 @@ pub enum BrokerEvent {
     /// * `InternalServerId` - the id of the component that should send the event
     /// * `CloudEventRoutingArgs` - routing arguments to define how a CloudEvent should be routed
     ///
-    OutgoingCloudEvent(CloudEventMessageRoutingId, CloudEvent, InternalServerId, CloudEventRoutingArgs),
+    OutgoingCloudEvent(
+        CloudEventMessageRoutingId,
+        CloudEvent,
+        InternalServerId,
+        CloudEventRoutingArgs,
+    ),
 
     /// The OutgoingCloudEvent was processed.
     /// The OutgoingCloudEventProcessed notifies the kernel about the end of the processing and indicates whether the outcome was successful.
@@ -102,7 +117,11 @@ pub enum BrokerEvent {
     /// * `CloudEventMessageRoutingId` - the unique identifier of the CloudEvent routing attempt
     /// * `OutgoingProcessingResult` - result of the processing, was the processing successful? Error?
     ///
-    OutgoingCloudEventProcessed(InternalServerId, CloudEventMessageRoutingId, ProcessingResult),
+    OutgoingCloudEventProcessed(
+        InternalServerId,
+        CloudEventMessageRoutingId,
+        ProcessingResult,
+    ),
 
     /// The IncomingCloudEvent was processed.
     /// The IncomingCloudEventProcessed notifies the receiver port that the routing is completed and a response to the sender can be sent.
@@ -141,8 +160,12 @@ impl fmt::Display for BrokerEvent {
             BrokerEvent::OutgoingCloudEvent(_, _, id, _) => {
                 write!(f, "OutgoingCloudEvent destination_id={}", id)
             }
-            BrokerEvent::OutgoingCloudEventProcessed(_, _, state) => write!(f, "OutgoingCloudEventProcessed state={}", state),
-            BrokerEvent::IncomingCloudEventProcessed(_, state) => write!(f, "IncomingCloudEventProcessed state={}", state),
+            BrokerEvent::OutgoingCloudEventProcessed(_, _, state) => {
+                write!(f, "OutgoingCloudEventProcessed state={}", state)
+            }
+            BrokerEvent::IncomingCloudEventProcessed(_, state) => {
+                write!(f, "IncomingCloudEventProcessed state={}", state)
+            }
             BrokerEvent::Batch(_) => write!(f, "Batch"),
         }
     }
