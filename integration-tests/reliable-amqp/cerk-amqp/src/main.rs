@@ -3,12 +3,12 @@ extern crate log;
 
 use env_logger::Env;
 
-use cerk::kernel::{bootstrap, BrokerEvent, Config, StartOptions};
+use cerk::kernel::{bootstrap, BrokerEvent, Config, DeliveryGuarantee, StartOptions};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
-use cerk_runtime_threading::threading_scheduler_start;
-use cerk_router_broadcast::router_start;
 use cerk::runtime::InternalServerId;
 use cerk_port_amqp::port_amqp_start;
+use cerk_router_broadcast::router_start;
+use cerk_runtime_threading::threading_scheduler_start;
 use std::collections::HashMap;
 use std::env;
 
@@ -26,22 +26,46 @@ fn static_config_loader_start(
         ("uri".to_string(), Config::String(amqp_broker_uri)),
         (
             "consume_channels".to_string(),
-            Config::Vec(vec![Config::HashMap([
-                ("name".to_string(), Config::String("router_input".to_string())),
-                ("ensure_queue".to_string(), Config::Bool(true)),
-            ].iter().cloned().collect())]),
+            Config::Vec(vec![Config::HashMap(
+                [
+                    (
+                        "name".to_string(),
+                        Config::String("router_input".to_string()),
+                    ),
+                    ("ensure_queue".to_string(), Config::Bool(true)),
+                    (
+                        "delivery_guarantee".to_string(),
+                        Config::from(DeliveryGuarantee::AtLeastOnce),
+                    ),
+                ]
+                .iter()
+                .cloned()
+                .collect(),
+            )]),
         ),
         (
             "publish_channels".to_string(),
-            Config::Vec(vec![Config::HashMap([
-                ("name".to_string(), Config::String("router_output".to_string())),
-                ("ensure_exchange".to_string(), Config::Bool(true)),
-            ].iter().cloned().collect())]),
-        )
+            Config::Vec(vec![Config::HashMap(
+                [
+                    (
+                        "name".to_string(),
+                        Config::String("router_output".to_string()),
+                    ),
+                    ("ensure_exchange".to_string(), Config::Bool(true)),
+                    (
+                        "delivery_guarantee".to_string(),
+                        Config::from(DeliveryGuarantee::AtLeastOnce),
+                    ),
+                ]
+                .iter()
+                .cloned()
+                .collect(),
+            )]),
+        ),
     ]
-        .iter()
-        .cloned()
-        .collect();
+    .iter()
+    .cloned()
+    .collect();
 
     loop {
         match inbox.receive() {
@@ -67,9 +91,7 @@ fn main() {
         scheduler_start: threading_scheduler_start,
         router_start: router_start,
         config_loader_start: static_config_loader_start,
-        ports: Box::new([
-            (String::from(AMQP_PORT), port_amqp_start),
-        ]),
+        ports: Box::new([(String::from(AMQP_PORT), port_amqp_start)]),
     };
     bootstrap(start_options);
 }

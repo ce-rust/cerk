@@ -1,4 +1,4 @@
-use cerk::kernel::{BrokerEvent, Config};
+use cerk::kernel::{BrokerEvent, CloudEventRoutingArgs, Config, IncomingCloudEvent};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
 use cloudevents::CloudEvent;
@@ -41,8 +41,14 @@ fn liten_to_stream(
                         match serde_json::from_str::<CloudEvent>(&line) {
                             Ok(cloud_event) => {
                                 debug!("{} deserialized event successfully", id);
-                                sender_to_kernel
-                                    .send(BrokerEvent::IncommingCloudEvent(id.clone(), cloud_event))
+                                sender_to_kernel.send(BrokerEvent::IncomingCloudEvent(
+                                    IncomingCloudEvent {
+                                        routing_id: id.clone(),
+                                        incoming_id: id.clone(),
+                                        cloud_event,
+                                        args: CloudEventRoutingArgs::default(),
+                                    },
+                                ))
                             }
                             Err(err) => {
                                 error!("{} while converting string to CloudEvent: {:?}", id, err);
@@ -69,6 +75,10 @@ fn liten_to_stream(
 /// # Examples
 ///
 /// * [UNIX Socket Example](https://github.com/ce-rust/cerk/tree/master/examples/src/unix_socket)
+///
+/// # Limitations
+///
+/// * **reliability** this port does not support any `DeliveryGuarantee` other then `Unspecified` and so does never send a `IncomingCloudEventProcessed` message
 ///
 /// # open issues
 ///

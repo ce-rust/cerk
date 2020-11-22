@@ -111,5 +111,8 @@ cargo doc --no-deps --open
 #[macro_use]
 extern crate log;
 
+#[macro_use]
+extern crate anyhow;
+
 pub mod kernel;
 pub mod runtime;

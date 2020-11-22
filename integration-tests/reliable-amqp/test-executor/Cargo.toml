@@ -15,3 +15,4 @@ async-global-executor = "1.4.3"
 futures-lite = "1.11.2"
 ctor = "0.1.16"
 anyhow = "1.0"
+cerk_port_amqp = { path = "../../../cerk_port_amqp" }
