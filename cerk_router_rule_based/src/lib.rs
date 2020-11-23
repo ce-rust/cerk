@@ -26,7 +26,7 @@ The operations `And`, `Or`, `Contains`, `StartsWith` and more are supported.
 # Configurations
 
 The Socket expects a `Config::String` as configuration.
-The string should be a json deserialized `routing_rules::RoutingTable;`.
+The string should be a json deserialized `routing_rules::RoutingTable`.
 
 ## Configuration Examples
 

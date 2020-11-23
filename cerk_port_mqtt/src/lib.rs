@@ -46,7 +46,7 @@ E.g. `Config::String(String::from("test"))`
 
 The following configurations are optional.
 
-### persistance
+### persistence
 
 The value has to by of type `Config::U8` and contain one of the following values.
 
@@ -75,7 +75,7 @@ The value has to by of type `Config::Vec([Config::String])` and must have the sa
 The values in the vector contain the MQTT topic wich the router should subscribe to.
 
 If multiple topics are subscribed in the same MQTT port,
-there is no possability at the moment to know let the router or the output port know from wich topic the an event was received.
+there is no possibility at the moment to know let the router or the output port know from which topic the event was received.
 
 ## subscribe_qos
 
@@ -93,7 +93,7 @@ The router only supports best effort at the moment.
 
 ### Minimal Configuration to send events
 
-This configuration will connect to the borker but nor send or receive events.
+This configuration will connect to the broker but will not send or receive any events.
 
 ```
 use std::collections::HashMap;
@@ -117,7 +117,7 @@ use cerk::kernel::Config;
 
 let map: HashMap<String, Config> = [
     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
-    ("persistance".to_string(), Config::U8(0)),
+    ("persistence".to_string(), Config::U8(0)),
     ("send_topic".to_string(), Config::String("test".to_string())),
     ("send_qos".to_string(), Config::U8(2)),
 ]
@@ -136,7 +136,7 @@ use cerk::kernel::Config;
 
 let map: HashMap<String, Config> = [
     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
-    ("persistance".to_string(), Config::U8(0)),
+    ("persistence".to_string(), Config::U8(0)),
     (
       "subscribe_topics".to_string(),
       Config::Vec(vec![Config::String("test".to_string())]),
@@ -161,7 +161,7 @@ use cerk::kernel::Config;
 
 let map: HashMap<String, Config> = [
     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
-    ("persistance".to_string(), Config::U8(0)),
+    ("persistence".to_string(), Config::U8(0)),
     ("send_topic".to_string(), Config::String("test".to_string())),
     ("send_qos".to_string(), Config::U8(2)),
     (

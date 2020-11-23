@@ -285,7 +285,7 @@ mod tests {
                 Config::String("tcp://mqtt-broker:1883".to_string()),
             ),
             ("send_topic".to_string(), Config::String("test".to_string())),
-            ("persistance".to_string(), Config::U8(0)),
+            ("persistence".to_string(), Config::U8(0)),
             ("send_qos".to_string(), Config::U8(2)),
             (
                 "subscribe_topics".to_string(),
