@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cerk-generator-configs
+data:
+  init.json: |
+    {
+      "scheduler": "THREADING_SCHEDULER",
+      "router": "ROUTER_BROADCAST",
+      "config_loader": "CONFIG_LOADER_FILE",
+      "ports": {
+        "ampq": "PORT_AMQP",
+        "sequence-generator": "PORT_SEQUENCE_GENERATOR"
+      }
+    }
+  config.json: |
+    {
+      "routing_rules": [
+        "ampq"
+      ],
+      "ports": {
+        "ampq": {
+          "uri": "amqp://rabbitmq:5672/%2f",
+          "publish_channels": [
+            {
+              "name": "input",
+              "ensure_exchange": true
+            }
+          ]
+        },
+        "sequence-generator": null
+      }
+    }

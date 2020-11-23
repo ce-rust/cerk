@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cerk-printer-configs
+data:
+  init.json: |
+    {
+      "scheduler": "THREADING_SCHEDULER",
+      "router": "ROUTER_BROADCAST",
+      "config_loader": "CONFIG_LOADER_FILE",
+      "ports": {
+        "ampq": "PORT_AMQP",
+        "dummy-logger-output": "PORT_PRINTER"
+      }
+    }
+  config.json: |
+    {
+      "routing_rules": [
+        "dummy-logger-output"
+      ],
+      "ports": {
+        "ampq": {
+          "uri": "amqp://rabbitmq:5672/%2f",
+          "consume_channels": [
+            {
+              "name": "output",
+              "ensure_queue": true,
+              "bind_to_exchange": "output",
+              "delivery_guarantee": 2
+            }
+          ]
+        },
+        "dummy-logger-output": null
+      }
+    }
