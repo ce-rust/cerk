@@ -1,22 +1,22 @@
 use cerk::kernel::{BrokerEvent, CloudEventRoutingArgs, IncomingCloudEvent};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
-use cloudevents::Data;
+use chrono::Utc;
+use cloudevents::{EventBuilder, EventBuilderV10};
 use std::{thread, time};
 
 fn generate_events(id: InternalServerId, sender_to_kernel: BoxedSender) {
     for i in 1.. {
         debug!("send dummy event with sequence number {} to kernel", i);
 
-        let cloud_event = cloudevent!(
-            event_id: format!("{}", i),
-            event_type: "sequence-generator.counter",
-            time: "now",
-            source: "dummy.sequence-generator",
-            datacontenttype: "text/plain",
-            data: Data::StringOrBinary(format!("sequence {}", i)),
-        )
-        .unwrap();
+        let cloud_event = EventBuilderV10::new()
+            .id(format!("{}", i))
+            .ty("sequence-generator.counter")
+            .time(Utc::now())
+            .source("dummy.sequence-generator")
+            .data("text/plain", format!("sequence {}", i))
+            .build()
+            .unwrap();
 
         sender_to_kernel.send(BrokerEvent::IncomingCloudEvent(IncomingCloudEvent {
             routing_id: i.clone().to_string(),

@@ -10,8 +10,8 @@ pub enum CloudEventFields {
     Id,
     Type,
     Source,
-    /// not implemented in V0.2
     Subject,
+    // schemaurl in v0.3
     Dataschema,
 }
 

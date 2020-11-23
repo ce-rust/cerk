@@ -13,8 +13,6 @@ This package contains some dummy ports for testing and demonstrations.
 
 #[macro_use]
 extern crate log;
-#[macro_use]
-extern crate cloudevents;
 
 mod port_printer;
 mod port_sequence_generator;

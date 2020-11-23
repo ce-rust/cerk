@@ -3,7 +3,7 @@ use crate::kernel::outgoing_processing_result::ProcessingResult;
 use crate::kernel::CloudEventRoutingArgs;
 use crate::runtime::channel::BoxedSender;
 use crate::runtime::{InternalServerFn, InternalServerId};
-use cloudevents::CloudEvent;
+use cloudevents::Event;
 use std::fmt;
 
 /// the unique identifier of the CloudEvent routing attempt
@@ -132,7 +132,7 @@ pub struct IncomingCloudEvent {
     /// the unique identifier of the CloudEvent routing attempt
     pub routing_id: CloudEventMessageRoutingId,
     /// the deserialized CloudEvent that the component has received
-    pub cloud_event: CloudEvent,
+    pub cloud_event: Event,
     /// routing arguments to define how a CloudEvent should be routed
     pub args: CloudEventRoutingArgs,
 }
@@ -155,7 +155,7 @@ pub struct OutgoingCloudEvent {
     /// the unique identifier of the CloudEvent routing attempt
     pub routing_id: CloudEventMessageRoutingId,
     /// the CloudEvent which should be forwarded
-    pub cloud_event: CloudEvent,
+    pub cloud_event: Event,
     /// the id of the component that should send the event
     pub destination_id: InternalServerId,
     /// routing arguments to define how a CloudEvent should be routed

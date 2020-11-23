@@ -1,7 +1,7 @@
 use cerk::kernel::{BrokerEvent, CloudEventRoutingArgs, Config, IncomingCloudEvent};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
-use cloudevents::CloudEvent;
+use cloudevents::{AttributesReader, Event};
 use paho_mqtt::{
     AsyncClient, ConnectOptions, CreateOptions, CreateOptionsBuilder, Message, PersistenceType,
 };
@@ -133,14 +133,11 @@ fn setup_connection(
             let topic = msg.topic();
             let payload_str = msg.payload_str();
             debug!("{} received cloudevent on topic {}", rc_id, topic);
-            match serde_json::from_str::<CloudEvent>(&payload_str) {
+            match serde_json::from_str::<Event>(&payload_str) {
                 Ok(cloud_event) => {
                     debug!("{} deserialized event successfully", rc_id);
                     // todo add delivery attempt to routing id
-                    let routing_id = match cloud_event {
-                        CloudEvent::V1_0(ref e) => e.event_id().to_string(),
-                        CloudEvent::V0_2(ref e) => e.event_id().to_string(),
-                    };
+                    let routing_id = cloud_event.id().to_string();
                     rc_send.send(BrokerEvent::IncomingCloudEvent(IncomingCloudEvent {
                         routing_id,
                         incoming_id: (*rc_id).clone(),
@@ -180,7 +177,7 @@ fn setup_connection(
 
 fn send_cloud_event(
     id: &InternalServerId,
-    cloud_event: &CloudEvent,
+    cloud_event: &Event,
     cli: &Option<AsyncClient>,
     options: &Option<MqttOptions>,
 ) {
