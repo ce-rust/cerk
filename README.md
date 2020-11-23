@@ -1,4 +1,4 @@
-# cerk 0.1.0
+# CERK
 
 [![Build status](https://badge.buildkite.com/4494e29d5f2c47e3fe998af46dff78a447800a76a68024e392.svg?branch=master)](https://buildkite.com/ce-rust/cerk)
 
@@ -82,7 +82,7 @@ Different Docker-based development environments can be found [here](https://gith
 ### Prerequisites without Docker
 
 1. latest version of [rustup](https://www.rust-lang.org/tools/install)
-2. Rust version 1.38.0: `rustup install 1.38.0`
+2. Rust version 1.47.0: `rustup install 1.47.0`
 3. Additional C libraries depending on the platform (examples can be found in the Docker containers)
 
 Optional Tooling:
@@ -108,12 +108,11 @@ cargo doc --no-deps --open
 ```
 
 
-## Update Readme
-
-The original readme text is a Rust doc comment in the [lib.rs](./cloudevents/src/lib.rs) file
+## Update a Crate Readme
 
 1. `cargo install cargo-readme`
-2. `cargo readme  -r cerk > README.md`
+2. `cd <crate>`
+3. `cargo readme > README.md`
 
 ## License
 
