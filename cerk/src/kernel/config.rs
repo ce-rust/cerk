@@ -1,9 +1,12 @@
 use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
 
 /// This object represents the configuration for a component.
 /// It can be defined recursively.
 #[allow(missing_docs)]
 #[derive(Debug, Clone, PartialEq)]
+#[serde(untagged)]
+#[derive(Deserialize, Serialize)]
 pub enum Config {
     /// empty configuration
     Null,

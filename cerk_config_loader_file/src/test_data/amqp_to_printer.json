@@ -1,0 +1,24 @@
+{
+  "routing_rules": [
+    "dummy-logger-output"
+  ],
+  "ports": {
+    "ampq-input": {
+      "uri": "amqp://127.0.0.1:5672/%2f",
+      "consume_channels": [
+        {
+          "name": "test",
+          "ensure_queue": true,
+          "bind_to_exchange": "test"
+        }
+      ],
+      "publish_channels": [
+        {
+          "name": "test",
+          "ensure_exchange": true
+        }
+      ]
+    },
+    "dummy-logger-output": null
+  }
+}

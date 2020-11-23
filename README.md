@@ -59,7 +59,8 @@ The ConfigLoader is responsible for providing the newest port configurations and
 
 | Name                                                             | Description                                          |
 |------------------------------------------------------------------|------------------------------------------------------|
-| [static config loader](./examples/src/hello_world/main.rs)       | Have to be implemented for each project individually |
+| [config_loader_file](./cerk_config_loader_file/)                 | Loads the configurations from a json based file      |
+| [config loader_static](./examples/src/hello_world/main.rs)       | Have to be implemented for each project individually |
 
 ## Examples
 
