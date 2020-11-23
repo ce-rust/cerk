@@ -28,8 +28,10 @@ fn build_configs(id: &InternalServerId, config: Config) -> (CreateOptions, MqttO
             }
 
             let send_topic = if let Some(Config::String(topic)) = config_map.get("send_topic") {
+                info!("{} send_topic={}", id, topic);
                 Some(topic.clone())
             } else {
+                info!("{} send_topic=None", id);
                 None
             };
 
@@ -117,13 +119,13 @@ fn setup_connection(
         panic!("Unable to connect: {:?}", e);
     }
 
-    cli.set_connection_lost_callback(|cli: &AsyncClient| {
-        warn!("Connection lost. Attempting reconnect.");
-        let tok = cli.reconnect();
-        if let Err(e) = tok.wait_for(Duration::from_secs(1)) {
-            panic!("Unable to reconnect: {:?}", e);
-        }
-    });
+    // cli.set_connection_lost_callback(|cli: &AsyncClient| {
+    //     warn!("Connection lost. Attempting reconnect.");
+    //     let tok = cli.reconnect();
+    //     if let Err(e) = tok.wait_for(Duration::from_secs(10)) {
+    //         panic!("Unable to reconnect: {:?}", e);
+    //     }
+    // });
 
     let rc_id = Rc::new(id.clone());
     let rc_send = Rc::new((*sender_to_kernel).clone_boxed());
@@ -182,6 +184,12 @@ fn send_cloud_event(
     options: &Option<MqttOptions>,
 ) {
     if cli.is_some() && options.is_some() && options.as_ref().unwrap().send_topic.is_some() {
+        if cli.as_ref().unwrap().is_connected() == false {
+            let reconnect_token = cli.as_ref().unwrap().reconnect();
+            if let Err(e) = reconnect_token.wait_for(Duration::from_secs(10)) {
+                panic!("Unable to reconnect: {:?}", e);
+            }
+        }
         let serialized = serde_json::to_string(cloud_event);
         let msg = Message::new(
             options.as_ref().unwrap().send_topic.as_ref().unwrap(),
@@ -191,7 +199,7 @@ fn send_cloud_event(
         let tok = cli.as_ref().unwrap().publish(msg);
 
         if let Err(e) = tok.wait_for(Duration::from_secs(1)) {
-            panic!("Error sending message: {:?}", e);
+            warn!("Error sending message: {:?}", e);
         }
     } else {
         error!(

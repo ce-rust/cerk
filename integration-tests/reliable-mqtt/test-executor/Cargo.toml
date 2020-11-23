@@ -1,0 +1,21 @@
+[package]
+name = "test-executor"
+version = "0.1.0"
+authors = ["Fabrizio Lazzaretti <fabrizio@lazzaretti.me>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+futures = "0.3.8"
+log = "0.4.0"
+env_logger = "0.7.1"
+paho-mqtt = {version="0.8.0", features=["bundled", "build_bindgen"], default-features = false}
+futures-lite = "1.11.2"
+ctor = "0.1.16"
+anyhow = "1.0"
+cloudevents-sdk = "0.3.0"
+chrono = "0.4"
+serde_json = "1.0"
+async-std = {version = "1.7.0", features = ["attributes"]}
+

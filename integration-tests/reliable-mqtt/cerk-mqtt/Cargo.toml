@@ -1,0 +1,15 @@
+[package]
+name = "cerk-amqp"
+version = "0.1.0"
+authors = ["Fabrizio Lazzaretti <fabrizio@lazzaretti.me>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+log = "0.4.0"
+env_logger = "0.7.1"
+cerk = { path = "../../../cerk" }
+cerk_runtime_threading = { path = "../../../cerk_runtime_threading" }
+cerk_router_broadcast = { path = "../../../cerk_router_broadcast" }
+cerk_port_mqtt = { path = "../../../cerk_port_mqtt" }
