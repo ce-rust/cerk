@@ -1,27 +1,32 @@
-/*!
+# cerk_config_loader_file 0.1.0
+
+[![Build status](https://badge.buildkite.com/4494e29d5f2c47e3fe998af46dff78a447800a76a68024e392.svg?branch=master)](https://buildkite.com/ce-rust/cerk)
+[![Crates.io](https://img.shields.io/crates/v/cerk)](https://docs.rs/cerk/*/cerk/)
+[![Docs status](https://docs.rs/cerk/badge.svg)](https://docs.rs/cerk/)
+
 
 This is a package for [CERK](https://github.com/ce-rust/cerk).
 CERK is an open source [CloudEvents](https://github.com/cloudevents/spec) Router written in Rust with a MicroKernel architecture.
 
-# Introduction
+## Introduction
 
 CERK lets you route your [CloudEvents](https://github.com/cloudevents/spec) between different different ports.
 Ports are transport layer bindings over which CloudEvents can be exchanged.
 It is built with modularity and portability in mind.
 
-# Components
+## Components
 
 CERK comes with a couple of prefabricated components, but implementing custom components is easy.
 
 A good overview is provided on [GitHub](https://github.com/ce-rust/cerk/).
 
-# This Component: File Based Config Loader
+## This Component: File Based Config Loader
 
 This port loads configurations from a json file.
 
 The file path could be set with the env variable `CONFIG_PATH`, default is `./config.json`.
 
-## Example Config
+### Example Config
 
 ```json
 {
@@ -50,19 +55,18 @@ The file path could be set with the env variable `CONFIG_PATH`, default is `./co
 }
 ```
 
-## Examples
+### Examples
 
  * [AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/src/amqp_to_printer/)
 
-*/
 
-#![deny(missing_docs)]
+## Update Readme
 
-#[macro_use]
-extern crate log;
+The original readme text is a Rust doc comment in the [lib.rs](./cloudevents/src/lib.rs) file
 
-mod config_loader_file;
-mod config_parser;
-mod file_reader;
+1. `cargo install cargo-readme`
+2. `cargo readme  > README.md`
 
-pub use self::config_loader_file::config_loader_file_start;
+## License
+
+Apache-2.0
