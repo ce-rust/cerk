@@ -33,7 +33,7 @@ fn static_config_loader_start(
     let mqtt_out_config: HashMap<String, Config> = [
         ("host".to_string(), Config::String(mqtt_broker_url)),
         ("send_topic".to_string(), Config::String("test".to_string())),
-        ("persistance".to_string(), Config::U8(1)),
+        ("persistence".to_string(), Config::U8(1)),
     ]
     .iter()
     .cloned()

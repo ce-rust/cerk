@@ -1,20 +1,28 @@
 [package]
 name = "cerk_port_amqp"
 version = "0.1.0"
-authors = ["Fabrizio Lazzaretti <fabrizio@lazzaretti.me>"]
+authors = [
+    "Linus Basig <linus@basig.me>",
+    "Fabrizio Lazzaretti <fabrizio@lazzaretti.me>"
+]
+description = "This is a package for CERK. CERK is an open source CloudEvents Router written in Rust with a MicroKernel architecture."
+license = "Apache-2.0"
+repository = "https://github.com/ce-rust/cerk"
+documentation = "https://github.com/ce-rust/cerk"
+homepage = "https://github.com/ce-rust/cerk"
+keywords = ["cloudevents", "router", "cerk", "amqp"]
+readme = "README.md"
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 log = "0.4.0"
 env_logger = "0.7.1"
-cerk = { path = "../cerk" }
+cerk = { version = "0.2.0", path = "../cerk" }
 serde_json = "1.0"
 lapin = { version = "1.5.0", features = [], default-features = false }
 async-global-executor = "1.4.3"
 futures-lite = "1.11.2"
-amq-protocol-types = { version = "6.0.1"  }
+amq-protocol-types = "6.0.1"
 amq-protocol = { version = "6.0.1", features = [], default-features = false }
 anyhow = "1.0"
 async-std = "1.7.0"

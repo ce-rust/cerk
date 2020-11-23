@@ -63,6 +63,8 @@ fn liten_to_stream(
     }
 }
 
+/// This is the main function to start the port.
+///
 /// This port reads CloudEvents form a UNIX Socket and sens them to the Kernel.
 ///
 /// # Configurations

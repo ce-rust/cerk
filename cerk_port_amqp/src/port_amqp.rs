@@ -505,22 +505,7 @@ async fn ack_nack_pending_event(
     Ok(())
 }
 
-/// This port publishes and/or subscribe CloudEvents to/from an AMQP broker with protocol version v0.9.1.
-///
-/// The port is implemented with [lapin](https://github.com/CleverCloud/lapin).
-///
-/// # Content Modes
-///
-/// The port supports the structured content mode with the JSON event format.
-/// However, it does not support the binary content mode.
-///
-/// <https://github.com/cloudevents/spec/blob/master/amqp-protocol-binding.md#2-use-of-cloudevents-attributes>
-///
-/// # Examples
-///
-/// * [Sequence to AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/src/sequence_to_amqp_to_printer/)
-/// * [AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/src/amqp_to_printer/)
-///
+/// This is the main function to start the port.
 pub fn port_amqp_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel: BoxedSender) {
     let mut connection_option: Option<Connection> = None;
     let mut configuration_option: Option<AmqpOptions> = None;

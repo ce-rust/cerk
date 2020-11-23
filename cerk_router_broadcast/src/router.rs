@@ -38,26 +38,7 @@ fn route_event(
     }))
 }
 
-/// This router broadcasts all received CloudEvents to the configured ports.
-///
-/// # Configurations
-///
-/// The Socket expects a `Config::Vec([Config::String])` as configuration.
-/// The strings should be Port ids, to which all received CloudEvents should be forwarded to.
-///
-/// e.g.
-/// ```
-///# use cerk::kernel::Config;
-///  let config = Config::Vec(vec![Config::String(String::from("output-port"))]);
-/// ```
-///
-/// # Examples
-///
-/// * [Hello World Example](https://github.com/ce-rust/cerk/tree/master/examples/src/hello_world)
-/// * [UNIX Socket Example](https://github.com/ce-rust/cerk/tree/master/examples/src/unix_socket)
-/// * [AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/src/amqp_to_printer/)
-/// * [Sequence to AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/src/sequence_to_amqp_to_printer/)
-///
+/// This is the main function to start the router.
 pub fn router_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel: BoxedSender) {
     info!("start broadcast router with id {}", id);
     let mut config: Config = Config::Null;

@@ -74,46 +74,7 @@ fn parse_config(config_update: String) -> Result<RoutingTable, SerdeErrorr> {
     serde_json::from_str::<RoutingTable>(&config_update)
 }
 
-/// The rule-based router routes events based on the given configuration.
-///
-/// The configurations are structured in a tree format.
-/// One configuration tree per output port needs to be configured.
-/// The operations `And`, `Or`, `Contains`, `StartsWith` and more are supported.
-///
-/// # Configurations
-///
-/// The Socket expects a `Config::String` as configuration.
-/// The string should be a json deserialized `routing_rules::RoutingTable;`.
-///
-/// minimal: `Config::String("{}".to_string())`
-///
-/// ## Example
-///
-/// ```
-/// use serde_json;
-/// use cerk_router_rule_based::{CloudEventFields, RoutingRules, RoutingTable};
-///
-/// let routing_rules: RoutingTable = [(
-///   "dummy-logger-output".to_string(),
-///   RoutingRules::And(vec![
-///     RoutingRules::Exact(
-///         CloudEventFields::Source,
-///         Some("dummy.sequence-generator".to_string()),
-///     ),
-///     RoutingRules::EndsWith(CloudEventFields::Id, "0".to_string()),
-///   ]),
-/// )]
-/// .iter()
-/// .cloned()
-/// .collect();
-///
-/// let routing_configs = serde_json::to_string(&routing_rules).unwrap();
-/// ```
-///
-/// # Examples
-///
-/// * [Rule Based Routing Example](https://github.com/ce-rust/cerk/tree/master/examples/src/rule_based_routing)
-///
+/// This is the main function to start the router.
 pub fn router_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel: BoxedSender) {
     info!("start broadcast router with id {}", id);
     let mut config: Option<RoutingTable> = None;

@@ -1,8 +1,6 @@
-# cerk 0.2.0
+# cerk_router_broadcast 0.2.0
 
 [![Build status](https://badge.buildkite.com/4494e29d5f2c47e3fe998af46dff78a447800a76a68024e392.svg?branch=master)](https://buildkite.com/ce-rust/cerk)
-[![Crates.io](https://img.shields.io/crates/v/cerk)](https://docs.rs/cerk/*/cerk/)
-[![Docs status](https://docs.rs/cerk/badge.svg)](https://docs.rs/cerk/)
 
 
 This is a package for [CERK](https://github.com/ce-rust/cerk).
@@ -20,11 +18,27 @@ CERK comes with a couple of prefabricated components, but implementing custom co
 
 A good overview is provided on [GitHub](https://github.com/ce-rust/cerk/).
 
-### This Component: The MicroKernel
+## This Component: Broadcast Router
 
-The MicroKernel is responsible for starting the other components with the help of the Scheduler and brokering messages between them.
+This router broadcasts all received CloudEvents to the configured ports.
 
-The MicroKernel is implemented in this crate.
+## Configurations
+
+The Socket expects a `Config::Vec([Config::String])` as configuration.
+The strings should be Port ids, to which all received CloudEvents should be forwarded to.
+
+e.g.
+```rust
+use cerk::kernel::Config;
+let config = Config::Vec(vec![Config::String(String::from("output-port"))]);
+```
+
+## Examples
+
+* [Hello World Example](https://github.com/ce-rust/cerk/tree/master/examples/src/hello_world)
+* [UNIX Socket Example](https://github.com/ce-rust/cerk/tree/master/examples/src/unix_socket)
+* [AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/src/amqp_to_printer/)
+* [Sequence to AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/src/sequence_to_amqp_to_printer/)
 
 
 ## Update Readme

@@ -4,9 +4,9 @@ use cerk::runtime::channel::BoxedSender;
 use cerk::runtime::{InternalServerFn, InternalServerId};
 use std::thread;
 
-/// A Scheduler implementation for CERK based on the `std::thread` model.
-/// `std::sync::mpsc` is used for the channels.
-/// The function that gets invoked in the `bootstrap` function in the start phase of CERK.
+/// This is the main function to start the scheduler.
+///
+/// This function gets invoked in the `bootstrap` function in the start phase of CERK.
 pub fn threading_scheduler_start(start_options: StartOptions, start_kernel: KernelFn) {
     info!("start threading scheduler");
 
