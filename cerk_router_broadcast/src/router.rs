@@ -4,14 +4,14 @@ use cerk::kernel::{
 };
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
-use cloudevents::CloudEvent;
+use cloudevents::Event;
 
 fn route_event(
     incoming_port: InternalServerId,
     sender_to_kernel: &BoxedSender,
     port_ids: &Vec<Config>,
     event_id: CloudEventMessageRoutingId,
-    cloud_event: CloudEvent,
+    cloud_event: Event,
     args: CloudEventRoutingArgs,
 ) {
     let routing: Vec<_> = port_ids

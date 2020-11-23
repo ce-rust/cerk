@@ -1,7 +1,7 @@
 use cerk::kernel::{BrokerEvent, Config};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
-use cloudevents::CloudEvent;
+use cloudevents::Event;
 use serde_json;
 use std::io::Write;
 use std::os::unix::net::{UnixListener, UnixStream};
@@ -9,7 +9,7 @@ use std::os::unix::net::{UnixListener, UnixStream};
 fn write_to_stream(
     listener: &UnixListener,
     stream: Option<UnixStream>,
-    event: &CloudEvent,
+    event: &Event,
     max_tries: usize,
 ) -> Option<UnixStream> {
     if max_tries == 0 {

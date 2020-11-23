@@ -10,7 +10,7 @@ use cerk::kernel::{
 };
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
-use cloudevents::CloudEvent;
+use cloudevents::{AttributesReader, Event};
 use futures_lite::future;
 use futures_lite::stream::StreamExt;
 use lapin::message::Delivery;
@@ -357,7 +357,7 @@ fn receive_message(
     let (channel, delivery) = delivery.as_ref().expect("error in consumer");
     debug!("{} received CloudEvent on queue {}", id, channel.id());
     let payload_str = std::str::from_utf8(&delivery.data).unwrap();
-    match serde_json::from_str::<CloudEvent>(&payload_str) {
+    match serde_json::from_str::<Event>(&payload_str) {
         Ok(cloud_event) => {
             debug!("{} deserialized event successfully", id);
             let routing_id = get_event_id(&cloud_event, &delivery.delivery_tag);
@@ -400,14 +400,11 @@ fn receive_message(
     Ok(())
 }
 
-fn get_event_id(cloud_event: &CloudEvent, delivery_tag: &LongLongUInt) -> String {
-    match cloud_event {
-        CloudEvent::V0_2(event) => format!("{}--{}", event.event_id(), delivery_tag),
-        CloudEvent::V1_0(event) => format!("{}--{}", event.event_id(), delivery_tag),
-    }
+fn get_event_id(cloud_event: &Event, delivery_tag: &LongLongUInt) -> String {
+    format!("{}--{}", cloud_event.id(), delivery_tag)
 }
 
-async fn send_cloud_event(cloud_event: &CloudEvent, configurations: &AmqpOptions) -> Result<()> {
+async fn send_cloud_event(cloud_event: &Event, configurations: &AmqpOptions) -> Result<()> {
     let payload = serde_json::to_string(cloud_event).unwrap();
     for (name, options) in configurations.publish_channels.iter() {
         let result = match options.channel {

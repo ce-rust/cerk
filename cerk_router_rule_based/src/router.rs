@@ -2,30 +2,27 @@ use crate::routing_rules::{CloudEventFields, RoutingRules, RoutingTable};
 use cerk::kernel::{BrokerEvent, Config, IncomingCloudEvent, OutgoingCloudEvent, RoutingResult};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::InternalServerId;
-use cloudevents::CloudEvent;
+use cloudevents::{AttributesReader, Event};
 use serde_json;
 use serde_json::error::Error as SerdeErrorr;
 
-fn compare_field<F>(field: &CloudEventFields, cloud_event: &CloudEvent, compare: F) -> bool
+fn compare_field<F>(field: &CloudEventFields, cloud_event: &Event, compare: F) -> bool
 where
     F: for<'a> Fn(Option<&'a str>) -> bool,
 {
     match field {
-        CloudEventFields::Id => compare(Some(get_event_field!(cloud_event, event_id))),
-        CloudEventFields::Source => compare(Some(get_event_field!(cloud_event, source))),
-        CloudEventFields::Subject => match cloud_event {
-            CloudEvent::V0_2(_) => false,
-            CloudEvent::V1_0(event) => compare(event.subject()),
-        },
-        CloudEventFields::Dataschema => match cloud_event {
-            CloudEvent::V0_2(event) => compare(event.schema_url()),
-            CloudEvent::V1_0(event) => compare(event.dataschema()),
-        },
-        CloudEventFields::Type => compare(Some(get_event_field!(cloud_event, event_type))),
+        CloudEventFields::Id => compare(Some(cloud_event.id())),
+        CloudEventFields::Source => compare(Some(cloud_event.source().as_str())),
+        CloudEventFields::Subject => cloud_event
+            .subject()
+            .and_then(|s| Some(compare(Some(s))))
+            .unwrap_or_else(|| false),
+        CloudEventFields::Dataschema => compare(cloud_event.dataschema().map(|s| s.as_str())),
+        CloudEventFields::Type => compare(Some(cloud_event.ty())),
     }
 }
 
-fn route_to_port(rules: &RoutingRules, cloud_event: &CloudEvent) -> bool {
+fn route_to_port(rules: &RoutingRules, cloud_event: &Event) -> bool {
     match rules {
         RoutingRules::And(rules) => rules.iter().all(|rule| route_to_port(rule, cloud_event)),
         RoutingRules::Or(rules) => rules.iter().any(|rule| route_to_port(rule, cloud_event)),
@@ -147,6 +144,7 @@ pub fn router_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel
 mod tests {
     use super::*;
     use crate::routing_rules::{CloudEventFields, RoutingRules};
+    use cloudevents::{EventBuilder, EventBuilderV10};
 
     #[test]
     fn rout_to_port_by_id() {
@@ -154,22 +152,22 @@ mod tests {
         // positive
         assert!(route_to_port(
             &rule,
-            &cloudevent!(
-                event_id: "1234",
-                event_type: "test type",
-                source: "testi",
-            )
-            .unwrap(),
+            &EventBuilderV10::new()
+                .id("1234")
+                .ty("test type")
+                .source("http://example.com/testi")
+                .build()
+                .unwrap(),
         ));
         // negative
         assert!(!route_to_port(
             &rule,
-            &cloudevent!(
-                event_id: "12345",
-                event_type: "test type",
-                source: "testi",
-            )
-            .unwrap(),
+            &EventBuilderV10::new()
+                .id("12345")
+                .ty("test type")
+                .source("http://example.com/testi")
+                .build()
+                .unwrap(),
         ));
     }
 
@@ -182,23 +180,23 @@ mod tests {
         // positive
         assert!(route_to_port(
             &rule,
-            &cloudevent!(
-                event_id: "1",
-                event_type: "testtype1",
-                source: "1testsource1",
-            )
-            .unwrap(),
+            &EventBuilderV10::new()
+                .id("1")
+                .ty("testtype1")
+                .source("http://example.com/1testsource1")
+                .build()
+                .unwrap(),
         ));
         // negative
         // positive
         assert!(!route_to_port(
             &rule,
-            &cloudevent!(
-                event_id: "1",
-                event_type: "1testtype",
-                source: "1test1source1",
-            )
-            .unwrap(),
+            &EventBuilderV10::new()
+                .id("1")
+                .ty("1testtype")
+                .source("http://example.com/1test1source1")
+                .build()
+                .unwrap(),
         ));
     }
 }
