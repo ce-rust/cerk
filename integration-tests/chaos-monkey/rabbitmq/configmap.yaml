@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rabbitmq-config
+data:
+  enabled_plugins: |
+    [rabbitmq_management].
+
+  rabbitmq.conf: |
+    # allow guest user
+    loopback_users = none
+    default_user = guest
+    default_pass = guest

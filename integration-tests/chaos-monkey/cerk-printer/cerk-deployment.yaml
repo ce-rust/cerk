@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cerk-printer-deployment
+  labels:
+    app: cerk-printer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cerk-printer
+  template:
+    metadata:
+      labels:
+        app: cerk-printer
+    spec:
+      containers:
+        - name: cerk-printer
+          image: cloudeventsrouter/cerk:common-0.0.1
+          env:
+            - name: RUST_LOG
+              value: debug
+          volumeMounts:
+            - name: cerk-configs
+              mountPath: /init.json
+              subPath: init.json
+            - name: cerk-configs
+              mountPath: /config.json
+              subPath: config.json
+      volumes:
+        - name: cerk-configs
+          configMap:
+              name: cerk-printer-configs
