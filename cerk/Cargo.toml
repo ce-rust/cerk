@@ -10,7 +10,7 @@ license = "Apache-2.0"
 repository = "https://github.com/ce-rust/cerk"
 documentation = "https://github.com/ce-rust/cerk"
 homepage = "https://github.com/ce-rust/cerk"
-keywords = ["cloudevents", "router"]
+keywords = ["cloudevents", "router", "cerk"]
 readme = "README.md"
 edition = "2018"
 

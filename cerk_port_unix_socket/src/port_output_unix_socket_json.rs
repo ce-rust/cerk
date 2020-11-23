@@ -37,6 +37,8 @@ fn write_to_stream(
     }
 }
 
+/// This is the main function to start the port.
+///
 /// This port writes CloudEvents to a UNIX Socket.
 ///
 /// # Configurations

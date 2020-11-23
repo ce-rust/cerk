@@ -1,49 +1,49 @@
-/*!
+# cerk_port_amqp 0.1.0
+
+[![Build status](https://badge.buildkite.com/4494e29d5f2c47e3fe998af46dff78a447800a76a68024e392.svg?branch=master)](https://buildkite.com/ce-rust/cerk)
+
 
 This is a package for [CERK](https://github.com/ce-rust/cerk).
 CERK is an open source [CloudEvents](https://github.com/cloudevents/spec) Router written in Rust with a MicroKernel architecture.
 
-# Introduction
+## Introduction
 
 CERK lets you route your [CloudEvents](https://github.com/cloudevents/spec) between different different ports.
 Ports are transport layer bindings over which CloudEvents can be exchanged.
 It is built with modularity and portability in mind.
 
-# Components
+## Components
 
 CERK comes with a couple of prefabricated components, but implementing custom components is easy.
 
 A good overview is provided on [GitHub](https://github.com/ce-rust/cerk/).
 
-# This Component: AMQP Port
+## This Component: AMQP Port
 
 This port publishes and/or subscribe CloudEvents to/from an AMQP broker with protocol version v0.9.1.
 
 The port is implemented with [lapin](https://github.com/CleverCloud/lapin).
 
-## Content Modes
+### Content Modes
 
 The port supports the structured content mode with the JSON event format.
 However, it does not support the binary content mode.
 
 <https://github.com/cloudevents/spec/blob/master/amqp-protocol-binding.md#2-use-of-cloudevents-attributes>
 
-## Examples
+### Examples
 
  * [Sequence to AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/src/sequence_to_amqp_to_printer/)
  * [AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/src/amqp_to_printer/)
 
-*/
 
-#![deny(missing_docs)]
+## Update Readme
 
-#[macro_use]
-extern crate log;
+The original readme text is a Rust doc comment in the [lib.rs](./cloudevents/src/lib.rs) file
 
-#[macro_use]
-extern crate anyhow;
+1. `cargo install cargo-readme`
+2. `cargo readme  > README.md`
 
-pub mod lapin_helper;
-mod port_amqp;
+## License
 
-pub use self::port_amqp::port_amqp_start;
+Apache-2.0
