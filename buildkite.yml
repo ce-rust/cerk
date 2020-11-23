@@ -35,7 +35,9 @@ steps:
   - label: "example: execute sequence_to_amqp_to_printer"
     commands:
       - cd examples/src/sequence_to_amqp_to_printer
+      - docker-compose down
       - ./run-example.sh
+      - docker-compose down
     timeout_in_minutes: 15
     artifact_paths: "**/build.log"
   - label: "setup: ubuntulinux"
