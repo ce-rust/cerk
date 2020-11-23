@@ -27,4 +27,4 @@ services:
       - /bin/bash 
       - -c
       - |
-        diff <(cargo readme  -r cerk) README.md || (echo 1>&2 'Please update the README with `cargo readme -r cerk > README.md`' && exit 1 )
+        diff <(cargo readme  -r cerk) cerk/README.md || (echo 1>&2 'Please update the cerk/README with `cargo readme -r cerk > cerk/README.md`' && exit 1 )
