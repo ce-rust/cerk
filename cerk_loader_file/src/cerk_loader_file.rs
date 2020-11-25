@@ -1,7 +1,7 @@
 use crate::config_parser::parse_json_to_start_options;
 use crate::file_reader::read_file;
 use crate::start_links::ComponentStartLinks;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use cerk::kernel::{bootstrap, StartOptions};
 use std::env;
 
@@ -10,6 +10,7 @@ pub fn load_by_path<'a>(path: String, links: ComponentStartLinks<'static>) -> Re
     info!("loading loader config from {}", path);
     let content = read_file(path.as_str())?;
     parse_json_to_start_options(content, links)
+        .with_context(|| format!("failed to parse file {}", path))
 }
 
 fn load<'a>(links: ComponentStartLinks<'static>) -> Result<StartOptions> {

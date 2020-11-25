@@ -28,20 +28,33 @@ fn parse_config_to_start_options(
     links: &ComponentStartLinks<'static>,
     config: &Configuration,
 ) -> Result<StartOptions> {
-    let ports: Vec<ScheduleInternalServerStatic> = config
+    let ports: Vec<Result<ScheduleInternalServerStatic>> = config
         .ports
         .iter()
-        .map(|(id, name)| ScheduleInternalServer {
-            id: id.to_string(),
-            function: get_link(name, &links.ports).unwrap(),
+        .map(|(id, name)| {
+            Ok(ScheduleInternalServer {
+                id: id.to_string(),
+                function: get_link(name, &links.ports)?,
+            })
         })
         .collect();
+
+    if let Some(e) = ports.iter().find(|e| e.is_err()).map(|e| e.as_ref()) {
+        bail!(
+            "error while building start options for ports: {:?}",
+            e.err().unwrap()
+        );
+    }
 
     let config = StartOptions {
         scheduler: get_link(&config.scheduler, &links.schedulers)?,
         config_loader: get_link(&config.config_loader, &links.config_loaders)?,
         router: get_link(&config.router, &links.routers)?,
-        ports,
+        ports: ports
+            .iter()
+            .map(|ref r| r.as_ref().unwrap())
+            .cloned()
+            .collect(),
     };
 
     Ok(config)

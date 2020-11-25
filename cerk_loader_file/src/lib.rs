@@ -27,11 +27,11 @@ The configuration file could be passed by the env variable `$CONFIG_PATH` or jus
 
 ```json
 {
-  "scheduler": "myschedulertype",
-  "router": "myroutertype",
-  "config_loader": "myconfig_loadertype",
+  "scheduler": "SCHEDULER",
+  "router": "ROUTER",
+  "config_loader": "CONFIG_LOADER",
   "ports": {
-    "myport": "myporttype"
+    "myport": "PORT"
   }
 }
 ```
@@ -39,39 +39,44 @@ The configuration file could be passed by the env variable `$CONFIG_PATH` or jus
 #### Example ComponentStartLinks
 
 ```no_run
- use cerk::runtime::{InternalServerId, InternalServerFn, ScheduleFn};
- use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
- use cerk::kernel::{StartOptions, KernelFn};
+#[macro_use]
+extern crate cerk_loader_file;
 use cerk_loader_file::{start, ComponentStartLinks};
 
-fn dummy_scheduler(_: StartOptions, _: KernelFn) {}
+# use cerk::runtime::{InternalServerId, InternalServerFn, InternalServerFnRefStatic, ScheduleFn, ScheduleFnRefStatic};
+# use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
+# use cerk::kernel::{StartOptions, KernelFn};
+#
+# fn dummy_scheduler(_: StartOptions, _: KernelFn) {}
+#
+# fn dummy_router(_: InternalServerId, _: BoxedReceiver, _: BoxedSender) {}
+#
+# fn dummy_config_loader(_: InternalServerId, _: BoxedReceiver, _: BoxedSender) {}
+#
+# fn dummy_port(_: InternalServerId, _: BoxedReceiver, _: BoxedSender) {}
+#
+# fn dummy_port_other(_: InternalServerId, _: BoxedReceiver, _: BoxedSender) {}
+#
+# const SCHEDULER: ScheduleFnRefStatic = &(dummy_scheduler as ScheduleFn);
+# const ROUTER: InternalServerFnRefStatic = &(dummy_router as InternalServerFn);
+# const CONFIG_LOADER: InternalServerFnRefStatic = &(dummy_config_loader as InternalServerFn);
+# const PORT: InternalServerFnRefStatic = &(dummy_port as InternalServerFn);
 
-fn dummy_router(_: InternalServerId, _: BoxedReceiver, _: BoxedSender) {}
+fn main() {
+    let link = ComponentStartLinks {
+            schedulers: fn_to_links![SCHEDULER],
+            routers: fn_to_links![ROUTER],
+            config_loaders: fn_to_links![CONFIG_LOADER],
+            ports: fn_to_links![PORT],
+        };
 
-fn dummy_config_loader(_: InternalServerId, _: BoxedReceiver, _: BoxedSender) {}
-
-fn dummy_port(_: InternalServerId, _: BoxedReceiver, _: BoxedSender) {}
-
-fn dummy_port_other(_: InternalServerId, _: BoxedReceiver, _: BoxedSender) {}
-
-
-let link = ComponentStartLinks {
-        schedulers: [("myschedulertype".to_string(), &(dummy_scheduler as ScheduleFn))].iter()
-            .cloned()
-            .collect(),
-        routers: [("myroutertype".to_string(), &(dummy_router as InternalServerFn))].iter()
-            .cloned()
-            .collect(),
-        config_loaders: [("myconfig_loadertype".to_string(), &(dummy_config_loader as InternalServerFn))].iter()
-            .cloned()
-            .collect(),
-        ports: [("myporttype".to_string(), &(dummy_port as InternalServerFn))].iter()
-            .cloned()
-            .collect(),
-    };
-
-start(link);
+    start(link);
+}
 ```
+
+## Examples
+
+ * [AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/src/amqp_to_printer/)
 
 */
 
@@ -82,6 +87,9 @@ mod start_links;
 
 #[macro_use]
 extern crate log;
+
+#[macro_use]
+extern crate anyhow;
 
 pub use self::cerk_loader_file::{load_by_path, start};
 pub use self::start_links::ComponentStartLinks;
