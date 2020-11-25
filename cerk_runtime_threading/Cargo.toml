@@ -1,6 +1,6 @@
 [package]
 name = "cerk_runtime_threading"
-version = "0.2.0"
+version = "0.2.1"
 authors = [
     "Linus Basig <linus@basig.me>",
     "Fabrizio Lazzaretti <fabrizio@lazzaretti.me>"
@@ -18,4 +18,4 @@ edition = "2018"
 
 [dependencies]
 log = "0.4.0"
-cerk = { version = "0.2.0", path = "../cerk" }
+cerk = { version = "0.2", path = "../cerk" }
