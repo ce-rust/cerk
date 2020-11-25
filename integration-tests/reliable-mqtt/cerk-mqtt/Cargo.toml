@@ -1,5 +1,5 @@
 [package]
-name = "cerk-amqp"
+name = "cerk-mqtt"
 version = "0.1.0"
 authors = ["Fabrizio Lazzaretti <fabrizio@lazzaretti.me>"]
 edition = "2018"
