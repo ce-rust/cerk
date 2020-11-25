@@ -396,9 +396,9 @@ dependencies = [
 
 [[package]]
 name = "cerk_port_dummies"
-version = "0.2.2"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "490a9e128306211f6bde9fae40df51905a7e99f47c7ea6451303182db800722b"
+checksum = "a327a5449f3f32cdbf7c75f9a010505b4f05141ef92d741dd8dc96c0d34e051b"
 dependencies = [
  "cerk",
  "chrono",
