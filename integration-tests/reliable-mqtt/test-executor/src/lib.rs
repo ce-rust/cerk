@@ -165,7 +165,7 @@ mod test {
             }
         }
 
-        timeout(Duration::from_secs(120), stored_messages_observer).await?;
+        timeout(Duration::from_secs(20), stored_messages_observer).await?;
 
         try_join!(
             inbox_client.disconnect_after(Duration::from_secs(1)),
