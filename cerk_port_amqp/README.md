@@ -39,7 +39,7 @@ However, it does not support the binary content mode.
 
 ## Update Readme
 
-The original readme text is a Rust doc comment in the [lib.rs](./cloudevents/src/lib.rs) file
+The original readme text is a Rust doc comment in the [lib.rs](./src/lib.rs) file
 
 1. `cargo install cargo-readme`
 2. `cargo readme  > README.md`
