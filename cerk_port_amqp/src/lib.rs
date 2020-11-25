@@ -46,4 +46,4 @@ extern crate anyhow;
 pub mod lapin_helper;
 mod port_amqp;
 
-pub use self::port_amqp::port_amqp_start;
+pub use self::port_amqp::{port_amqp_start, PORT_AMQP};

@@ -62,6 +62,14 @@ The ConfigLoader is responsible for providing the newest port configurations and
 | [config_loader_file](./cerk_config_loader_file/)                 | Loads the configurations from a json based file      |
 | [config loader_static](./examples/src/hello_world/main.rs)       | Have to be implemented for each project individually |
 
+### Loaders
+
+The Loader helps by starting the router with different components.
+
+| Name                                                             | Description                                          |
+|------------------------------------------------------------------|------------------------------------------------------|
+| [cerk_loader_file](./cerk_loader_file/)                          | Starts the router by configuration provided by a json file |
+
 ## Examples
 
 Check out the README in the folder of each example for more details and setup instructions.

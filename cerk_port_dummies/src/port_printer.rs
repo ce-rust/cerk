@@ -1,6 +1,6 @@
 use cerk::kernel::BrokerEvent;
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
-use cerk::runtime::InternalServerId;
+use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
 use serde_json;
 
 /// This port prints the CloudEvent id to the logger.
@@ -30,3 +30,6 @@ pub fn port_printer_start(
         }
     }
 }
+
+/// This is the pointer for the main function to start the port.
+pub static PORT_PRINTER: InternalServerFnRefStatic = &(port_printer_start as InternalServerFn);

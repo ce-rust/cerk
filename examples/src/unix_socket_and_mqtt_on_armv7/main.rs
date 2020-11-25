@@ -1,17 +1,16 @@
 #[macro_use]
 extern crate log;
+
 use env_logger::Env;
 use std::env;
 
-use cerk::kernel::{bootstrap, BrokerEvent, Config, StartOptions};
+use cerk::kernel::{bootstrap, BrokerEvent, Config, ScheduleInternalServer, StartOptions};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
-use cerk::runtime::InternalServerId;
-use cerk_port_mqtt::port_mqtt_start;
-use cerk_port_unix_socket::{
-    port_input_unix_socket_json_start, port_output_unix_socket_json_start,
-};
-use cerk_router_rule_based::{router_start, CloudEventFields, RoutingRules, RoutingTable};
-use cerk_runtime_threading::threading_scheduler_start;
+use cerk::runtime::{InternalServerFn, InternalServerId};
+use cerk_port_mqtt::PORT_MQTT;
+use cerk_port_unix_socket::{PORT_INPUT_UNIX_SOCKET, PORT_OUTPUT_UNIX_SOCKET};
+use cerk_router_rule_based::{CloudEventFields, RoutingRules, RoutingTable, ROUTER_RULE_BASED};
+use cerk_runtime_threading::THREADING_SCHEDULER;
 use std::collections::HashMap;
 use std::fs::remove_file;
 
@@ -92,20 +91,23 @@ fn main() {
 
     info!("start UNIX Socket and MQTT example");
     let start_options = StartOptions {
-        scheduler_start: threading_scheduler_start,
-        router_start: router_start,
-        config_loader_start: static_config_loader_start,
-        ports: Box::new([
-            (
-                String::from(PORT_UNIX_INPUT),
-                port_input_unix_socket_json_start,
-            ),
-            (
-                String::from(PORT_UNIX_OUTPUT),
-                port_output_unix_socket_json_start,
-            ),
-            (String::from(PORT_MQTT_OUTPUT), port_mqtt_start),
-        ]),
+        scheduler: THREADING_SCHEDULER,
+        router: ROUTER_RULE_BASED,
+        config_loader: &(static_config_loader_start as InternalServerFn),
+        ports: vec![
+            ScheduleInternalServer {
+                id: String::from(PORT_UNIX_INPUT),
+                function: PORT_INPUT_UNIX_SOCKET,
+            },
+            ScheduleInternalServer {
+                id: String::from(PORT_UNIX_OUTPUT),
+                function: PORT_OUTPUT_UNIX_SOCKET,
+            },
+            ScheduleInternalServer {
+                id: String::from(PORT_MQTT_OUTPUT),
+                function: PORT_MQTT,
+            },
+        ],
     };
     bootstrap(start_options);
 }

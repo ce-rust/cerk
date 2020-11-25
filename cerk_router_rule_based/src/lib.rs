@@ -72,5 +72,5 @@ extern crate log;
 mod router;
 mod routing_rules;
 
-pub use self::router::router_start;
+pub use self::router::{router_start, ROUTER_RULE_BASED};
 pub use self::routing_rules::{CloudEventFields, RoutingRules, RoutingTable};

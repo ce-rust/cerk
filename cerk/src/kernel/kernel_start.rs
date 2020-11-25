@@ -1,7 +1,9 @@
 //! Implementation of the Kernel
 
 use super::{BrokerEvent, StartOptions};
-use crate::kernel::broker_event::{OutgoingCloudEventProcessed, RoutingResult};
+use crate::kernel::broker_event::{
+    OutgoingCloudEventProcessed, RoutingResult, ScheduleInternalServer,
+};
 use crate::kernel::{CloudEventMessageRoutingId, ProcessingResult};
 use crate::runtime::channel::{BoxedReceiver, BoxedSender};
 use crate::runtime::InternalServerId;
@@ -198,16 +200,20 @@ pub fn kernel_start(
     let mut pending_deliveries = PendingDeliveries::new();
 
     sender_to_scheduler.send(BrokerEvent::ScheduleInternalServer(
-        String::from(ROUTER_ID),
-        start_options.router_start,
+        ScheduleInternalServer {
+            id: String::from(ROUTER_ID),
+            function: start_options.router,
+        },
     ));
     sender_to_scheduler.send(BrokerEvent::ScheduleInternalServer(
-        String::from(CONFIG_LOADER_ID),
-        start_options.config_loader_start,
+        ScheduleInternalServer {
+            id: String::from(CONFIG_LOADER_ID),
+            function: start_options.config_loader,
+        },
     ));
 
-    for (id, port_start) in start_options.ports.iter() {
-        sender_to_scheduler.send(BrokerEvent::ScheduleInternalServer(id.clone(), *port_start));
+    for service in start_options.ports.iter() {
+        sender_to_scheduler.send(BrokerEvent::ScheduleInternalServer(service.clone()));
     }
     let number_of_servers = 2 + start_options.ports.len(); // 2 = router + config_loader
 

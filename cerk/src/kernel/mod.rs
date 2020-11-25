@@ -12,7 +12,8 @@ mod start_options;
 pub use self::bootstrap::{bootstrap, KernelFn};
 pub use self::broker_event::{
     BrokerEvent, CloudEventMessageRoutingId, IncomingCloudEvent, OutgoingCloudEvent,
-    OutgoingCloudEventProcessed, RoutingResult,
+    OutgoingCloudEventProcessed, RoutingResult, ScheduleInternalServer,
+    ScheduleInternalServerStatic,
 };
 pub use self::cloud_event_routing_args::CloudEventRoutingArgs;
 pub use self::config::Config;

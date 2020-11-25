@@ -3,7 +3,7 @@ use cerk::kernel::{
     RoutingResult,
 };
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
-use cerk::runtime::InternalServerId;
+use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
 use cloudevents::Event;
 
 fn route_event(
@@ -61,3 +61,6 @@ pub fn router_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel
         }
     }
 }
+
+/// This is the pointer for the main function to start the router.
+pub static ROUTER_BROADCAST: InternalServerFnRefStatic = &(router_start as InternalServerFn);

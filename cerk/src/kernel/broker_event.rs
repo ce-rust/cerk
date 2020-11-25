@@ -2,7 +2,7 @@ use super::Config;
 use crate::kernel::outgoing_processing_result::ProcessingResult;
 use crate::kernel::CloudEventRoutingArgs;
 use crate::runtime::channel::BoxedSender;
-use crate::runtime::{InternalServerFn, InternalServerId};
+use crate::runtime::{InternalServerFnRef, InternalServerId};
 use cloudevents::Event;
 use std::fmt;
 
@@ -26,7 +26,7 @@ pub enum BrokerEvent {
     /// * `InternalServerId` - id of the component that should be scheduled
     /// * `InternalServerFn` - start function of the component that should be scheduled
     ///
-    ScheduleInternalServer(InternalServerId, InternalServerFn),
+    ScheduleInternalServer(ScheduleInternalServerStatic),
 
     /// The InernalServerScheduled event indicates to the receiver that a new internal server was successfully scheduled.
     /// The event gets produced by the scheduler after a component was scheduled (because of a ScheduleInternalServer event).
@@ -96,8 +96,8 @@ impl fmt::Display for BrokerEvent {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             BrokerEvent::Init => write!(f, "Init"),
-            BrokerEvent::ScheduleInternalServer(id, _) => {
-                write!(f, "ScheduleInternalServer server_id={}", id)
+            BrokerEvent::ScheduleInternalServer(event) => {
+                write!(f, "ScheduleInternalServer server_id={}", event.id)
             }
             BrokerEvent::InternalServerScheduled(id, _) => {
                 write!(f, "InternalServerScheduled server_id={}", id)
@@ -171,3 +171,15 @@ pub struct OutgoingCloudEventProcessed {
     /// result of the processing, was the processing successful? Error?
     pub result: ProcessingResult,
 }
+
+/// Struct for `BrokerEvent::ScheduleInternalServer`
+#[derive(Clone)]
+pub struct ScheduleInternalServer<'a> {
+    /// id of the service that should be scheduled
+    pub id: InternalServerId,
+    /// pointer to the start function
+    pub function: InternalServerFnRef<'a>,
+}
+
+/// Fixed static lifetime for struct for `BrokerEvent::ScheduleInternalServer`
+pub type ScheduleInternalServerStatic = ScheduleInternalServer<'static>;

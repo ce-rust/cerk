@@ -2,14 +2,12 @@
 extern crate log;
 use env_logger::Env;
 
-use cerk::kernel::{bootstrap, BrokerEvent, Config, StartOptions};
+use cerk::kernel::{bootstrap, BrokerEvent, Config, ScheduleInternalServer, StartOptions};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
-use cerk::runtime::InternalServerId;
-use cerk_port_unix_socket::{
-    port_input_unix_socket_json_start, port_output_unix_socket_json_start,
-};
-use cerk_router_broadcast::router_start;
-use cerk_runtime_threading::threading_scheduler_start;
+use cerk::runtime::{InternalServerFn, InternalServerId};
+use cerk_port_unix_socket::{PORT_INPUT_UNIX_SOCKET, PORT_OUTPUT_UNIX_SOCKET};
+use cerk_router_broadcast::ROUTER_BROADCAST;
+use cerk_runtime_threading::THREADING_SCHEDULER;
 use std::fs::remove_file;
 
 const PORT_UNIX_INPUT: &str = "unix-json-input";
@@ -54,19 +52,19 @@ fn main() {
 
     info!("start UNIX Socket example");
     let start_options = StartOptions {
-        scheduler_start: threading_scheduler_start,
-        router_start: router_start,
-        config_loader_start: static_config_loader_start,
-        ports: Box::new([
-            (
-                String::from(PORT_UNIX_INPUT),
-                port_input_unix_socket_json_start,
-            ),
-            (
-                String::from(PORT_UNIX_OUTPUT),
-                port_output_unix_socket_json_start,
-            ),
-        ]),
+        scheduler: THREADING_SCHEDULER,
+        router: ROUTER_BROADCAST,
+        config_loader: &(static_config_loader_start as InternalServerFn),
+        ports: vec![
+            ScheduleInternalServer {
+                id: String::from(PORT_UNIX_INPUT),
+                function: PORT_INPUT_UNIX_SOCKET,
+            },
+            ScheduleInternalServer {
+                id: String::from(PORT_UNIX_OUTPUT),
+                function: PORT_OUTPUT_UNIX_SOCKET,
+            },
+        ],
     };
     bootstrap(start_options);
 }

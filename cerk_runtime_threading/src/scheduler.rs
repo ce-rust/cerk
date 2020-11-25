@@ -1,8 +1,26 @@
 use super::channel::new_channel;
 use cerk::kernel::{BrokerEvent, KernelFn, StartOptions};
 use cerk::runtime::channel::BoxedSender;
-use cerk::runtime::{InternalServerFn, InternalServerId};
+use cerk::runtime::{InternalServerFnRefStatic, InternalServerId, ScheduleFn, ScheduleFnRefStatic};
 use std::thread;
+
+fn schedule(
+    id: InternalServerId,
+    internal_server_fn: InternalServerFnRefStatic,
+    sender_to_kernel: &BoxedSender,
+) {
+    debug!("schedule {} thread", id);
+    let (sender_to_server, receiver_from_kernel) = new_channel();
+    let server_sender_to_kernel = sender_to_kernel.clone_boxed();
+    let new_server_id = id.clone();
+    thread::spawn(move || {
+        internal_server_fn(new_server_id, receiver_from_kernel, server_sender_to_kernel);
+    });
+    sender_to_kernel.send(BrokerEvent::InternalServerScheduled(
+        id.clone(),
+        sender_to_server,
+    ));
+}
 
 /// This is the main function to start the scheduler.
 ///
@@ -20,28 +38,13 @@ pub fn threading_scheduler_start(start_options: StartOptions, start_kernel: Kern
     loop {
         let event = receiver_from_kernel.receive();
         match event {
-            BrokerEvent::ScheduleInternalServer(id, internal_server) => {
-                schedule(id, internal_server, &sender_to_kernel)
+            BrokerEvent::ScheduleInternalServer(event) => {
+                schedule(event.id, event.function, &sender_to_kernel)
             }
             _ => warn!("Unknown event"),
         }
     }
 }
 
-fn schedule(
-    id: InternalServerId,
-    internal_server_fn: InternalServerFn,
-    sender_to_kernel: &BoxedSender,
-) {
-    debug!("schedule {} thread", id);
-    let (sender_to_server, receiver_from_kernel) = new_channel();
-    let server_sender_to_kernel = sender_to_kernel.clone_boxed();
-    let new_server_id = id.clone();
-    thread::spawn(move || {
-        internal_server_fn(new_server_id, receiver_from_kernel, server_sender_to_kernel);
-    });
-    sender_to_kernel.send(BrokerEvent::InternalServerScheduled(
-        id.clone(),
-        sender_to_server,
-    ));
-}
+/// This is the pointer for the main function to start the scheduler.
+pub static THREADING_SCHEDULER: ScheduleFnRefStatic = &(threading_scheduler_start as ScheduleFn);

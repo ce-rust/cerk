@@ -1,0 +1,8 @@
+{
+  "scheduler": "myschedulertype",
+  "router": "myroutertype",
+  "config_loader": "myconfig_loadertype",
+  "ports": {
+    "myport": "myporttype"
+  }
+}
