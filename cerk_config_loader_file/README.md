@@ -1,4 +1,4 @@
-# cerk 0.2.1
+# cerk_config_loader_file 0.1.0
 
 [![Build status](https://badge.buildkite.com/4494e29d5f2c47e3fe998af46dff78a447800a76a68024e392.svg?branch=master)](https://buildkite.com/ce-rust/cerk)
 [![Crates.io](https://img.shields.io/crates/v/cerk)](https://docs.rs/cerk/*/cerk/)
@@ -20,11 +20,44 @@ CERK comes with a couple of prefabricated components, but implementing custom co
 
 A good overview is provided on [GitHub](https://github.com/ce-rust/cerk/).
 
-### This Component: The MicroKernel
+## This Component: File Based Config Loader
 
-The MicroKernel is responsible for starting the other components with the help of the Scheduler and brokering messages between them.
+This port loads configurations from a json file.
 
-The MicroKernel is implemented in this crate.
+The file path could be set with the env variable `CONFIG_PATH`, default is `./config.json`.
+
+### Example Config
+
+```json
+{
+  "routing_rules": [
+    "dummy-logger-output"
+  ],
+  "ports": {
+    "ampq-input": {
+      "uri": "amqp://127.0.0.1:5672/%2f",
+      "consume_channels": [
+        {
+          "name": "test",
+          "ensure_queue": true,
+          "bind_to_exchange": "test"
+        }
+      ],
+      "publish_channels": [
+        {
+          "name": "test",
+          "ensure_exchange": true
+        }
+      ]
+    },
+    "dummy-logger-output": null
+  }
+}
+```
+
+### Examples
+
+ * [AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/src/amqp_to_printer/)
 
 
 ## Update Readme

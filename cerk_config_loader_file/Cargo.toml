@@ -1,0 +1,28 @@
+[package]
+name = "cerk_config_loader_file"
+version = "0.1.0"
+authors = [
+    "Linus Basig <linus@basig.me>",
+    "Fabrizio Lazzaretti <fabrizio@lazzaretti.me>"
+]
+description = "This is a package for CERK. CERK is an open source CloudEvents Router written in Rust with a MicroKernel architecture."
+license = "Apache-2.0"
+repository = "https://github.com/ce-rust/cerk"
+documentation = "https://github.com/ce-rust/cerk"
+homepage = "https://github.com/ce-rust/cerk"
+keywords = ["cloudevents", "router", "cerk"]
+readme = "README.md"
+edition = "2018"
+
+[dependencies]
+log = "0.4"
+env_logger = "0.8"
+cerk = { version = "0.2.1", path = "../cerk" }
+serde = { version = "1.0.75", features = ["derive"] }
+serde_with = "1.6.0"
+serde_json = "1.0"
+anyhow = "1.0"
+strum_macros = "0.19"
+
+[dev-dependencies]
+rstest = "0.6.4"

@@ -47,6 +47,7 @@ path = "src/rule_based_routing/main.rs"
 log = "0.4.0"
 env_logger = "0.7.1"
 cerk = { path = "../cerk" }
+cerk_config_loader_file = { path = "../cerk_config_loader_file" }
 cerk_runtime_threading = { path = "../cerk_runtime_threading" }
 cerk_router_broadcast = { path = "../cerk_router_broadcast" }
 cerk_port_dummies = { path = "../cerk_port_dummies" }
