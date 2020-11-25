@@ -7,13 +7,15 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cerk = { version = "0.2" } #, path = "../../cerk" }
-cerk_config_loader_file = { version = "0.1" } #, path = "../../cerk_config_loader_file" }
-cerk_loader_file = { version = "0.1" } #, path = "../../cerk_loader_file" }
-cerk_port_amqp = { version = "0.1" } #, path = "../../cerk_port_amqp" }
-cerk_port_dummies = { version = "0.2" } #, path = "../../cerk_port_dummies" }
-cerk_port_mqtt = { version = "0.2" } #, path = "../../cerk_port_mqtt" }
-cerk_port_unix_socket = { version = "0.2" } #, path = "../../cerk_port_unix_socket" }
-cerk_router_broadcast = { version = "0.2" } #, path = "../../cerk_router_broadcast" }
-cerk_router_rule_based = { version = "0.2" } #, path = "../../cerk_router_rule_based" }
-cerk_runtime_threading = { version = "0.2" } #, path = "../../cerk_runtime_threading" }
+cerk = { version = "0.2" }
+cerk_config_loader_file = { version = "0.2" }
+cerk_loader_file = { version = "0.2" }
+cerk_port_amqp = { version = "0.2" }
+cerk_port_dummies = { version = "0.2" }
+cerk_port_mqtt = { version = "0.2" }
+cerk_port_unix_socket = { version = "0.2" }
+cerk_router_broadcast = { version = "0.2" }
+cerk_router_rule_based = { version = "0.2" }
+cerk_runtime_threading = { version = "0.2" }
+log = "0.4"
+env_logger = "0.8"

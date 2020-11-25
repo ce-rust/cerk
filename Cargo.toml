@@ -10,11 +10,11 @@ members = [
     "cerk_router_broadcast",
     "cerk_router_rule_based",
     "cerk_runtime_threading",
-    "docker/cerk-common",
     "examples",
 ]
 
 exclude = [
+    "docker/cerk-common",
     "integration-tests/reliable-amqp/cerk-amqp",
     "integration-tests/reliable-amqp/test-executor"
 ]

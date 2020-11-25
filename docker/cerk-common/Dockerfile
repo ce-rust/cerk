@@ -4,5 +4,5 @@ ADD . /app
 RUN cargo build --release
 
 FROM gcr.io/distroless/cc
-COPY --from=build-env /app/target/release/cerk-common /
+COPY --from=build-env /app/target/release/cerk-common /app/init.json /app/config.json /
 CMD ["./cerk-common"]

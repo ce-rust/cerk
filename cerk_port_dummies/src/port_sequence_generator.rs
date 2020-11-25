@@ -13,7 +13,7 @@ fn generate_events(id: InternalServerId, sender_to_kernel: BoxedSender) {
             .id(format!("{}", i))
             .ty("sequence-generator.counter")
             .time(Utc::now())
-            .source("dummy.sequence-generator")
+            .source("http://example.com/dummy.sequence-generator")
             .data("text/plain", format!("sequence {}", i))
             .build()
             .unwrap();

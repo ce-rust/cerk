@@ -1,0 +1,9 @@
+{
+  "routing_rules": [
+    "dummy-logger-output"
+  ],
+  "ports": {
+    "sequence-generator-input": null,
+    "dummy-logger-output": null
+  }
+}
