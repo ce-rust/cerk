@@ -1,7 +1,7 @@
 use crate::routing_rules::{CloudEventFields, RoutingRules, RoutingTable};
 use cerk::kernel::{BrokerEvent, Config, IncomingCloudEvent, OutgoingCloudEvent, RoutingResult};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
-use cerk::runtime::InternalServerId;
+use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
 use cloudevents::{AttributesReader, Event};
 use serde_json;
 use serde_json::error::Error as SerdeErrorr;
@@ -100,6 +100,9 @@ pub fn router_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel
         }
     }
 }
+
+/// This is the pointer for the main function to start the router.
+pub static ROUTER_RULE_BASED: InternalServerFnRefStatic = &(router_start as InternalServerFn);
 
 #[cfg(test)]
 mod tests {

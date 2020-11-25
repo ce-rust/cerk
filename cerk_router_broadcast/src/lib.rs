@@ -46,4 +46,4 @@ extern crate log;
 
 mod router;
 
-pub use self::router::router_start;
+pub use self::router::{router_start, ROUTER_BROADCAST};

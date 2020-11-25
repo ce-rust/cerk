@@ -3,6 +3,7 @@
 members = [
     "cerk",
     "cerk_config_loader_file",
+    "cerk_loader_file",
     "cerk_port_unix_socket",
     "cerk_port_mqtt",
     "cerk_port_amqp",

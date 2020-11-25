@@ -1,6 +1,6 @@
 use cerk::kernel::{BrokerEvent, CloudEventRoutingArgs, IncomingCloudEvent};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
-use cerk::runtime::InternalServerId;
+use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
 use chrono::Utc;
 use cloudevents::{EventBuilder, EventBuilderV10};
 use std::{thread, time};
@@ -50,3 +50,7 @@ pub fn port_sequence_generator_start(
     }
     generate_events(id, sender_to_kernel);
 }
+
+/// This is the pointer for the main function to start the port.
+pub static PORT_SEQUENCE_GENERATOR: InternalServerFnRefStatic =
+    &(port_sequence_generator_start as InternalServerFn);

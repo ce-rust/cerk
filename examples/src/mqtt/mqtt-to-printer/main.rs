@@ -2,13 +2,13 @@
 extern crate log;
 use env_logger::Env;
 
-use cerk::kernel::{bootstrap, BrokerEvent, Config, StartOptions};
+use cerk::kernel::{bootstrap, BrokerEvent, Config, ScheduleInternalServer, StartOptions};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
-use cerk::runtime::InternalServerId;
-use cerk_port_dummies::port_printer_start;
-use cerk_port_mqtt::port_mqtt_start;
-use cerk_router_broadcast::router_start;
-use cerk_runtime_threading::threading_scheduler_start;
+use cerk::runtime::{InternalServerFn, InternalServerId};
+use cerk_port_dummies::PORT_PRINTER;
+use cerk_port_mqtt::PORT_MQTT;
+use cerk_router_broadcast::ROUTER_BROADCAST;
+use cerk_runtime_threading::THREADING_SCHEDULER;
 use std::collections::HashMap;
 use std::env;
 
@@ -63,13 +63,19 @@ fn main() {
     env_logger::from_env(Env::default().default_filter_or("debug")).init();
     info!("start mqtt to printer router");
     let start_options = StartOptions {
-        scheduler_start: threading_scheduler_start,
-        router_start: router_start,
-        config_loader_start: static_config_loader_start,
-        ports: Box::new([
-            (String::from(MQTT_INPUT), port_mqtt_start),
-            (String::from(DUMMY_LOGGER_OUTPUT), port_printer_start),
-        ]),
+        scheduler: THREADING_SCHEDULER,
+        router: ROUTER_BROADCAST,
+        config_loader: &(static_config_loader_start as InternalServerFn),
+        ports: vec![
+            ScheduleInternalServer {
+                id: String::from(MQTT_INPUT),
+                function: PORT_MQTT,
+            },
+            ScheduleInternalServer {
+                id: String::from(DUMMY_LOGGER_OUTPUT),
+                function: PORT_PRINTER,
+            },
+        ],
     };
     bootstrap(start_options);
 }

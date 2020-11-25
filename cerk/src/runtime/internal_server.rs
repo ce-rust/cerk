@@ -18,7 +18,7 @@ pub type InternalServerId = String;
 /// # Example
 /// ```
 /// use cerk::kernel::BrokerEvent;
-/// use cerk::runtime::{InternalServerId, InternalServerFn};
+/// use cerk::runtime::{InternalServerId, InternalServerFn, InternalServerFnRefStatic};
 /// use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 ///
 /// fn dummy_port(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel: BoxedSender,) {
@@ -31,8 +31,15 @@ pub type InternalServerId = String;
 /// }
 ///
 /// fn main() {
-///   let port: InternalServerFn = dummy_port;
+///     let port: InternalServerFn = dummy_port;
+///     let port_ref: InternalServerFnRefStatic = &(dummy_port as InternalServerFn);
 /// }
 /// ```
 pub type InternalServerFn =
     fn(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel: BoxedSender);
+
+/// reference for type InternalServerFn
+pub type InternalServerFnRef<'a> = &'a InternalServerFn;
+
+/// static reference for type InternalServerFn
+pub type InternalServerFnRefStatic = &'static InternalServerFn;

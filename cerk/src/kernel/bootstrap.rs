@@ -22,5 +22,5 @@ pub type KernelFn =
 /// * `start_options` - The start options defining the components and the behavior of the router.
 ///
 pub fn bootstrap(start_options: StartOptions) {
-    (start_options.scheduler_start)(start_options, kernel_start);
+    (start_options.scheduler)(start_options, kernel_start);
 }

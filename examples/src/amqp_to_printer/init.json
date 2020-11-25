@@ -1,0 +1,9 @@
+{
+  "scheduler": "THREADING_SCHEDULER",
+  "router": "ROUTER_BROADCAST",
+  "config_loader": "CONFIG_LOADER_FILE",
+  "ports": {
+    "ampq-input": "PORT_AMQP",
+    "dummy-logger-output": "PORT_PRINTER"
+  }
+}

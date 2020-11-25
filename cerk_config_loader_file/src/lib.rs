@@ -65,4 +65,4 @@ mod config_loader_file;
 mod config_parser;
 mod file_reader;
 
-pub use self::config_loader_file::config_loader_file_start;
+pub use self::config_loader_file::{config_loader_file_start, CONFIG_LOADER_FILE};

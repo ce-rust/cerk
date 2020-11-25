@@ -90,7 +90,7 @@ fn main() {
     let start_options = StartOptions {
         scheduler_start: threading_scheduler_start,
         router_start: router_start,
-        config_loader_start: static_config_loader_start,
+        config_loader_start: &(static_config_loader_start as InternalServerFn),
         ports: Box::new([(String::from(AMQP_PORT), port_amqp_start)]),
     };
     bootstrap(start_options);

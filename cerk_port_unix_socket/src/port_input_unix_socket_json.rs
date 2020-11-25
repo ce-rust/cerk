@@ -1,6 +1,6 @@
 use cerk::kernel::{BrokerEvent, CloudEventRoutingArgs, Config, IncomingCloudEvent};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
-use cerk::runtime::InternalServerId;
+use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
 use cloudevents::Event;
 use serde_json;
 use std::io::{BufRead, BufReader};
@@ -119,3 +119,7 @@ pub fn port_input_unix_socket_json_start(
         }
     }
 }
+
+/// This is the pointer for the main function to start the port.
+pub static PORT_INPUT_UNIX_SOCKET: InternalServerFnRefStatic =
+    &(port_input_unix_socket_json_start as InternalServerFn);

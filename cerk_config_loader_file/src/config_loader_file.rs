@@ -3,7 +3,7 @@ use crate::config_parser::parse_json_to_events;
 use anyhow::Result;
 use cerk::kernel::BrokerEvent;
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
-use cerk::runtime::InternalServerId;
+use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
 use std::env;
 
 pub fn read_configs_from_file(config_path: &str) -> Result<Vec<BrokerEvent>> {
@@ -39,6 +39,10 @@ pub fn config_loader_file_start(
         }
     }
 }
+
+/// This is the pointer for the main function to start the config loader.
+pub static CONFIG_LOADER_FILE: InternalServerFnRefStatic =
+    &(config_loader_file_start as InternalServerFn);
 
 #[cfg(test)]
 mod tests {

@@ -8,6 +8,7 @@ function check {
 
 check cerk
 check cerk_config_loader_file
+check cerk_loader_file
 check cerk_port_amqp
 check cerk_port_dummies
 check cerk_port_mqtt

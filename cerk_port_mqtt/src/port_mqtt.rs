@@ -1,6 +1,6 @@
 use cerk::kernel::{BrokerEvent, CloudEventRoutingArgs, Config, IncomingCloudEvent};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
-use cerk::runtime::InternalServerId;
+use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
 use cloudevents::{AttributesReader, Event};
 use paho_mqtt::{
     AsyncClient, ConnectOptions, CreateOptions, CreateOptionsBuilder, Message, PersistenceType,
@@ -227,6 +227,9 @@ pub fn port_mqtt_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
         }
     }
 }
+
+/// This is the pointer for the main function to start the port.
+pub static PORT_MQTT: InternalServerFnRefStatic = &(port_mqtt_start as InternalServerFn);
 
 #[cfg(test)]
 mod tests {

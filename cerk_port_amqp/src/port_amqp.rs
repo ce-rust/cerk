@@ -9,7 +9,7 @@ use cerk::kernel::{
     IncomingCloudEvent, OutgoingCloudEvent, OutgoingCloudEventProcessed, ProcessingResult,
 };
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
-use cerk::runtime::InternalServerId;
+use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
 use cloudevents::{AttributesReader, Event};
 use futures_lite::future;
 use futures_lite::stream::StreamExt;
@@ -591,3 +591,6 @@ pub fn port_amqp_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
         }
     }
 }
+
+/// This is the pointer for the main function to start the port.
+pub static PORT_AMQP: InternalServerFnRefStatic = &(port_amqp_start as InternalServerFn);

@@ -197,4 +197,4 @@ extern crate log;
 
 mod port_mqtt;
 
-pub use self::port_mqtt::port_mqtt_start;
+pub use self::port_mqtt::{port_mqtt_start, PORT_MQTT};
