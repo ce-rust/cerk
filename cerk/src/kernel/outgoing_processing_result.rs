@@ -20,3 +20,14 @@ pub enum ProcessingResult {
     /// However, the error is permanent (e.g., parsing or config error) and should not be retried.
     PermanentError,
 }
+
+/// from result to ProcessingResult; for every error a `ProcessingResult::PermanentError` is used
+impl<T, E> From<Result<T, E>> for ProcessingResult {
+    fn from(r: Result<T, E>) -> Self {
+        if r.is_ok() {
+            ProcessingResult::Successful
+        } else {
+            ProcessingResult::PermanentError
+        }
+    }
+}
