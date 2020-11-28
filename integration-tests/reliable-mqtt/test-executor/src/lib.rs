@@ -102,7 +102,7 @@ mod test {
     #[async_std::test]
     async fn test_successful_routing() -> Result<()> {
         let expected_event_count = env::var("SAMPLE_SIZE")
-            .unwrap_or(1.to_string())
+            .unwrap_or(100.to_string())
             .parse::<usize>().unwrap();
 
         let inbox_opts = mqtt::CreateOptionsBuilder::new()
@@ -113,7 +113,7 @@ mod test {
 
         let outbox_opts = mqtt::CreateOptionsBuilder::new()
             .server_uri("tcp://unlimited:1883")
-            .client_id("-outbox-observer")
+            .client_id("outbox-observer")
             .finalize();
         let mut outbox_client = mqtt::AsyncClient::new(outbox_opts)?;
 
@@ -165,6 +165,8 @@ mod test {
             }
         }
 
+        timeout(Duration::from_secs(20), inbox_observer).await?;
+        timeout(Duration::from_secs(20), outbox_observer).await?;
         timeout(Duration::from_secs(20), stored_messages_observer).await?;
 
         try_join!(
