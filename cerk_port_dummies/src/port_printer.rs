@@ -92,7 +92,7 @@ mod tests {
 
     /// We send a CloudEvent to the port with `DeliveryGuarantee::default()`, it does not need to be acked.
     ///
-    /// test prints `thread '<unnamed>' panicked at 'called `Result::unwrap()` on an `Err` value: RecvError'`
+    /// `thread '<unnamed>' panicked at 'called Result::unwrap() on an Err value: RecvError'`
     /// this is okay -> we don't do a real shutdown of the port but just kill the communication channel
     #[test]
     fn print_unack_message() {
@@ -107,7 +107,8 @@ mod tests {
     }
 
     /// We send a CloudEvent to the port with `DeliveryGuarantee::AtLeastOnce`, it needs to be acked.
-    /// test prints `thread '<unnamed>' panicked at 'called `Result::unwrap()` on an `Err` value: RecvError'`
+    ///
+    /// `thread '<unnamed>' panicked at 'called Result::unwrap() on an Err value: RecvError'`
     /// this is okay -> we don't do a real shutdown of the port but just kill the communication channel
     #[test]
     fn print_ack_message() {

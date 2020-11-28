@@ -22,3 +22,7 @@ env_logger = "0.7.1"
 cerk = { version = "0.2", path = "../cerk" }
 cloudevents-sdk = "0.3.0"
 serde_json = "1.0.42"
+anyhow = "1.0"
+
+[dev-dependencies]
+cerk_runtime_threading = { version = "0.2", path = "../cerk_runtime_threading" }
