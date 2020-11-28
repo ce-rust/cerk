@@ -1,0 +1,22 @@
+{
+  "routing_rules": [
+    "dummy-logger-output"
+  ],
+  "ports": {
+    "inbox": {
+      "host": "tcp://unlimited:1883",
+      "subscribe_topics": ["inbox"],
+      "subscribe_qos": [1]
+    },
+    "outbox": {
+      "host": "tcp://unlimited:1883",
+      "send_topic": "outbox",
+      "send_qos": 1
+    },
+    "failing": {
+      "host": "tcp://limited:1883",
+      "send_topic": "failing",
+      "send_qos": 1
+    }
+  }
+}
