@@ -36,6 +36,10 @@ fn generate_events(id: InternalServerId, sender_to_kernel: BoxedSender) {
 /// * [Hello World Example](https://github.com/ce-rust/cerk/tree/master/examples/src/hello_world)
 /// * [Generator to MQTT](https://github.com/ce-rust/cerk/tree/master/examples/src/mqtt/)
 ///
+/// ## Limitations
+///
+/// * **reliability** this port does not support any `DeliveryGuarantee` and so does never resend an unprocessed event.
+///
 pub fn port_sequence_generator_start(
     id: InternalServerId,
     inbox: BoxedReceiver,

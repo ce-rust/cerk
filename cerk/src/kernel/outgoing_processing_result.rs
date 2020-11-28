@@ -1,7 +1,7 @@
 use strum_macros::Display;
 
 /// result of the processing of the send attempt
-#[derive(Display)]
+#[derive(Display, Clone, Debug, PartialEq)]
 pub enum ProcessingResult {
     /// Sending was successful
     ///
