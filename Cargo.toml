@@ -14,6 +14,7 @@ members = [
 ]
 
 exclude = [
+    "docker/cerk-common",
     "integration-tests/reliable-amqp/cerk-amqp",
     "integration-tests/reliable-amqp/test-executor"
 ]

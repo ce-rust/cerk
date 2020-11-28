@@ -1,0 +1,9 @@
+{
+  "scheduler": "THREADING_SCHEDULER",
+  "router": "ROUTER_BROADCAST",
+  "config_loader": "CONFIG_LOADER_FILE",
+  "ports": {
+    "sequence-generator-input": "PORT_SEQUENCE_GENERATOR",
+    "dummy-logger-output": "PORT_PRINTER"
+  }
+}
