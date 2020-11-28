@@ -4,6 +4,7 @@ use crate::kernel::CloudEventRoutingArgs;
 use crate::runtime::channel::BoxedSender;
 use crate::runtime::{InternalServerFnRef, InternalServerId};
 use cloudevents::Event;
+use serde::Serialize;
 use std::fmt;
 
 /// the unique identifier of the CloudEvent routing attempt
@@ -90,6 +91,12 @@ pub enum BrokerEvent {
     /// * `Vec<BrokerEvent>` - a vector of `BrokerEvent`
     ///
     Batch(Vec<BrokerEvent>),
+
+    /// A health check port sends `HealthCheckRequest` to some components, they should response with `HealthCheckResponse`
+    HealthCheckRequest(HealthCheckRequest),
+
+    /// response for `HealthCheckRequest`, should go to a health check component
+    HealthCheckResponse(HealthCheckResponse),
 }
 
 impl fmt::Display for BrokerEvent {
@@ -121,6 +128,8 @@ impl fmt::Display for BrokerEvent {
                 write!(f, "IncomingCloudEventProcessed state={}", state)
             }
             BrokerEvent::Batch(_) => write!(f, "Batch"),
+            BrokerEvent::HealthCheckRequest(_) => write!(f, "HealthCheckRequest"),
+            BrokerEvent::HealthCheckResponse(_) => write!(f, "HealthCheckResponse"),
         }
     }
 }
@@ -183,6 +192,37 @@ pub struct ScheduleInternalServer<'a> {
     pub id: InternalServerId,
     /// pointer to the start function
     pub function: InternalServerFnRef<'a>,
+}
+
+/// Struct for `BrokerEvent::HealthCheckRequest`
+pub struct HealthCheckRequest {
+    /// id of the health check
+    pub id: String,
+    /// the id of the component that created the request
+    pub sender_id: InternalServerId,
+    /// the port that should response to the health check
+    pub destination_id: InternalServerId,
+}
+
+/// Struct for `BrokerEvent::HealthCheckResponse`
+pub struct HealthCheckResponse {
+    /// id of the health check
+    pub id: String,
+    /// the id of the component that responded to the health request
+    pub sender_id: InternalServerId,
+    /// routing destination of the health response (HealthCheckRequest.sender_id)
+    pub destination_id: InternalServerId,
+    /// status of the component
+    pub status: HealthCheckStatus,
+}
+
+/// health check status
+#[derive(Debug, PartialEq, Clone, Serialize)]
+pub enum HealthCheckStatus {
+    /// the component is healthy and fully functional
+    Healthy,
+    /// the component is unhealthy, message to indicate the problem
+    Unhealthy(String),
 }
 
 /// Fixed static lifetime for struct for `BrokerEvent::ScheduleInternalServer`

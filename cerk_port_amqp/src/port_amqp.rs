@@ -58,7 +58,7 @@ fn try_get_delivery_option(config: &HashMap<String, Config>) -> Result<DeliveryG
     })
 }
 
-fn build_config(config: &Config) -> Result<AmqpOptions> {
+fn build_config(id: &InternalServerId, config: &Config) -> Result<AmqpOptions> {
     match config {
         Config::HashMap(config_map) => {
             let mut options = if let Some(Config::String(uri)) = config_map.get("uri") {
@@ -129,7 +129,7 @@ fn build_config(config: &Config) -> Result<AmqpOptions> {
 
             Ok(options)
         }
-        _ => bail!("{} config has to be of type HashMap"),
+        _ => bail!("{} config has to be of type HashMap", id),
     }
 }
 
@@ -140,7 +140,7 @@ fn setup_connection(
     config: Config,
     pending_deliveries: Arc<Mutex<HashMap<String, PendingDelivery>>>,
 ) -> Result<(Connection, AmqpOptions)> {
-    let mut config = match build_config(&config) {
+    let mut config = match build_config(&id, &config) {
         Ok(c) => c,
         Err(e) => panic!(e),
     };
