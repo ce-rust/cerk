@@ -170,6 +170,14 @@ fn process_broker_event(
                 );
             }
         }
+        BrokerEvent::HealthCheckRequest(event) => outboxes
+            .get(event.destination_id.as_str())
+            .unwrap()
+            .send(BrokerEvent::HealthCheckRequest(event)),
+        BrokerEvent::HealthCheckResponse(event) => outboxes
+            .get(event.destination_id.as_str())
+            .unwrap()
+            .send(BrokerEvent::HealthCheckResponse(event)),
         broker_event => warn!("event {} not implemented", broker_event),
     }
 }
