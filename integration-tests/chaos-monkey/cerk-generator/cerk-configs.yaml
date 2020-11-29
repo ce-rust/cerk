@@ -10,7 +10,8 @@ data:
       "config_loader": "CONFIG_LOADER_FILE",
       "ports": {
         "ampq": "PORT_AMQP",
-        "sequence-generator": "PORT_SEQUENCE_GENERATOR"
+        "sequence-generator": "PORT_SEQUENCE_GENERATOR",
+        "health": "PORT_HEALTH_CHECK_HTTP"
       }
     }
   config.json: |
@@ -28,6 +29,9 @@ data:
             }
           ]
         },
-        "sequence-generator": null
+        "sequence-generator": null,
+        "health": {
+          "ports_to_check": ["ampq"]
+        }
       }
     }
