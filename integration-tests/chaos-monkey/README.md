@@ -10,3 +10,4 @@
     1. do a prot forward to rabbitmq
         `kubectl port-forward statefulset/rabbitmq 15672`
     2. go to <http://localhost:15672>
+        login with user `guest` pw `guest`
