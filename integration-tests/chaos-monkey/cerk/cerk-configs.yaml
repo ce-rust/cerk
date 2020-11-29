@@ -10,7 +10,8 @@ data:
       "config_loader": "CONFIG_LOADER_FILE",
       "ports": {
         "ampq": "PORT_AMQP",
-        "dummy-logger-output": "PORT_PRINTER"
+        "dummy-logger-output": "PORT_PRINTER",
+        "health": "PORT_HEALTH_CHECK_HTTP"
       }
     }
   config.json: |
@@ -37,6 +38,9 @@ data:
             }
           ]
         },
-        "dummy-logger-output": null
+        "dummy-logger-output": null,
+        "health": {
+          "ports_to_check": ["ampq"]
+        }
       }
     }

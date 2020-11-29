@@ -16,10 +16,22 @@ spec:
     spec:
       containers:
         - name: cerk-generator
-          image: cloudeventsrouter/cerk:common-0.0.1
+          image: cloudeventsrouter/cerk:common-0.0.2
           env:
             - name: RUST_LOG
-              value: debug
+              value: info
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 2
+            periodSeconds: 10
           volumeMounts:
             - name: cerk-configs
               mountPath: /init.json
