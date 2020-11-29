@@ -17,6 +17,7 @@ check cerk_config_loader_file
 check cerk_loader_file
 check cerk_port_amqp
 check cerk_port_dummies
+check cerk_port_health_check_http
 check cerk_port_mqtt
 check cerk_port_unix_socket
 check cerk_router_broadcast

@@ -6,7 +6,8 @@ use anyhow::{Context, Result};
 use async_std::future::timeout;
 use cerk::kernel::{
     BrokerEvent, CloudEventMessageRoutingId, CloudEventRoutingArgs, Config, DeliveryGuarantee,
-    IncomingCloudEvent, OutgoingCloudEvent, OutgoingCloudEventProcessed, ProcessingResult,
+    HealthCheckRequest, HealthCheckResponse, HealthCheckStatus, IncomingCloudEvent,
+    OutgoingCloudEvent, OutgoingCloudEventProcessed, ProcessingResult,
 };
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
@@ -58,7 +59,7 @@ fn try_get_delivery_option(config: &HashMap<String, Config>) -> Result<DeliveryG
     })
 }
 
-fn build_config(config: &Config) -> Result<AmqpOptions> {
+fn build_config(id: &InternalServerId, config: &Config) -> Result<AmqpOptions> {
     match config {
         Config::HashMap(config_map) => {
             let mut options = if let Some(Config::String(uri)) = config_map.get("uri") {
@@ -129,7 +130,7 @@ fn build_config(config: &Config) -> Result<AmqpOptions> {
 
             Ok(options)
         }
-        _ => bail!("{} config has to be of type HashMap"),
+        _ => bail!("{} config has to be of type HashMap", id),
     }
 }
 
@@ -140,7 +141,7 @@ fn setup_connection(
     config: Config,
     pending_deliveries: Arc<Mutex<HashMap<String, PendingDelivery>>>,
 ) -> Result<(Connection, AmqpOptions)> {
-    let mut config = match build_config(&config) {
+    let mut config = match build_config(&id, &config) {
         Ok(c) => c,
         Err(e) => panic!(e),
     };
@@ -505,6 +506,28 @@ async fn ack_nack_pending_event(
     Ok(())
 }
 
+fn check_health(
+    event: HealthCheckRequest,
+    send_to_kernel: &BoxedSender,
+    connection: &Option<Connection>,
+) {
+    let status = if let Some(c) = connection {
+        if c.status().connected() {
+            HealthCheckStatus::Healthy
+        } else {
+            HealthCheckStatus::Unhealthy("Connection is not open".to_string())
+        }
+    } else {
+        HealthCheckStatus::Unhealthy("Not connected".to_string())
+    };
+    send_to_kernel.send(BrokerEvent::HealthCheckResponse(HealthCheckResponse {
+        status,
+        destination_id: event.sender_id,
+        id: event.id,
+        sender_id: event.destination_id,
+    }))
+}
+
 /// This is the main function to start the port.
 pub fn port_amqp_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel: BoxedSender) {
     let mut connection_option: Option<Connection> = None;
@@ -586,6 +609,9 @@ pub fn port_amqp_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
                     Ok(()) => debug!("IncomingCloudEventProcessed was ack/nack successful"),
                     Err(err) => warn!("IncomingCloudEventProcessed was not ack/nack {:?}", err),
                 };
+            }
+            BrokerEvent::HealthCheckRequest(event) => {
+                check_health(event, &sender_to_kernel, &connection_option)
             }
             broker_event => warn!("event {} not implemented", broker_event),
         }
