@@ -13,6 +13,8 @@ spec:
     metadata:
       labels:
         app: cerk
+      annotations:
+        chaos.alpha.kubernetes.io/enabled: "true"
     spec:
       containers:
         - name: cerk

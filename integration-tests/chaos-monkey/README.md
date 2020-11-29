@@ -11,3 +11,8 @@
         `kubectl port-forward statefulset/rabbitmq 15672`
     2. go to <http://localhost:15672>
         login with user `guest` pw `guest`
+3. start to kill bods with the chaos monkey:
+    1. deploy the chaos monkey
+       `kubectl apply -f chaos-monkey/`
+    2. observe the logs: 
+        `kubectl logs --follow deployment/chaoskube`
