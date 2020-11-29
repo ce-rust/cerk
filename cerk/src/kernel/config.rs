@@ -112,11 +112,9 @@ impl ConfigHelpers for Config {
 
     fn get_op_val_u32<'a>(&'a self, key: &'static str) -> Result<Option<u32>> {
         match self.get_op_val(key).into() {
-            Err(e) => {
-                 match self.get_op_val_u8(key) {
-                     Err(_) => Err(e),
-                     Ok(v) => Ok(v.map(|v| v as u32)),
-                 }
+            Err(e) => match self.get_op_val_u8(key) {
+                Err(_) => Err(e),
+                Ok(v) => Ok(v.map(|v| v as u32)),
             },
             o => o,
         }

@@ -52,6 +52,7 @@ cerk_loader_file = { path = "../cerk_loader_file" }
 cerk_runtime_threading = { path = "../cerk_runtime_threading" }
 cerk_router_broadcast = { path = "../cerk_router_broadcast" }
 cerk_port_dummies = { path = "../cerk_port_dummies" }
+cerk_port_health_check_http = { path = "../cerk_port_health_check_http" }
 cerk_port_unix_socket = { path = "../cerk_port_unix_socket" }
 cerk_port_mqtt = { path = "../cerk_port_mqtt" }
 cerk_port_amqp = { path = "../cerk_port_amqp" }

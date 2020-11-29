@@ -187,7 +187,7 @@ async fn handle_health_request(data: Arc<Mutex<HealthCheckData>>) -> Result<Resp
                 if responses
                     .responses
                     .iter()
-                    .any(|(_, status)| status.eq(&Some(HealthCheckStatus::Healthy)))
+                    .any(|(_, status)| !status.eq(&Some(HealthCheckStatus::Healthy)))
                 {
                     "not all responses were successful".to_string()
                 } else {

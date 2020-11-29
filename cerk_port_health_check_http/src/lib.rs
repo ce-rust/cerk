@@ -21,6 +21,10 @@ This component adds health check functionality to CERK via http.
 
 It is registered as a port, but neither sends nor receives CloudEvents.
 
+## Examples
+
+* [AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/src/amqp_to_printer/)
+
 */
 
 #![deny(missing_docs)]
