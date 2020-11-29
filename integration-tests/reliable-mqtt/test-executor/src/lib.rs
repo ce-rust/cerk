@@ -66,7 +66,7 @@ async fn observe_topic(mut client: mqtt::AsyncClient, topic_name: &str, expected
 
 async fn observe_stored_messages(mut client: mqtt::AsyncClient, expected_stored_unretained: usize) -> Result<()> {
     let mut stream = client.get_stream(10*expected_stored_unretained);
-    let mut retained: usize = 0;
+    let mut retained: usize = 51;
     let mut stored: usize = 0;
     info!("observe stored messages");
 
@@ -179,15 +179,6 @@ mod test {
             timeout(Duration::from_secs(20), inbox_observer),
             timeout(Duration::from_secs(20), outbox_observer),
             timeout(Duration::from_secs(20), stored_messages_observer),
-        )?;
-
-
-        info!("test done, disconnecting now");
-
-        try_join!(
-            inbox_client.disconnect_after(Duration::from_secs(1)),
-            outbox_client.disconnect_after(Duration::from_secs(1)),
-            stored_messages_client.disconnect_after(Duration::from_secs(1)),
         )?;
 
         return Ok(())

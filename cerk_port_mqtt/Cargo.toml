@@ -19,7 +19,10 @@ log = "0.4.0"
 env_logger = "0.7.1"
 cerk = { version = "0.2", path = "../cerk" }
 cloudevents-sdk = "0.3.0"
+serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 paho-mqtt = { git = "https://github.com/ce-rust/paho.mqtt.rust", branch = "feat/ack-after-processing-0.8.0", features=["bundled", "build_bindgen"], default-features = false}
 anyhow = "1.0"
 async-std = "1.7.0"
+nix = "0.19.1"
+interprocess = "1.0.0"

@@ -233,6 +233,7 @@ dependencies = [
  "cerk",
  "cerk_config_loader_file",
  "cerk_loader_file",
+ "cerk_port_dummies",
  "cerk_port_mqtt",
  "cerk_router_broadcast",
  "cerk_runtime_threading",
@@ -267,6 +268,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "cerk_port_dummies"
+version = "0.2.3"
+dependencies = [
+ "anyhow",
+ "cerk",
+ "chrono",
+ "cloudevents-sdk",
+ "log",
+ "serde_json",
+]
+
+[[package]]
 name = "cerk_port_mqtt"
 version = "0.2.1"
 dependencies = [
@@ -275,8 +288,11 @@ dependencies = [
  "cerk",
  "cloudevents-sdk",
  "env_logger 0.7.1",
+ "interprocess",
  "log",
+ "nix",
  "paho-mqtt",
+ "serde",
  "serde_json",
 ]
 
@@ -812,6 +828,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "interprocess"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a270b4cb72407618bc4a32bd5674485ce675ea0218114c138b208a33bf02168"
+dependencies = [
+ "blocking",
+ "cfg-if 0.1.10",
+ "futures 0.3.8",
+ "intmap",
+ "lazy_static",
+ "libc",
+ "spin",
+ "thiserror",
+ "winapi",
+]
+
+[[package]]
+name = "intmap"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e50930385956f6c4a0b99f3dd654adcc40788456c36e17c5b20e1d1ceb523ec6"
+
+[[package]]
 name = "itoa"
 version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -898,6 +937,18 @@ checksum = "8123a81538e457d44b933a02faf885d3fe8408806b23fa700e8f01c6c3a98998"
 dependencies = [
  "libc",
  "winapi",
+]
+
+[[package]]
+name = "nix"
+version = "0.19.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b2ccba0cfe4fdf15982d1674c69b1fd80bad427d293849982668dfe454bd61f2"
+dependencies = [
+ "bitflags",
+ "cc",
+ "cfg-if 1.0.0",
+ "libc",
 ]
 
 [[package]]
@@ -1247,6 +1298,12 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "spin"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 
 [[package]]
 name = "strsim"

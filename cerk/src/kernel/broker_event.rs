@@ -4,7 +4,7 @@ use crate::kernel::CloudEventRoutingArgs;
 use crate::runtime::channel::BoxedSender;
 use crate::runtime::{InternalServerFnRef, InternalServerId};
 use cloudevents::Event;
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use std::fmt;
 
 /// the unique identifier of the CloudEvent routing attempt
@@ -135,7 +135,7 @@ impl fmt::Display for BrokerEvent {
 }
 
 /// Struct for `BrokerEvent::IncomingCloudEvent`
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct IncomingCloudEvent {
     /// id of the component which received the CloudEvent
     pub incoming_id: InternalServerId,
@@ -162,7 +162,7 @@ pub struct RoutingResult {
 }
 
 /// Struct for `BrokerEvent::OutgoingCloudEvent`
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct OutgoingCloudEvent {
     /// the unique identifier of the CloudEvent routing attempt
     pub routing_id: CloudEventMessageRoutingId,
@@ -175,7 +175,7 @@ pub struct OutgoingCloudEvent {
 }
 
 /// Struct for `BrokerEvent::OutgoingCloudEventProcessed`
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct OutgoingCloudEventProcessed {
     /// the id of the component that processed the event (mostly sent to a queue)
     pub sender_id: InternalServerId,

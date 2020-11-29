@@ -1,9 +1,10 @@
 use super::Config;
 use std::convert::TryFrom;
+use serde::{Serialize, Deserialize};
 
 /// Message delivery guarantees for the routing (defined per port channel)
 #[repr(u8)]
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum DeliveryGuarantee {
     /// unspecified behaviour, the default
     Unspecified = 0,

@@ -1,7 +1,8 @@
 use strum_macros::Display;
+use serde::{Serialize, Deserialize};
 
 /// result of the processing of the send attempt
-#[derive(Display, Clone, Debug, PartialEq)]
+#[derive(Display, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum ProcessingResult {
     /// Sending was successful
     ///

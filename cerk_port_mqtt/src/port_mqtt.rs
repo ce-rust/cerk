@@ -16,6 +16,14 @@ use std::future::Future;
 use std::rc::Rc;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::time::Duration;
+use nix::unistd::{fork, ForkResult};
+use interprocess::unnamed_pipe::{pipe, UnnamedPipeWriter, UnnamedPipeReader};
+use std::io::{BufReader, BufRead};
+use serde::{Serialize, Deserialize};
+use std::io::Write;
+use std::fmt;
+use std::sync::{Arc,RwLock};
+use std::thread;
 
 struct MqttConnection {
     client: AsyncClient,
@@ -24,6 +32,16 @@ struct MqttConnection {
     send_qos: u8,
     subscribe_topic: Option<String>,
     subscribe_qos: u8,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+enum IpcEvent {
+    Init,
+    ConfigUpdated(Config),
+    OutgoingCloudEvent(OutgoingCloudEvent),
+    OutgoingCloudEventProcessed(OutgoingCloudEventProcessed),
+    IncomingCloudEvent(IncomingCloudEvent),
+    IncomingCloudEventProcessed(CloudEventMessageRoutingId, ProcessingResult),
 }
 
 fn build_connection(
@@ -89,7 +107,7 @@ fn build_connection(
 fn message_handler(
     id: InternalServerId,
     processed_rx: Receiver<ProcessingResult>,
-    sender_to_kernel: BoxedSender,
+    parent_tx: Arc<RwLock<UnnamedPipeWriter>>,
     routing_args: CloudEventRoutingArgs,
 ) -> Box<dyn Fn(&AsyncClient, Option<paho_mqtt::Message>)> {
     Box::new(
@@ -103,14 +121,14 @@ fn message_handler(
                         debug!("{} deserialized event successfully", id);
                         // todo add delivery attempt to routing id
                         let routing_id = cloud_event.id().to_string();
-                        sender_to_kernel.send(BrokerEvent::IncomingCloudEvent(
+                        send_to_process(&mut parent_tx.write().unwrap(), IpcEvent::IncomingCloudEvent(
                             IncomingCloudEvent {
                                 routing_id,
                                 incoming_id: id.clone(),
                                 cloud_event,
                                 args: routing_args.clone(),
-                            },
-                        ));
+                            }
+                        )).unwrap();
                         processed_rx.recv();
                     }
                     Err(err) => {
@@ -124,7 +142,7 @@ fn message_handler(
 
 async fn setup_connection(
     id: &InternalServerId,
-    sender_to_kernel: BoxedSender,
+    parent_tx: Arc<RwLock<UnnamedPipeWriter>>,
     config: Config,
 ) -> Result<MqttConnection> {
     debug!("{} start connection to mqtt broker", id);
@@ -150,7 +168,7 @@ async fn setup_connection(
     connection.client.set_message_callback(message_handler(
         id.clone(),
         processed_rx,
-        sender_to_kernel,
+        parent_tx,
         routing_args,
     ));
 
@@ -195,78 +213,154 @@ async fn send_cloud_event(
     }
 }
 
-async fn port_mqtt_start_async() -> Result<()> {
+fn send_to_process(process_tx: &mut UnnamedPipeWriter, ipc_event: IpcEvent) -> Result<()> {
+    let event_json = serde_json::to_string(&ipc_event)?;
+    write!(process_tx, "{}\n", event_json)?;
     Ok(())
 }
 
-/// This is the main function to start the port.
-pub fn port_mqtt_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel: BoxedSender) {
-    let mut connection: Option<MqttConnection> = None;
+fn backchannel(sender_to_kernel: BoxedSender, mut parent_rx: UnnamedPipeReader) {
+    let reader = BufReader::new(parent_rx)
+        .lines()
+        .map(|line| line.unwrap())
+        .map(|line| serde_json::from_str::<IpcEvent>(&line).unwrap());
 
-    info!("start mqtt port with id {}", id);
+    for ipc_event in reader {
+        debug!("Event received from CHILD PROCESS {:?}", ipc_event);
+        match ipc_event {
+            IpcEvent::IncomingCloudEvent(event) => sender_to_kernel.send(BrokerEvent::IncomingCloudEvent(event)),
+            IpcEvent::OutgoingCloudEventProcessed(event) => sender_to_kernel.send(BrokerEvent::OutgoingCloudEventProcessed(event)),
+            _ => panic!("Unexpected event in backchannels {:?}", ipc_event),
+        }
+    }
+}
 
+async fn port_mqtt_start_parent(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel: BoxedSender, mut parent_rx: UnnamedPipeReader, mut child_tx: UnnamedPipeWriter) -> Result<()> {
+    thread::spawn(move || {
+        backchannel(sender_to_kernel, parent_rx)
+    });
+    
     loop {
-        match inbox.receive() {
+        let broker_event = inbox.receive();
+
+        match broker_event {
             BrokerEvent::Init => {
-                info!("{} initiated", id);
+                info!("PARENT PROCESS {} initiated", id);
+                send_to_process(&mut child_tx, IpcEvent::Init)?;
             }
             BrokerEvent::ConfigUpdated(config, _) => {
-                info!("{} received ConfigUpdated", &id);
+                info!("PARENT PROCESS {} received ConfigUpdated", &id);
+                send_to_process(&mut child_tx, IpcEvent::ConfigUpdated(config))?;
+            }
+            BrokerEvent::OutgoingCloudEvent(event) => {
+                debug!("PARENT PROCESS {} cloudevent received", &id);
+                send_to_process(&mut child_tx, IpcEvent::OutgoingCloudEvent(event))?;
+            }
+            BrokerEvent::IncomingCloudEventProcessed(event_id, result) => {
+                debug!("PARENT PROCESS {} message {} processed -> {}", id, event_id, result);
+                send_to_process(&mut child_tx, IpcEvent::IncomingCloudEventProcessed(event_id, result))?;
+            }
+            broker_event => warn!("event {} not implemented", broker_event),
+        }
+    }
+}
+
+async fn port_mqtt_start_child(id: InternalServerId, mut child_rx: UnnamedPipeReader, mut parent_tx: UnnamedPipeWriter) -> Result<()> {
+    let mut connection: Option<MqttConnection> = None;
+    let mut parent_tx_arc = Arc::new(RwLock::new(parent_tx));
+    let reader = BufReader::new(child_rx)
+        .lines()
+        .map(|line| line.unwrap())
+        .map(|line| serde_json::from_str::<IpcEvent>(&line).unwrap());
+    for ipc_event in reader {
+        debug!("Event received from PARENT PROCESS {:?}", ipc_event);
+
+        match ipc_event {
+            IpcEvent::Init => {
+                info!("CHILD PROCESS {}: initiated", id);
+            }
+            IpcEvent::ConfigUpdated(config) => {
+                info!("CHILD PROCESS {} received ConfigUpdated", &id);
+
                 if let Some(ref connection) = connection {
-                    match block_on(connection.client.disconnect(None)) {
+                    match connection.client.disconnect(None).await {
                         Ok(_) => debug!("disconnected succesfully"),
                         Err(err) => panic!("{} disconnects failed {:?}", id, err),
                     }
                 }
 
-                match block_on(setup_connection(
+                match setup_connection(
                     &id,
-                    sender_to_kernel.clone_boxed(),
+                    parent_tx_arc.clone(),
                     config,
-                )) {
+                ).await {
                     Ok(new_connection) => {
                         connection = Some(new_connection);
                     }
                     Err(err) => panic!("{} connection setup failed {:?}", id, err),
                 }
             }
-            BrokerEvent::OutgoingCloudEvent(event) => {
-                debug!("{} cloudevent received", &id);
-                if let Some(ref connection) = connection {
-                    match block_on(send_cloud_event(&id, &event.cloud_event, &connection)) {
-                        Ok(result) => {
-                            debug!("{} cloudevent sent -> {:?}", &id, &result);
+            IpcEvent::OutgoingCloudEvent(event) => {
+                debug!("CHILD PROCESS {} cloudevent received", &id);
 
-                            sender_to_kernel.send(BrokerEvent::OutgoingCloudEventProcessed(
+                if let Some(ref connection) = connection {
+                    match send_cloud_event(&id, &event.cloud_event, &connection).await {
+                        Ok(result) => {
+                            debug!("CHILD PROCESS {} cloudevent sent -> {:?}", &id, &result);
+                            
+                            send_to_process(&mut parent_tx_arc.write().unwrap(), IpcEvent::OutgoingCloudEventProcessed(
                                 OutgoingCloudEventProcessed {
                                     sender_id: id.clone(),
                                     routing_id: event.routing_id,
                                     result: result,
-                                },
-                            ));
+                                }
+                            ))?;
                         }
-                        Err(err) => panic!("{} connection setup failed {:?}", id, err),
+                        Err(err) => panic!("CHILD PROCESS {} connection setup failed {:?}", id, err),
                     }
                 } else {
-                    panic!("{} can not send message, no connection configured", id)
+                    panic!("CHILD PROCESS {} can not send message, no connection configured", id)
                 }
             }
-            BrokerEvent::IncomingCloudEventProcessed(event_id, result) => {
-                debug!("{} message {} processed -> {}", id, event_id, result);
+            IpcEvent::IncomingCloudEventProcessed(event_id, result) => {
+                debug!("CHILD PROCESS {} message {} processed -> {}", id, event_id, result);
+
                 if let Some(ref connection) = connection {
                     match result {
                         ProcessingResult::Successful => {
                             connection.processed_tx.send(result).unwrap()
                         }
-                        _ => panic!("{} message processing failed, restart", id),
+                        _ => panic!("CHILD PROCESS {} message processing failed, restart", id),
                     }
                 } else {
-                    panic!("{} can not send message, no connection configured", id)
+                    panic!("CHILD PROCESS {} can not send message, no connection configured", id)
                 }
             }
-            broker_event => warn!("event {} not implemented", broker_event),
+            ipc_event => warn!("event {:?} not implemented", ipc_event),
         }
     }
+    Ok(())
+}
+
+/// This is the main function to start the port.
+pub fn port_mqtt_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel: BoxedSender) {
+    mitosis::init();
+    let (mut parent_tx, mut parent_rx) = pipe().unwrap();
+    let (mut child_tx, mut child_rx) = pipe().unwrap();
+
+    match unsafe{fork()} {
+        Ok(ForkResult::Parent { child, .. }) => {
+            println!("Continuing execution in parent process, new child has pid: {}", child);
+            block_on(port_mqtt_start_parent(id.clone(), inbox, sender_to_kernel, parent_rx, child_tx)).unwrap();
+        }
+        Ok(ForkResult::Child) => {
+            println!("I'm a new child process");
+            block_on(port_mqtt_start_child(id.clone(), child_rx, parent_tx)).unwrap();
+        },
+        Err(_) => println!("Fork failed"),
+     }
+
+    info!("start mqtt port with id {}", id);
 }
 
 /// This is the pointer for the main function to start the port.
