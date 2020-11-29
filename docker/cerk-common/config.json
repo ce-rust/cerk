@@ -4,6 +4,9 @@
   ],
   "ports": {
     "sequence-generator-input": null,
-    "dummy-logger-output": null
+    "dummy-logger-output": null,
+    "health": {
+      "ports_to_check": []
+    }
   }
 }

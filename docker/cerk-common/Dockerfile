@@ -4,5 +4,6 @@ ADD . /app
 RUN cargo build --release
 
 FROM gcr.io/distroless/cc
+ENV RUST_LOG=debug
 COPY --from=build-env /app/target/release/cerk-common /app/init.json /app/config.json /
 CMD ["./cerk-common"]
