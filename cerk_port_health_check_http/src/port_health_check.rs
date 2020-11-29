@@ -56,7 +56,7 @@ fn build_config(id: &InternalServerId, config: Config) -> Result<HealthCheckConf
         bail!("{} ports_to_check have to be an array of strings", id)
     }
     let port_config = HealthCheckConfig {
-        http_port: config.get_op_val_u8("http_port")?.unwrap_or(80) as u16,
+        http_port: config.get_op_val_u32("http_port")?.unwrap_or(3000) as u16,
         ports_to_check: ports
             .iter()
             .filter_map(|c| c.as_ref().ok().map(|v| v.to_string()))

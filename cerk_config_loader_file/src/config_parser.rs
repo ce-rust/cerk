@@ -51,6 +51,7 @@ mod tests {
         case("true", Config::Bool(true)),
         case("0", Config::U8(0)),
         case("42", Config::U8(42)),
+        case("3000", Config::U32(3000)),
         case("[]", Config::Vec(vec![])),
         case("[42]", Config::Vec(vec![Config::U8(42)])),
     )]

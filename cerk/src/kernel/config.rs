@@ -18,6 +18,7 @@ pub enum Config {
     String(String),
     /// unsigned 8-bit number
     U8(u8),
+    U32(u32),
     Vec(Vec<Config>),
     HashMap(ConfigHashMap),
 }
@@ -28,6 +29,16 @@ impl TryFrom<&Config> for u8 {
         Ok(match value {
             Config::U8(v) => v.clone(),
             _ => bail!("expected U8"),
+        })
+    }
+}
+
+impl TryFrom<&Config> for u32 {
+    type Error = anyhow::Error;
+    fn try_from(value: &Config) -> Result<Self, Self::Error> {
+        Ok(match value {
+            Config::U32(v) => v.clone(),
+            _ => bail!("expected U32"),
         })
     }
 }
@@ -77,6 +88,8 @@ pub trait ConfigHelpers {
     fn get_op_val_string<'a>(&'a self, key: &'static str) -> Result<Option<String>>;
     /// get a u8 value from the HashMap
     fn get_op_val_u8<'a>(&'a self, key: &'static str) -> Result<Option<u8>>;
+    /// Get a u32 value from the HashMap. If it does not exist, it tries to get an u8, too.
+    fn get_op_val_u32<'a>(&'a self, key: &'static str) -> Result<Option<u32>>;
     /// get a vec value from the HashMap
     fn get_op_val_vec<'a>(&'a self, key: &'static str) -> Result<Option<Vec<Config>>>;
 }
@@ -90,28 +103,22 @@ impl ConfigHelpers for Config {
     }
 
     fn get_op_val_string<'a>(&'a self, key: &'static str) -> Result<Option<String>> {
-        let c = self.get_op_val_config(key)?;
-        if let Some(c) = c {
-            if let Ok(s) = String::try_from(c) {
-                Ok(Some(s))
-            } else {
-                bail!("Map option {} should have type string", key)
-            }
-        } else {
-            Ok(None)
-        }
+        self.get_op_val(key).into()
     }
 
     fn get_op_val_u8<'a>(&'a self, key: &'static str) -> Result<Option<u8>> {
-        let c = self.get_op_val_config(key)?;
-        if let Some(c) = c {
-            if let Ok(v) = u8::try_from(c) {
-                Ok(Some(v))
-            } else {
-                bail!("Map option {} should have type string", key)
-            }
-        } else {
-            Ok(None)
+        self.get_op_val(key).into()
+    }
+
+    fn get_op_val_u32<'a>(&'a self, key: &'static str) -> Result<Option<u32>> {
+        match self.get_op_val(key).into() {
+            Err(e) => {
+                 match self.get_op_val_u8(key) {
+                     Err(_) => Err(e),
+                     Ok(v) => Ok(v.map(|v| v as u32)),
+                 }
+            },
+            o => o,
         }
     }
 
@@ -161,5 +168,18 @@ mod tests {
                 .collect(),
         );
         assert!(config.get_op_val_string("test").is_err());
+    }
+
+    #[test]
+    fn get_u32() -> Result<()> {
+        let conf = Config::HashMap(
+            [("test".to_string(), Config::U8(3))]
+                .iter()
+                .cloned()
+                .collect(),
+        );
+        assert_eq!(conf.get_op_val_u32("test")?, Some(3));
+        assert_eq!(conf.get_op_val_u32("nonexsiting")?, None);
+        Ok(())
     }
 }
