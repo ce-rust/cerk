@@ -26,12 +26,12 @@ fn static_config_loader_start(
     let mqtt_in_config: HashMap<String, Config> = [
         ("host".to_string(), Config::String(mqtt_broker_url)),
         (
-            "subscribe_topics".to_string(),
-            Config::Vec(vec![Config::String("test".to_string())]),
+            "subscribe_topic".to_string(),
+            Config::String("test".to_string()),
         ),
         (
             "subscribe_qos".to_string(),
-            Config::Vec(vec![Config::U8(1)]),
+            Config::U8(1),
         ),
     ]
     .iter()
