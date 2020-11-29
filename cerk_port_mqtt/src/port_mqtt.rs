@@ -1,3 +1,5 @@
+use anyhow::{bail, Context, Result};
+use async_std::task::block_on;
 use cerk::kernel::{
     BrokerEvent, CloudEventMessageRoutingId, CloudEventRoutingArgs, Config, DeliveryGuarantee,
     IncomingCloudEvent, OutgoingCloudEvent, OutgoingCloudEventProcessed, ProcessingResult,
@@ -6,15 +8,14 @@ use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
 use cloudevents::{AttributesReader, Event};
 use paho_mqtt::{
-    AsyncClient, ConnectOptionsBuilder, CreateOptions, CreateOptionsBuilder, Message, PersistenceType,
+    AsyncClient, ConnectOptionsBuilder, CreateOptions, CreateOptionsBuilder, Message,
+    PersistenceType,
 };
 use serde_json;
-use std::rc::Rc;
-use std::time::Duration;
-use anyhow::{Context, Result, bail};
-use std::sync::mpsc::{channel,Receiver,Sender};
-use async_std::task::block_on;
 use std::future::Future;
+use std::rc::Rc;
+use std::sync::mpsc::{channel, Receiver, Sender};
+use std::time::Duration;
 
 struct MqttConnection {
     client: AsyncClient,
@@ -25,38 +26,42 @@ struct MqttConnection {
     subscribe_qos: u8,
 }
 
-fn build_connection(id: &InternalServerId, config: Config, processed_tx: Sender<ProcessingResult>) -> MqttConnection {
+fn build_connection(
+    id: &InternalServerId,
+    config: Config,
+    processed_tx: Sender<ProcessingResult>,
+) -> MqttConnection {
     match config {
         Config::HashMap(ref config_map) => {
             let host = match config_map.get("host") {
                 Some(Config::String(host)) => host,
-                _ => panic!("{} invalid value for host", id)
+                _ => panic!("{} invalid value for host", id),
             };
 
             let send_topic = match config_map.get("send_topic") {
                 Some(Config::String(topic)) => Some(topic.clone()),
                 Some(_) => panic!("{} invalid value for send_topic", id),
-                _ => None
+                _ => None,
             };
 
             let send_qos = match config_map.get("send_qos") {
                 Some(Config::U8(qos)) => *qos,
                 Some(_) => panic!("{} invalid value for send_qos", id),
-                _ => 0
+                _ => 0,
             };
 
             let subscribe_topic = match config_map.get("subscribe_topic") {
                 Some(Config::String(topic)) => Some(topic.clone()),
                 Some(_) => panic!("{} invalid value for subscribe_topic", id),
-                _ => None
+                _ => None,
             };
 
             let subscribe_qos = match config_map.get("subscribe_qos") {
                 Some(Config::U8(qos)) => *qos,
                 Some(_) => panic!("{} invalid value for subscribe_qos", id),
-                _ => 0
+                _ => 0,
             };
-            
+
             let mqtt_config = CreateOptionsBuilder::new()
                 .client_id(format!("cerk-{}", id))
                 .server_uri(host)
@@ -67,7 +72,7 @@ fn build_connection(id: &InternalServerId, config: Config, processed_tx: Sender<
             let client = AsyncClient::new(mqtt_config).unwrap_or_else(|err| {
                 panic!("Error creating the client: {}", err);
             });
-            
+
             return MqttConnection {
                 client,
                 processed_tx,
@@ -75,37 +80,46 @@ fn build_connection(id: &InternalServerId, config: Config, processed_tx: Sender<
                 send_qos,
                 subscribe_topic,
                 subscribe_qos,
-            }
+            };
         }
         _ => panic!("{} received invalide config", id),
     }
 }
 
-fn message_handler(id: InternalServerId, processed_rx: Receiver<ProcessingResult>, sender_to_kernel: BoxedSender, routing_args: CloudEventRoutingArgs) -> Box<dyn Fn(&AsyncClient, Option<paho_mqtt::Message>)> {
-    Box::new(move |_client: &AsyncClient,  msg: Option<paho_mqtt::Message>| {
-        debug!("{} received message callback", id);
-        if let Some(msg) = msg {
-            debug!("{} received cloudevent on topic {}", id, msg.topic());
-            let payload_str = msg.payload_str();
-            match serde_json::from_str::<Event>(&payload_str) {
-                Ok(cloud_event) => {
-                    debug!("{} deserialized event successfully", id);
-                    // todo add delivery attempt to routing id
-                    let routing_id = cloud_event.id().to_string();
-                    sender_to_kernel.send(BrokerEvent::IncomingCloudEvent(IncomingCloudEvent {
-                        routing_id,
-                        incoming_id: id.clone(),
-                        cloud_event,
-                        args: routing_args.clone(),
-                    }));
-                    processed_rx.recv();
-                }
-                Err(err) => {
-                    error!("{} while converting string to CloudEvent: {:?}", id, err);
+fn message_handler(
+    id: InternalServerId,
+    processed_rx: Receiver<ProcessingResult>,
+    sender_to_kernel: BoxedSender,
+    routing_args: CloudEventRoutingArgs,
+) -> Box<dyn Fn(&AsyncClient, Option<paho_mqtt::Message>)> {
+    Box::new(
+        move |_client: &AsyncClient, msg: Option<paho_mqtt::Message>| {
+            debug!("{} received message callback", id);
+            if let Some(msg) = msg {
+                debug!("{} received cloudevent on topic {}", id, msg.topic());
+                let payload_str = msg.payload_str();
+                match serde_json::from_str::<Event>(&payload_str) {
+                    Ok(cloud_event) => {
+                        debug!("{} deserialized event successfully", id);
+                        // todo add delivery attempt to routing id
+                        let routing_id = cloud_event.id().to_string();
+                        sender_to_kernel.send(BrokerEvent::IncomingCloudEvent(
+                            IncomingCloudEvent {
+                                routing_id,
+                                incoming_id: id.clone(),
+                                cloud_event,
+                                args: routing_args.clone(),
+                            },
+                        ));
+                        processed_rx.recv();
+                    }
+                    Err(err) => {
+                        error!("{} while converting string to CloudEvent: {:?}", id, err);
+                    }
                 }
             }
-        }
-    })
+        },
+    )
 }
 
 async fn setup_connection(
@@ -129,11 +143,16 @@ async fn setup_connection(
     let routing_args = CloudEventRoutingArgs {
         delivery_guarantee: match connection.subscribe_qos {
             1 => DeliveryGuarantee::AtLeastOnce,
-            _ => DeliveryGuarantee::Unspecified
-        }
+            _ => DeliveryGuarantee::Unspecified,
+        },
     };
 
-    connection.client.set_message_callback(message_handler(id.clone(), processed_rx, sender_to_kernel, routing_args));
+    connection.client.set_message_callback(message_handler(
+        id.clone(),
+        processed_rx,
+        sender_to_kernel,
+        routing_args,
+    ));
 
     if let Some(ref subscribe_topic) = connection.subscribe_topic {
         debug!(
@@ -141,10 +160,13 @@ async fn setup_connection(
             id, subscribe_topic, connection.subscribe_qos,
         );
 
-        connection.client.subscribe(subscribe_topic, connection.subscribe_qos as i32).await?;
+        connection
+            .client
+            .subscribe(subscribe_topic, connection.subscribe_qos as i32)
+            .await?;
     }
 
-    return Ok(connection)
+    return Ok(connection);
 }
 
 async fn send_cloud_event(
@@ -155,19 +177,15 @@ async fn send_cloud_event(
     if let Some(ref send_topic) = connection.send_topic {
         let serialized = serde_json::to_string(cloud_event).unwrap();
         debug!("{} message serialized", id);
-        let msg = Message::new(
-            send_topic,
-            serialized,
-            connection.send_qos as i32,
-        );
+        let msg = Message::new(send_topic, serialized, connection.send_qos as i32);
         debug!("start publishing on {}", send_topic);
-        
+
         match connection.client.publish(msg).await {
             Ok(_) => Ok(ProcessingResult::Successful),
             Err(e) => {
                 error!("{} error while publishing {:?}", id, e);
                 Ok(ProcessingResult::PermanentError)
-            },
+            }
         }
     } else {
         bail!(
@@ -197,19 +215,24 @@ pub fn port_mqtt_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
                 if let Some(ref connection) = connection {
                     match block_on(connection.client.disconnect(None)) {
                         Ok(_) => debug!("disconnected succesfully"),
-                        Err(err) => panic!("{} disconnects failed {:?}", id, err)
+                        Err(err) => panic!("{} disconnects failed {:?}", id, err),
                     }
                 }
 
-                match block_on(setup_connection(&id, sender_to_kernel.clone_boxed(), config)) {
-                    Ok(new_connection) => {connection = Some(new_connection);},
-                    Err(err) => panic!("{} connection setup failed {:?}", id, err)
+                match block_on(setup_connection(
+                    &id,
+                    sender_to_kernel.clone_boxed(),
+                    config,
+                )) {
+                    Ok(new_connection) => {
+                        connection = Some(new_connection);
+                    }
+                    Err(err) => panic!("{} connection setup failed {:?}", id, err),
                 }
             }
             BrokerEvent::OutgoingCloudEvent(event) => {
                 debug!("{} cloudevent received", &id);
                 if let Some(ref connection) = connection {
-
                     match block_on(send_cloud_event(&id, &event.cloud_event, &connection)) {
                         Ok(result) => {
                             debug!("{} cloudevent sent -> {:?}", &id, &result);
@@ -219,22 +242,23 @@ pub fn port_mqtt_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
                                     sender_id: id.clone(),
                                     routing_id: event.routing_id,
                                     result: result,
-                                }
+                                },
                             ));
-                        },
-                        Err(err) => panic!("{} connection setup failed {:?}", id, err)
+                        }
+                        Err(err) => panic!("{} connection setup failed {:?}", id, err),
                     }
                 } else {
                     panic!("{} can not send message, no connection configured", id)
                 }
-                
             }
             BrokerEvent::IncomingCloudEventProcessed(event_id, result) => {
                 debug!("{} message {} processed -> {}", id, event_id, result);
                 if let Some(ref connection) = connection {
                     match result {
-                        ProcessingResult::Successful => connection.processed_tx.send(result).unwrap(),
-                        _ => panic!("{} message processing failed, restart", id)
+                        ProcessingResult::Successful => {
+                            connection.processed_tx.send(result).unwrap()
+                        }
+                        _ => panic!("{} message processing failed, restart", id),
                     }
                 } else {
                     panic!("{} can not send message, no connection configured", id)
