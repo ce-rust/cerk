@@ -403,10 +403,11 @@ dependencies = [
 
 [[package]]
 name = "cerk_port_dummies"
-version = "0.2.3"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a327a5449f3f32cdbf7c75f9a010505b4f05141ef92d741dd8dc96c0d34e051b"
+checksum = "f7cf0f3242798b3a8f22881c8d86727629550a4bf4244b802ea4c3b8e4f22646"
 dependencies = [
+ "anyhow",
  "cerk",
  "chrono",
  "cloudevents-sdk",
