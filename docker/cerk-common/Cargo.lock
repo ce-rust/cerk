@@ -334,7 +334,7 @@ dependencies = [
 
 [[package]]
 name = "cerk-common"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "cerk",
  "cerk_config_loader_file",
@@ -416,9 +416,9 @@ dependencies = [
 
 [[package]]
 name = "cerk_port_health_check_http"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2283038b66a4fb39d3028e01fdf4eb3964837d33c16a444a10af309d851489d6"
+checksum = "aa6963faaac9af72e0d0d23f396e21a63522fd7916126734f420acecc4b7c565"
 dependencies = [
  "anyhow",
  "async-global-executor",
