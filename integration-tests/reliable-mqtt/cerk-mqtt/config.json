@@ -1,12 +1,13 @@
 {
   "routing_rules": [
-    "dummy-logger-output"
+    "outbox",
+    "failing"
   ],
   "ports": {
     "inbox": {
       "host": "tcp://unlimited:1883",
-      "subscribe_topics": ["inbox"],
-      "subscribe_qos": [1]
+      "subscribe_topic": "inbox",
+      "subscribe_qos": 1
     },
     "outbox": {
       "host": "tcp://unlimited:1883",
