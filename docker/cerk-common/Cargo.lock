@@ -369,9 +369,9 @@ dependencies = [
 
 [[package]]
 name = "cerk_loader_file"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "028fce2f415a54ac6c1c01c3a610bcc6f28711f3481e3bda56829852f00e005a"
+checksum = "c7bab5187d4c5e5efe95453f2a6e338bcf0cc53b357c8c5d7da35dab67147cb2"
 dependencies = [
  "anyhow",
  "cerk",
