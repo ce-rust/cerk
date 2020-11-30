@@ -3,33 +3,73 @@ use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
 use chrono::Utc;
 use cloudevents::{EventBuilder, EventBuilderV10};
-use std::{thread, time};
+use std::env;
+use std::thread;
+use std::time::Duration;
+
+const DEFAULT_SLEEP_MS: u64 = 1000;
 
 fn generate_events(id: InternalServerId, sender_to_kernel: BoxedSender) {
-    for i in 1.. {
-        debug!("send dummy event with sequence number {} to kernel", i);
+    let sleep = Duration::from_millis(if let Ok(time) = env::var("GENERATOR_SLEEP_MS") {
+        match time.parse() {
+            Ok(time) => time,
+            Err(e) => {
+                error!(
+                    "failed to parse GENERATOR_SLEEP_MS {:?} -> using default",
+                    e
+                );
+                DEFAULT_SLEEP_MS
+            }
+        }
+    } else {
+        DEFAULT_SLEEP_MS
+    });
 
-        let cloud_event = EventBuilderV10::new()
-            .id(format!("{}", i))
-            .ty("sequence-generator.counter")
-            .time(Utc::now())
-            .source("http://example.com/dummy.sequence-generator")
-            .data("text/plain", format!("sequence {}", i))
-            .build()
-            .unwrap();
-
-        sender_to_kernel.send(BrokerEvent::IncomingCloudEvent(IncomingCloudEvent {
-            routing_id: i.clone().to_string(),
-            incoming_id: id.clone(),
-            cloud_event,
-            args: CloudEventRoutingArgs::default(),
-        }));
-        thread::sleep(time::Duration::from_secs(1));
+    if let Ok(amount) = env::var("GENERATOR_AMOUNT") {
+        match amount.parse() {
+            Ok(amount) => {
+                for i in 1..=amount {
+                    generate_event(&id, &sender_to_kernel, i, &sleep);
+                }
+            }
+            Err(e) => error!("failed to parse GENERATOR_AMOUNT {:?}", e),
+        }
+    } else {
+        for i in 1.. {
+            generate_event(&id, &sender_to_kernel, i, &sleep);
+        }
     }
+    info!("{} finished generating events!", &id)
 }
 
-/// This port generates a CloudEvent every second and sends it to the Kernel.
+fn generate_event(id: &String, sender_to_kernel: &BoxedSender, i: i32, sleep: &Duration) {
+    debug!("send dummy event with sequence number {} to kernel", i);
+
+    let cloud_event = EventBuilderV10::new()
+        .id(format!("{}", i))
+        .ty("sequence-generator.counter")
+        .time(Utc::now())
+        .source("http://example.com/dummy.sequence-generator")
+        .data("text/plain", format!("sequence {}", i))
+        .build()
+        .unwrap();
+
+    sender_to_kernel.send(BrokerEvent::IncomingCloudEvent(IncomingCloudEvent {
+        routing_id: i.clone().to_string(),
+        incoming_id: id.clone(),
+        cloud_event,
+        args: CloudEventRoutingArgs::default(),
+    }));
+    thread::sleep(sleep.clone());
+}
+
+/// This port generates a CloudEvent every second (by default) and sends it to the Kernel.
 /// This port is for testing!
+///
+/// # Env Options
+///
+/// * `GENERATOR_SLEEP_MS` define the sleep time between 2 events
+/// * `GENERATOR_AMOUNT` define the total amount of events that should be generated
 ///
 /// # Examples
 ///
