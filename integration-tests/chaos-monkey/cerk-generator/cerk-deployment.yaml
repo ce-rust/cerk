@@ -16,10 +16,10 @@ spec:
     spec:
       containers:
         - name: cerk-generator
-          image: cloudeventsrouter/cerk:common-0.0.4
-          env:
-            - name: RUST_LOG
-              value: info
+          image: cloudeventsrouter/cerk:common-0.0.6
+          envFrom:
+            - configMapRef:
+                name: cerk-generator-env-config
           livenessProbe:
             httpGet:
               path: /

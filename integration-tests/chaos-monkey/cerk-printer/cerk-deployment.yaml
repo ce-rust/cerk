@@ -16,10 +16,10 @@ spec:
     spec:
       containers:
         - name: cerk-printer
-          image: cloudeventsrouter/cerk:common-0.0.4
-          env:
-              - name: RUST_LOG
-                value: info
+          image: cloudeventsrouter/cerk:common-0.0.6
+          envFrom:
+            - configMapRef:
+                name: cerk-printer-env-config
           livenessProbe:
             httpGet:
               path: /
@@ -39,6 +39,9 @@ spec:
             - name: cerk-configs
               mountPath: /config.json
               subPath: config.json
+            - name: cerk-configs
+              mountPath: /validator-conifg.json
+              subPath: validator-conifg.json
       volumes:
         - name: cerk-configs
           configMap:

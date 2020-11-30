@@ -11,7 +11,8 @@ data:
       "ports": {
         "ampq": "PORT_AMQP",
         "dummy-logger-output": "PORT_PRINTER",
-        "health": "PORT_HEALTH_CHECK_HTTP"
+        "health": "PORT_HEALTH_CHECK_HTTP",
+        "validator": "PORT_SEQUENCE_VALIDATOR"
       }
     }
   config.json: |
@@ -37,3 +38,28 @@ data:
         }
       }
     }
+  validator-conifg.json: |
+      {
+        "routing_rules": [
+          "dummy-logger-output",
+          "validator"
+        ],
+        "ports": {
+          "ampq": {
+            "uri": "amqp://rabbitmq:5672/%2f",
+            "consume_channels": [
+              {
+                "name": "output",
+                "ensure_queue": true,
+                "bind_to_exchange": "output",
+                "delivery_guarantee": 2
+              }
+            ]
+          },
+          "dummy-logger-output": null,
+          "health": {
+            "ports_to_check": ["ampq"]
+          },
+          "validator": null
+        }
+      }
