@@ -44,3 +44,33 @@ data:
         }
       }
     }
+  no-guarantee.json: |
+    {
+      "routing_rules": [
+        "dummy-logger-output",
+        "ampq"
+      ],
+      "ports": {
+        "ampq": {
+          "uri": "amqp://rabbitmq:5672/%2f",
+          "consume_channels": [
+            {
+              "name": "input",
+              "ensure_queue": true,
+              "bind_to_exchange": "input",
+              "delivery_guarantee": 0
+            }
+          ],
+          "publish_channels": [
+            {
+              "name": "output",
+              "ensure_exchange": true
+            }
+          ]
+        },
+        "dummy-logger-output": null,
+        "health": {
+          "ports_to_check": ["ampq"]
+        }
+      }
+    }

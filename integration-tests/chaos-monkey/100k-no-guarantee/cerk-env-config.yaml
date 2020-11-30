@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: cerk-printer-env-config
+  name: cerk-env-config
 data:
   RUST_LOG: info
-  CONFIG_PATH: './config.json'
+  CONFIG_PATH: './no-guarantee.json'

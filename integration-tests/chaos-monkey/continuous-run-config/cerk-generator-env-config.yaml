@@ -4,3 +4,4 @@ metadata:
   name: cerk-generator-env-config
 data:
   RUST_LOG: info
+  CONFIG_PATH: './config.json'
