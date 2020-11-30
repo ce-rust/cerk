@@ -14,12 +14,10 @@ use paho_mqtt::{
 use serde_json;
 use std::future::Future;
 use std::rc::Rc;
-use std::sync::mpsc::{channel, Receiver, Sender};
 use std::time::Duration;
 
 struct MqttConnection {
     client: AsyncClient,
-    processed_tx: Sender<ProcessingResult>,
     send_topic: Option<String>,
     send_qos: u8,
     subscribe_topic: Option<String>,
@@ -29,7 +27,6 @@ struct MqttConnection {
 fn build_connection(
     id: &InternalServerId,
     config: Config,
-    processed_tx: Sender<ProcessingResult>,
 ) -> MqttConnection {
     match config {
         Config::HashMap(ref config_map) => {
@@ -75,7 +72,6 @@ fn build_connection(
 
             return MqttConnection {
                 client,
-                processed_tx,
                 send_topic,
                 send_qos,
                 subscribe_topic,
@@ -88,7 +84,6 @@ fn build_connection(
 
 fn message_handler(
     id: InternalServerId,
-    processed_rx: Receiver<ProcessingResult>,
     sender_to_kernel: BoxedSender,
     routing_args: CloudEventRoutingArgs,
 ) -> Box<dyn Fn(&AsyncClient, Option<paho_mqtt::Message>)> {
@@ -111,7 +106,6 @@ fn message_handler(
                                 args: routing_args.clone(),
                             },
                         ));
-                        processed_rx.recv();
                     }
                     Err(err) => {
                         error!("{} while converting string to CloudEvent: {:?}", id, err);
@@ -129,8 +123,7 @@ async fn setup_connection(
 ) -> Result<MqttConnection> {
     debug!("{} start connection to mqtt broker", id);
 
-    let (processed_tx, processed_rx) = channel();
-    let mut connection = build_connection(id, config, processed_tx);
+    let mut connection = build_connection(id, config);
 
     let connection_options = ConnectOptionsBuilder::new()
         .clean_session(false)
@@ -142,14 +135,13 @@ async fn setup_connection(
 
     let routing_args = CloudEventRoutingArgs {
         delivery_guarantee: match connection.subscribe_qos {
-            1 => DeliveryGuarantee::AtLeastOnce,
-            _ => DeliveryGuarantee::Unspecified,
+            0 => DeliveryGuarantee::Unspecified,
+            _ => panic!("The MQTT Port Currently only supports QoS 0 (see https://github.com/ce-rust/cerk/issues/71)"),
         },
     };
 
     connection.client.set_message_callback(message_handler(
         id.clone(),
-        processed_rx,
         sender_to_kernel,
         routing_args,
     ));
@@ -253,16 +245,6 @@ pub fn port_mqtt_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
             }
             BrokerEvent::IncomingCloudEventProcessed(event_id, result) => {
                 debug!("{} message {} processed -> {}", id, event_id, result);
-                if let Some(ref connection) = connection {
-                    match result {
-                        ProcessingResult::Successful => {
-                            connection.processed_tx.send(result).unwrap()
-                        }
-                        _ => panic!("{} message processing failed, restart", id),
-                    }
-                } else {
-                    panic!("{} can not send message, no connection configured", id)
-                }
             }
             broker_event => warn!("event {} not implemented", broker_event),
         }
