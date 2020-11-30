@@ -166,7 +166,7 @@ async fn setup_connection_async(
         &config.uri,
         ConnectionProperties::default().with_default_executor(8),
     )
-        .await?;
+    .await?;
 
     info!("CONNECTED");
 
@@ -188,8 +188,8 @@ async fn setup_connection_async(
             name,
             channel_options,
         )
-            .await
-            .with_context(|| format!("failed to setup consume channel {}", &name))?;
+        .await
+        .with_context(|| format!("failed to setup consume channel {}", &name))?;
         channel_options.channel = Some(channel);
     }
     Ok(connection)
@@ -218,9 +218,12 @@ async fn setup_consume_channel(
                 .context("failed to setup dlx")?;
             queue_args.insert(
                 ShortString::from("x-dead-letter-exchange"),
-                AMQPValue::LongString(LongString::from(dlx)));
-            queue_args.insert(ShortString::from("x-delivery-limit"),
-                              AMQPValue::ShortUInt(ShortUInt::from_be(3)));
+                AMQPValue::LongString(LongString::from(dlx)),
+            );
+            queue_args.insert(
+                ShortString::from("x-delivery-limit"),
+                AMQPValue::ShortUInt(ShortUInt::from_be(3)),
+            );
         }
 
         let mut queue_options = QueueDeclareOptions::default();
@@ -232,7 +235,7 @@ async fn setup_consume_channel(
             queue_options,
             queue_args,
         )
-            .await?;
+        .await?;
         info!("Declared queue {:?}", queue);
 
         if let Some(exchange) = &channel_options.bind_to_exchange {
@@ -277,7 +280,7 @@ async fn setup_consume_channel(
             }
         }
     })
-        .detach();
+    .detach();
 
     Ok(channel)
 }
@@ -301,7 +304,7 @@ async fn setup_dlx(
         exchange_options,
         FieldTable::default(),
     )
-        .await?;
+    .await?;
     assert_queue(
         connection,
         channel,
@@ -309,7 +312,7 @@ async fn setup_dlx(
         queue_options,
         FieldTable::default(),
     )
-        .await?;
+    .await?;
     channel
         .queue_bind(
             dlx_name.as_str(),
@@ -342,7 +345,7 @@ async fn setup_publish_channel(
             ExchangeDeclareOptions::default(),
             FieldTable::default(),
         )
-            .await?;
+        .await?;
         info!("Declared exchange {}", &name);
     }
     Ok(channel)
