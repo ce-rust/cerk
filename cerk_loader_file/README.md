@@ -1,4 +1,4 @@
-# cerk_loader_file 0.2.0
+# cerk_loader_file 0.2.1
 
 [![Build status](https://badge.buildkite.com/4494e29d5f2c47e3fe998af46dff78a447800a76a68024e392.svg?branch=master)](https://buildkite.com/ce-rust/cerk)
 
@@ -23,7 +23,7 @@ A good overview is provided on [GitHub](https://github.com/ce-rust/cerk/).
 The cerk_loader_file link the different modules together and pass it to the `bootstrap` function.
 
 It uses a `ComponentStartLinks` file with all links to the start functions and a configuration file.
-The configuration file could be passed by the env variable `$CONFIG_PATH` or just use the path `./init.json`.
+The configuration file could be passed by the env variable `$INIT_PATH` or just use the path `./init.json`.
 
 
 #### Example Config
@@ -46,12 +46,24 @@ The configuration file could be passed by the env variable `$CONFIG_PATH` or jus
 extern crate cerk_loader_file;
 use cerk_loader_file::{start, ComponentStartLinks};
 
-#
-#
-#
-#
-#
-#
+use cerk::runtime::{InternalServerId, InternalServerFn, InternalServerFnRefStatic, ScheduleFn, ScheduleFnRefStatic};
+use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
+use cerk::kernel::{StartOptions, KernelFn};
+
+fn dummy_scheduler(_: StartOptions, _: KernelFn) {}
+
+fn dummy_router(_: InternalServerId, _: BoxedReceiver, _: BoxedSender) {}
+
+fn dummy_config_loader(_: InternalServerId, _: BoxedReceiver, _: BoxedSender) {}
+
+fn dummy_port(_: InternalServerId, _: BoxedReceiver, _: BoxedSender) {}
+
+fn dummy_port_other(_: InternalServerId, _: BoxedReceiver, _: BoxedSender) {}
+
+const SCHEDULER: ScheduleFnRefStatic = &(dummy_scheduler as ScheduleFn);
+const ROUTER: InternalServerFnRefStatic = &(dummy_router as InternalServerFn);
+const CONFIG_LOADER: InternalServerFnRefStatic = &(dummy_config_loader as InternalServerFn);
+const PORT: InternalServerFnRefStatic = &(dummy_port as InternalServerFn);
 
 fn main() {
     let link = ComponentStartLinks {
