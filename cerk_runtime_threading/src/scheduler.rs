@@ -2,6 +2,8 @@ use super::channel::new_channel;
 use cerk::kernel::{BrokerEvent, KernelFn, StartOptions};
 use cerk::runtime::channel::BoxedSender;
 use cerk::runtime::{InternalServerFnRefStatic, InternalServerId, ScheduleFn, ScheduleFnRefStatic};
+use std::panic;
+use std::process;
 use std::thread;
 
 fn schedule(
@@ -34,6 +36,13 @@ pub fn threading_scheduler_start(start_options: StartOptions, start_kernel: Kern
     thread::spawn(move || {
         start_kernel(start_options, receiver_from_scheduler, sender_to_scheduler);
     });
+
+    let default_hook = panic::take_hook();
+    panic::set_hook(Box::new(move |panic_info| {
+        // invoke the default handler and exit the process
+        default_hook(panic_info);
+        process::exit(1);
+    }));
 
     loop {
         let event = receiver_from_kernel.receive();
