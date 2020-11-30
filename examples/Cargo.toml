@@ -57,4 +57,4 @@ cerk_port_unix_socket = { path = "../cerk_port_unix_socket" }
 cerk_port_mqtt = { path = "../cerk_port_mqtt" }
 cerk_port_amqp = { path = "../cerk_port_amqp" }
 cerk_router_rule_based = { path = "../cerk_router_rule_based" }
-serde_json = "1.0.42"
+serde_json = "1.0.59"

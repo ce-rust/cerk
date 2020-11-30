@@ -6,29 +6,29 @@ extern crate anyhow;
 
 extern crate ctor;
 
-use std::env;
-use env_logger::Env;
-use paho_mqtt as mqtt;
 use anyhow::*;
 use async_std;
+use async_std::future::timeout;
 use async_std::prelude::*;
 use async_std::stream;
 use async_std::stream::Stream;
 use async_std::stream::StreamExt;
-use async_std::future::timeout;
-use std::time::Duration;
+use chrono::{DateTime, Utc};
+use cloudevents::{AttributesReader, Data, Event, EventBuilder, EventBuilderV10};
+use env_logger::Env;
 use futures::try_join;
-use cloudevents::{EventBuilder, AttributesReader, EventBuilderV10, Event, Data};
+use paho_mqtt as mqtt;
 use serde_json;
 use std::collections::HashSet;
-use chrono::{Utc, DateTime};
+use std::env;
+use std::time::Duration;
 
-fn get_event_id(payload: &[u8]) ->  Result<String> {
+fn get_event_id(payload: &[u8]) -> Result<String> {
     let event: Event = serde_json::from_slice(payload)?;
     Ok(event.id().to_string())
 }
 
-async fn setup_connection(client: mqtt::AsyncClient) -> Result<()>{
+async fn setup_connection(client: mqtt::AsyncClient) -> Result<()> {
     let connection_opts = mqtt::ConnectOptionsBuilder::new()
         .keep_alive_interval(Duration::from_secs(20))
         .mqtt_version(mqtt::MQTT_VERSION_3_1_1)
@@ -39,8 +39,12 @@ async fn setup_connection(client: mqtt::AsyncClient) -> Result<()>{
     Ok(())
 }
 
-async fn observe_topic(mut client: mqtt::AsyncClient, topic_name: &str, expected_event_count: usize) -> Result<()> {
-    let mut stream = client.get_stream(10*expected_event_count);
+async fn observe_topic(
+    mut client: mqtt::AsyncClient,
+    topic_name: &str,
+    expected_event_count: usize,
+) -> Result<()> {
+    let mut stream = client.get_stream(10 * expected_event_count);
     let mut received_message_ids = HashSet::new();
 
     while let Some(msg_opt) = stream.next().await {
@@ -61,20 +65,26 @@ async fn observe_topic(mut client: mqtt::AsyncClient, topic_name: &str, expected
         }
     }
 
-    return Ok(())
+    return Ok(());
 }
 
-async fn observe_stored_messages(mut client: mqtt::AsyncClient, expected_stored_unretained: usize) -> Result<()> {
-    let mut stream = client.get_stream(10*expected_stored_unretained);
+async fn observe_stored_messages(
+    mut client: mqtt::AsyncClient,
+    expected_stored_unretained: usize,
+) -> Result<()> {
+    let mut stream = client.get_stream(10 * expected_stored_unretained);
     let mut retained: usize = 0;
     let mut stored: usize = 0;
     info!("observe stored messages");
 
     while let Some(msg_opt) = stream.next().await {
         if let Some(msg) = msg_opt {
-            let topic_name =  msg.topic();
+            let topic_name = msg.topic();
             info!("received message on {}", topic_name);
-            info!("match retained {}", topic_name == "$SYS/broker/retained messages/count");
+            info!(
+                "match retained {}",
+                topic_name == "$SYS/broker/retained messages/count"
+            );
             if topic_name == "$SYS/broker/retained messages/count" {
                 retained = msg.payload_str().parse()?;
             } else {
@@ -84,12 +94,14 @@ async fn observe_stored_messages(mut client: mqtt::AsyncClient, expected_stored_
             info!("retained={}", retained);
             if stored >= retained {
                 let stored_unretained = stored - retained;
-                info!("stored-retained messages: {}/{}", stored_unretained, expected_stored_unretained);
+                info!(
+                    "stored-retained messages: {}/{}",
+                    stored_unretained, expected_stored_unretained
+                );
                 if stored_unretained == expected_stored_unretained {
                     break;
                 }
             }
-            
         } else {
             bail!("no message received");
         }
@@ -113,7 +125,8 @@ mod test {
     async fn test_successful_routing() -> Result<()> {
         let expected_event_count = env::var("SAMPLE_SIZE")
             .unwrap_or(100.to_string())
-            .parse::<usize>().unwrap();
+            .parse::<usize>()
+            .unwrap();
 
         let inbox_opts = mqtt::CreateOptionsBuilder::new()
             .server_uri("tcp://unlimited:1883")
@@ -137,20 +150,29 @@ mod test {
         setup_connection(outbox_client.clone()).await?;
         setup_connection(stored_messages_client.clone()).await?;
 
-        inbox_client.subscribe_many(&[
-            "inbox"
-        ], &[1]).await?;
-        outbox_client.subscribe_many(&[
-            "outbox"
-        ], &[1]).await?;
-        stored_messages_client.subscribe_many(&[
-            "$SYS/broker/retained messages/count",
-            "$SYS/broker/store/messages/count"
-        ], &[1, 1]).await?;
+        inbox_client.subscribe_many(&["inbox"], &[1]).await?;
+        outbox_client.subscribe_many(&["outbox"], &[1]).await?;
+        stored_messages_client
+            .subscribe_many(
+                &[
+                    "$SYS/broker/retained messages/count",
+                    "$SYS/broker/store/messages/count",
+                ],
+                &[1, 1],
+            )
+            .await?;
 
-        let inbox_observer = async_std::task::spawn(observe_topic(inbox_client.clone(), "inbox", expected_event_count));
-        let outbox_observer = async_std::task::spawn(observe_topic(outbox_client.clone(), "outbox", 1));
-        let stored_messages_observer = async_std::task::spawn(observe_stored_messages(stored_messages_client.clone(), expected_event_count));
+        let inbox_observer = async_std::task::spawn(observe_topic(
+            inbox_client.clone(),
+            "inbox",
+            expected_event_count,
+        ));
+        let outbox_observer =
+            async_std::task::spawn(observe_topic(outbox_client.clone(), "outbox", 1));
+        let stored_messages_observer = async_std::task::spawn(observe_stored_messages(
+            stored_messages_client.clone(),
+            expected_event_count,
+        ));
 
         for i in 0..expected_event_count {
             let mut data: Vec<u8> = Vec::new();
@@ -174,13 +196,12 @@ mod test {
                 bail!("connection error")
             }
         }
-        
+
         try_join!(
             timeout(Duration::from_secs(20), inbox_observer),
             timeout(Duration::from_secs(20), outbox_observer),
             timeout(Duration::from_secs(20), stored_messages_observer),
         )?;
-
 
         info!("test done, disconnecting now");
 
@@ -190,6 +211,6 @@ mod test {
             stored_messages_client.disconnect_after(Duration::from_secs(1)),
         )?;
 
-        return Ok(())
+        return Ok(());
     }
 }
