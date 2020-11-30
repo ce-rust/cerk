@@ -27,6 +27,7 @@ The ports are:
 
 * port_printer
 * port_sequence_generator
+* port_sequence_validator
 
 
 ## Update Readme

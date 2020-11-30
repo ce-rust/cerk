@@ -24,6 +24,7 @@ The ports are:
 
 * port_printer
 * port_sequence_generator
+* port_sequence_validator
 
 */
 
@@ -32,8 +33,13 @@ The ports are:
 #[macro_use]
 extern crate log;
 
+#[macro_use]
+extern crate anyhow;
+
 mod port_printer;
 mod port_sequence_generator;
+mod port_sequence_validator;
 
 pub use self::port_printer::{port_printer_start, PORT_PRINTER};
 pub use self::port_sequence_generator::{port_sequence_generator_start, PORT_SEQUENCE_GENERATOR};
+pub use self::port_sequence_validator::{port_sequence_validator_start, PORT_SEQUENCE_VALIDATOR};
