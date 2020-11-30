@@ -1,19 +1,16 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, Result};
 use async_std::task::block_on;
 use cerk::kernel::{
-    BrokerEvent, CloudEventMessageRoutingId, CloudEventRoutingArgs, Config, DeliveryGuarantee,
-    IncomingCloudEvent, OutgoingCloudEvent, OutgoingCloudEventProcessed, ProcessingResult,
+    BrokerEvent, CloudEventRoutingArgs, Config, DeliveryGuarantee, IncomingCloudEvent,
+    OutgoingCloudEventProcessed, ProcessingResult,
 };
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
 use cloudevents::{AttributesReader, Event};
 use paho_mqtt::{
-    AsyncClient, ConnectOptionsBuilder, CreateOptions, CreateOptionsBuilder, Message,
-    PersistenceType,
+    AsyncClient, ConnectOptionsBuilder, CreateOptionsBuilder, Message, PersistenceType,
 };
 use serde_json;
-use std::future::Future;
-use std::rc::Rc;
 use std::time::Duration;
 
 struct MqttConnection {
@@ -24,10 +21,7 @@ struct MqttConnection {
     subscribe_qos: u8,
 }
 
-fn build_connection(
-    id: &InternalServerId,
-    config: Config,
-) -> MqttConnection {
+fn build_connection(id: &InternalServerId, config: Config) -> MqttConnection {
     match config {
         Config::HashMap(ref config_map) => {
             let host = match config_map.get("host") {
@@ -185,10 +179,6 @@ async fn send_cloud_event(
             id
         )
     }
-}
-
-async fn port_mqtt_start_async() -> Result<()> {
-    Ok(())
 }
 
 /// This is the main function to start the port.

@@ -12,7 +12,7 @@ cerk_config_loader_file = { version = "0.2" }
 cerk_loader_file = { version = "0.2" }
 cerk_port_amqp = { version = "0.2" }
 cerk_port_dummies = { version = "0.2" }
-cerk_port_mqtt = { version = "0.2" }
+cerk_port_mqtt = { version = "0.3" }
 cerk_port_unix_socket = { version = "0.2" }
 cerk_router_broadcast = { version = "0.2" }
 cerk_router_rule_based = { version = "0.2" }

@@ -30,7 +30,7 @@ The configurations should be of type `cerk::kernel::Config::HashMap` and have at
 
 ## Required Fields
 
-## host
+### host
 
 The value has to by of type `Config::String` and contain a host name with protocol and port.
 
@@ -50,7 +50,6 @@ The following configurations are optional.
 
 The [quality of service](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718099) for message delivery.
 The quality of service is only for the MQTT broker and does not change any behavior of the router or the port.
-The router only supports best effort at the moment.
 
 * 0: At most once delivery (default)
 * 1: At least once delivery
@@ -64,15 +63,8 @@ The value has to by of type `Config::String` and contain the MQTT topic name  wh
 
 ### subscribe_qos
 
-The value has to by of type `Config::U8` and contain one of the following values:
-
-* 0: At most once delivery
-* 1: At least once delivery
-* 2: Exactly once delivery
-
 The [quality of service](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718099) for the topic subscription.
-The quality of service is only for the MQTT broker and does not change any behavior of the router or the port.
-The router only supports best effort at the moment.
+The value has to by of type `Config::U8` and currently only `0` (At most once delivery) is supported. (see https://github.com/ce-rust/cerk/issues/71)
 
 ## Configuration Examples
 
@@ -102,8 +94,7 @@ use cerk::kernel::Config;
 
 let map: HashMap<String, Config> = [
     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
-    ("persistence".to_string(), Config::U8(0)),
-    ("send_topic".to_string(), Config::String("test".to_string())),
+    ("send_topic".to_string(), Config::String("outbox".to_string())),
     ("send_qos".to_string(), Config::U8(2)),
 ]
 .iter()
@@ -121,15 +112,8 @@ use cerk::kernel::Config;
 
 let map: HashMap<String, Config> = [
     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
-    ("persistence".to_string(), Config::U8(0)),
-    (
-      "subscribe_topic".to_string(),
-      Config::String("test".to_string()),
-    ),
-    (
-      "subscribe_qos".to_string(),
-      Config::U8(2),
-    ),
+    ("subscribe_topic".to_string(), Config::String("inbox".to_string())),
+    ("subscribe_qos".to_string(), Config::U8(0)),
 ]
 .iter()
 .cloned()
@@ -146,17 +130,10 @@ use cerk::kernel::Config;
 
 let map: HashMap<String, Config> = [
     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
-    ("persistence".to_string(), Config::U8(0)),
-    ("send_topic".to_string(), Config::String("test".to_string())),
+    ("subscribe_topic".to_string(), Config::String("inbox".to_string())),
+    ("subscribe_qos".to_string(), Config::U8(0)),
+    ("send_topic".to_string(), Config::String("outbox".to_string())),
     ("send_qos".to_string(), Config::U8(2)),
-    (
-      "subscribe_topic".to_string(),
-      Config::String("test".to_string()),
-    ),
-    (
-      "subscribe_qos".to_string(),
-      Config::U8(2),
-    ),
 ]
 .iter()
 .cloned()
@@ -171,7 +148,7 @@ let config = Config::HashMap(map);
 
 # Limitations
 
-* **reliability** this port does not support any `DeliveryGuarantee` other then `Unspecified` and so does never send a `OutgoingCloudEventProcessed` or `IncomingCloudEventProcessed` messages
+* **reliability** this port does not support any `DeliveryGuarantee` other then `Unspecified` (QoS 0) for incomming events (see https://github.com/ce-rust/cerk/issues/71)
 
 */
 
