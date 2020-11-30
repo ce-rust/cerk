@@ -10,6 +10,7 @@ use serde::Serialize;
 use std::borrow::BorrowMut;
 use std::collections::HashMap;
 use std::convert::TryFrom;
+use std::net::{IpAddr, SocketAddr};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::runtime::Handle;
@@ -25,7 +26,7 @@ struct PendingRequest {
 }
 
 struct HealthCheckConfig {
-    http_port: u16,
+    address: SocketAddr,
     ports_to_check: Vec<InternalServerId>,
     timeout: Duration,
 }
@@ -55,8 +56,14 @@ fn build_config(id: &InternalServerId, config: Config) -> Result<HealthCheckConf
     if ports.iter().any(|r| r.is_err()) {
         bail!("{} ports_to_check have to be an array of strings", id)
     }
+    let ip_addr: IpAddr = config
+        .get_op_val_string("ip_addr")?
+        .unwrap_or("0.0.0.0".to_string())
+        .parse()?;
+    let port = config.get_op_val_u32("http_port")?.unwrap_or(3000) as u16;
+    let address: SocketAddr = SocketAddr::new(ip_addr, port);
     let port_config = HealthCheckConfig {
-        http_port: config.get_op_val_u32("http_port")?.unwrap_or(3000) as u16,
+        address,
         ports_to_check: ports
             .iter()
             .filter_map(|c| c.as_ref().ok().map(|v| v.to_string()))
@@ -94,14 +101,15 @@ fn start_server(data: ArcHealthCheckData) -> Result<()> {
 
     let tokio = data.clone().lock().unwrap().tokio.clone();
 
-    let port = data
+    let address = data
         .clone()
         .lock()
         .unwrap()
         .config
         .as_ref()
         .unwrap()
-        .http_port;
+        .address
+        .clone();
 
     let make_svc = make_service_fn(move |_| {
         let data = data.clone();
@@ -114,7 +122,7 @@ fn start_server(data: ArcHealthCheckData) -> Result<()> {
     });
 
     tokio.spawn(async move {
-        let server = Server::bind(&([127, 0, 0, 1], port).into()).serve(make_svc);
+        let server = Server::bind(&address).serve(make_svc);
         let graceful = server.with_graceful_shutdown(async {
             rx.await.ok();
         });
@@ -314,7 +322,7 @@ mod tests {
             pending_requests: HashMap::new(),
         };
         config.config = Some(HealthCheckConfig {
-            http_port: server_port,
+            address: SocketAddr::new("127.0.0.1".parse()?, server_port),
             timeout: Duration::from_millis(10),
             ports_to_check: ports,
         });

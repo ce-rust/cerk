@@ -1,6 +1,6 @@
 [package]
 name = "cerk-common"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Fabrizio Lazzaretti <fabrizio@lazzaretti.me>"]
 edition = "2018"
 
@@ -12,6 +12,7 @@ cerk_config_loader_file = { version = "0.2" }
 cerk_loader_file = { version = "0.2" }
 cerk_port_amqp = { version = "0.2" }
 cerk_port_dummies = { version = "0.2" }
+cerk_port_health_check_http = { version = "0.2" }
 cerk_port_mqtt = { version = "0.3" }
 cerk_port_unix_socket = { version = "0.2" }
 cerk_router_broadcast = { version = "0.2" }
