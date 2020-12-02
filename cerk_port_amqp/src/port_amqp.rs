@@ -5,9 +5,9 @@ use amq_protocol_types::{AMQPValue, LongLongUInt};
 use anyhow::{Context, Result};
 use async_std::future::timeout;
 use cerk::kernel::{
-    BrokerEvent, CloudEventMessageRoutingId, CloudEventRoutingArgs, Config, DeliveryGuarantee,
-    HealthCheckRequest, HealthCheckResponse, HealthCheckStatus, IncomingCloudEvent,
-    OutgoingCloudEvent, OutgoingCloudEventProcessed, ProcessingResult,
+    BrokerEvent, CloudEventMessageRoutingId, CloudEventRoutingArgs, Config, ConfigHelpers,
+    DeliveryGuarantee, HealthCheckRequest, HealthCheckResponse, HealthCheckStatus,
+    IncomingCloudEvent, OutgoingCloudEvent, OutgoingCloudEventProcessed, ProcessingResult,
 };
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
@@ -25,6 +25,10 @@ use std::convert::TryFrom;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+/// The default prefetch count per channel.
+/// The channel to the kernel has a size of 50 so it should be smaller then that.
+const DEFAULT_PREFETCH_COUNT: u16 = 30;
+
 struct PendingDelivery {
     consume_channel_id: String,
     delivery_tag: LongLongUInt,
@@ -38,6 +42,7 @@ struct AmqpConsumeOptions {
     ensure_dlx: bool,
     bind_to_exchange: Option<String>,
     delivery_guarantee: DeliveryGuarantee,
+    prefetch_count: u16,
 }
 
 struct AmqpPublishOptions {
@@ -88,6 +93,10 @@ fn build_config(id: &InternalServerId, config: &Config) -> Result<AmqpOptions> {
                             },
                             delivery_guarantee: try_get_delivery_option(consumer)?,
                             channel: None,
+                            prefetch_count: consumer_config
+                                .get_op_val_u32("prefetch_count")?
+                                .map(|v| v as u16)
+                                .unwrap_or(DEFAULT_PREFETCH_COUNT),
                         };
 
                         if let Some(Config::String(name)) = consumer.get("name") {
@@ -210,6 +219,9 @@ async fn setup_consume_channel(
             .confirm_select(ConfirmSelectOptions { nowait: false })
             .await?;
     }
+    channel
+        .basic_qos(channel_options.prefetch_count, BasicQosOptions::default())
+        .await?;
     if channel_options.ensure_queue {
         let mut queue_args = FieldTable::default();
         if channel_options.ensure_dlx {
@@ -620,3 +632,20 @@ pub fn port_amqp_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
 
 /// This is the pointer for the main function to start the port.
 pub static PORT_AMQP: InternalServerFnRefStatic = &(port_amqp_start as InternalServerFn);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn minimal_config() -> Result<()> {
+        let uri = "amqp://127.0.0.1:5672/%2f".to_string();
+        let map = [("uri".to_string(), Config::String(uri.to_string()))];
+        let config = build_config(
+            &"an-id".to_string(),
+            &Config::HashMap(map.iter().cloned().collect()),
+        )?;
+        assert_eq!(config.uri, uri);
+        Ok(())
+    }
+}
