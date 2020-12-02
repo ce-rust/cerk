@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: cerk
-          image: cloudeventsrouter/cerk:common-0.0.6
+          image: cloudeventsrouter/cerk:common-0.0.7
           envFrom:
             - configMapRef:
                 name: cerk-env-config

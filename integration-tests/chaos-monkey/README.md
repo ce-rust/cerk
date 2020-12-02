@@ -9,7 +9,7 @@ You need a kubernetes cluster, e.g. a local minikube installation <https://minik
 ## Test
 
 1. deploy all services
-   `kubectl apply -f rabbitmq/ -f continuous-run-config/ -f cerk/ -f cerk-generator/ -f cerk-printer/ -f continuous-run-config/`
+   `kubectl apply -f rabbitmq/ -f continuous-run-config/ -f cerk/ -f cerk-generator/ -f cerk-printer/`
 2. observe the message flow at the reabbitmq
     1. do a prot forward to rabbitmq
         `kubectl port-forward statefulset/rabbitmq 15672`
