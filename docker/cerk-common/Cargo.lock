@@ -383,9 +383,9 @@ dependencies = [
 
 [[package]]
 name = "cerk_port_amqp"
-version = "0.2.1"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77a7c8b0f728d38842f31a65f61f9b999063bded3204141caa0cb6aa94064818"
+checksum = "2d080042f93b6ea7d4906906a2815c61b6163c5cab1aefc50e6a892ada3fd5bc"
 dependencies = [
  "amq-protocol",
  "amq-protocol-types",
