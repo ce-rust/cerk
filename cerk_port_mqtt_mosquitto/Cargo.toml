@@ -12,5 +12,5 @@ env_logger = "0.7.1"
 cerk = { version = "0.2", path = "../cerk" }
 cloudevents-sdk = "0.3.0"
 serde_json = "1.0"
-mosquitto-client="0.1.5"
+mosquitto-client = { git = "https://github.com/jsloth/mosquitto-client", rev="7913a98bfe6d35aaec9b541e7be4b817c42d91e0" } #fork of "0.1.5"
 anyhow = "1.0"

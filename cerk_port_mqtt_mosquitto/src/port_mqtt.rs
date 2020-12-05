@@ -11,37 +11,37 @@ use std::sync::mpsc::{channel,Sender};
 fn build_connection(id: &InternalServerId, config: Config) -> Result<Mosquitto> {
     match config {
         Config::HashMap(ref config_map) => {
-            let host = match config_map.get("host") {
-                Some(Config::String(host)) => host,
-                _ => panic!("{} invalid value for host", id),
-            };
-
-            let send_topic = match config_map.get("send_topic") {
-                Some(Config::String(topic)) => Some(topic.clone()),
-                Some(_) => panic!("{} invalid value for send_topic", id),
-                _ => None,
-            };
-
-            let send_qos = match config_map.get("send_qos") {
-                Some(Config::U8(qos)) => *qos,
-                Some(_) => panic!("{} invalid value for send_qos", id),
-                _ => 0,
-            };
-
-            let subscribe_topic = match config_map.get("subscribe_topic") {
-                Some(Config::String(topic)) => Some(topic.clone()),
-                Some(_) => panic!("{} invalid value for subscribe_topic", id),
-                _ => None,
-            };
-
-            let subscribe_qos = match config_map.get("subscribe_qos") {
-                Some(Config::U8(qos)) => *qos,
-                Some(_) => panic!("{} invalid value for subscribe_qos", id),
-                _ => 0,
-            };
+            // let host = match config_map.get("host") {
+            //     Some(Config::String(host)) => host,
+            //     _ => panic!("{} invalid value for host", id),
+            // };
+            //
+            // let send_topic = match config_map.get("send_topic") {
+            //     Some(Config::String(topic)) => Some(topic.clone()),
+            //     Some(_) => panic!("{} invalid value for send_topic", id),
+            //     _ => None,
+            // };
+            //
+            // let send_qos = match config_map.get("send_qos") {
+            //     Some(Config::U8(qos)) => *qos,
+            //     Some(_) => panic!("{} invalid value for send_qos", id),
+            //     _ => 0,
+            // };
+            //
+            // let subscribe_topic = match config_map.get("subscribe_topic") {
+            //     Some(Config::String(topic)) => Some(topic.clone()),
+            //     Some(_) => panic!("{} invalid value for subscribe_topic", id),
+            //     _ => None,
+            // };
+            //
+            // let subscribe_qos = match config_map.get("subscribe_qos") {
+            //     Some(Config::U8(qos)) => *qos,
+            //     Some(_) => panic!("{} invalid value for subscribe_qos", id),
+            //     _ => 0,
+            // };
 
             let client = mosquitto_client::Mosquitto::new(&id.clone());
-            client.connect("localhost", 1883)?;
+            client.connect("localhost", 1883, 5)?;
             client.subscribe("inbox",1)?;
 
             return Ok(client);
@@ -84,7 +84,7 @@ fn send_cloud_event(
 }
 
 
-pub fn port_mqtt_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel: BoxedSender) {
+pub fn port_mqtt_mosquitto_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel: BoxedSender) {
     info!("start mqtt port with id {}", id);
     let mut client: Option<Mosquitto> = None;
     let mut sender: Option<Sender<()>> = None;
@@ -96,7 +96,11 @@ pub fn port_mqtt_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
             }
             BrokerEvent::ConfigUpdated(config, _) => {
                 info!("{} received ConfigUpdated", &id);
-                client = Some(build_connection(&id, config).unwrap());
+                match build_connection(&id, config) {
+                    Ok(new_client) => client = Some(new_client),
+                    Err(e) => error!("failed to connect {:?}", e)
+                }
+
                 if let Some(ref client) = client {
                     sender = Some(connect(id.clone(), client.clone(), sender_to_kernel.clone_boxed()).unwrap());
                 } else {
@@ -139,4 +143,4 @@ pub fn port_mqtt_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
 }
 
 /// This is the pointer for the main function to start the port.
-pub static PORT_MQTT: InternalServerFnRefStatic = &(port_mqtt_start as InternalServerFn);
+pub static PORT_MQTT_MOSQUITTO: InternalServerFnRefStatic = &(port_mqtt_mosquitto_start as InternalServerFn);

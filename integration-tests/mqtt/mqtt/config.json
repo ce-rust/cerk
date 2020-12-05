@@ -1,0 +1,15 @@
+{
+  "routing_rules": [
+    "dummy-logger-output",
+    "mqtt"
+  ],
+  "ports": {
+    "mqtt": {},
+    "dummy-logger-output": null,
+    "health": {
+      "ports_to_check": [
+        "mqtt"
+      ]
+    }
+  }
+}
