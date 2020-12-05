@@ -1,7 +1,6 @@
 {
   "routing_rules": [
-    "dummy-logger-output",
-    "mqtt"
+    "dummy-logger-output"
   ],
   "ports": {
     "mqtt": {},

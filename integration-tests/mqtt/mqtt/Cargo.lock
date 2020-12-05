@@ -124,6 +124,8 @@ checksum = "4c0496836a84f8d0495758516b8621a622beb77c0fed418570e50764093ced48"
 [[package]]
 name = "cerk"
 version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "06115df76872a963a7e5effa2fd1e26590ab7a41c1389c54a9e2e09fe9a141b4"
 dependencies = [
  "anyhow",
  "cloudevents-sdk",
@@ -135,6 +137,8 @@ dependencies = [
 [[package]]
 name = "cerk_config_loader_file"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b5db8383d6a70ca26a6e913950554d90dd04531efc3262dbeff1b75b07cece2c"
 dependencies = [
  "anyhow",
  "cerk",
@@ -149,6 +153,8 @@ dependencies = [
 [[package]]
 name = "cerk_loader_file"
 version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c7bab5187d4c5e5efe95453f2a6e338bcf0cc53b357c8c5d7da35dab67147cb2"
 dependencies = [
  "anyhow",
  "cerk",
@@ -161,6 +167,8 @@ dependencies = [
 [[package]]
 name = "cerk_port_dummies"
 version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "528eeedf768521921402b190b38a6efd5728d9f0aa83bab41f6037c11cb869e2"
 dependencies = [
  "anyhow",
  "cerk",
@@ -174,6 +182,8 @@ dependencies = [
 [[package]]
 name = "cerk_port_health_check_http"
 version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aa6963faaac9af72e0d0d23f396e21a63522fd7916126734f420acecc4b7c565"
 dependencies = [
  "anyhow",
  "async-global-executor",
@@ -204,6 +214,8 @@ dependencies = [
 [[package]]
 name = "cerk_router_broadcast"
 version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "adfbc642038d7bc4f44da1b5e410aeaaf768bb243c09729e88c5aafba6d21e39"
 dependencies = [
  "cerk",
  "cloudevents-sdk",
@@ -213,6 +225,8 @@ dependencies = [
 [[package]]
 name = "cerk_runtime_threading"
 version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0257b89e6730b6b2c1e59dfa594bea70a4650047e83d0a76ba3af8e951c07e9a"
 dependencies = [
  "cerk",
  "log",
