@@ -40,7 +40,7 @@ fn build_connection(id: &InternalServerId, config: Config) -> Result<Mosquitto> 
             //     _ => 0,
             // };
 
-            let client = mosquitto_client::Mosquitto::new(&id.clone());
+            let client = mosquitto_client::Mosquitto::new_session(&id.clone(), false); // keep old session
             client.connect("localhost", 1883, 5)?;
             client.subscribe("inbox",1)?;
 
@@ -56,6 +56,7 @@ fn connect(id: InternalServerId, client: Mosquitto, sender_to_kernel: BoxedSende
         let mut callbacks = client.callbacks(Vec::<()>::new());
         callbacks.on_message(|data,msg| {
             let cloudevent: Event = serde_json::from_str(msg.text()).unwrap();
+            debug!("received cloud event");
             sender_to_kernel.send(BrokerEvent::IncomingCloudEvent(IncomingCloudEvent{
                 incoming_id:id.clone(),
                 routing_id: "abc".to_string(),
@@ -64,7 +65,9 @@ fn connect(id: InternalServerId, client: Mosquitto, sender_to_kernel: BoxedSende
                     delivery_guarantee: DeliveryGuarantee::AtLeastOnce
                 }
             }));
+            debug!("wait for ack of cloud event - block");
             receiver.recv().unwrap();
+            debug!("received ack for cloud event -> will ack to mqtt");
         });
         client.loop_until_disconnect(200);
     });
@@ -132,6 +135,7 @@ pub fn port_mqtt_mosquitto_start(id: InternalServerId, inbox: BoxedReceiver, sen
             BrokerEvent::IncomingCloudEventProcessed(event_id, result) => {
                 // todo check result
                 if let Some(ref sender) = sender {
+                    debug!("received IncomingCloudEventProcessed -> will ack");
                     sender.send(()).unwrap();
                 } else {
                     // TODO
