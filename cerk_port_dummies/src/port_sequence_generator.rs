@@ -180,12 +180,9 @@ pub fn generate_sequence_event(i: u32) -> Event {
 ///
 /// # Examples
 ///
-/// * [Hello World Example](https://github.com/ce-rust/cerk/tree/master/examples/src/hello_world)
+/// * [Hello World](https://github.com/ce-rust/cerk/tree/master/examples/src/hello_world)
+/// * [Hello World Reliable](https://github.com/ce-rust/cerk/tree/master/examples/src/hello_world_reliable)
 /// * [Generator to MQTT](https://github.com/ce-rust/cerk/tree/master/examples/src/mqtt/)
-///
-/// ## Limitations
-///
-/// * **reliability** this port does not support any `DeliveryGuarantee` and so does never resend an unprocessed event.
 ///
 pub fn port_sequence_generator_start(
     id: InternalServerId,
