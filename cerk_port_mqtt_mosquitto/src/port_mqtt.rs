@@ -1,5 +1,5 @@
 use mosquitto_client::{Mosquitto,Callbacks};
-use cerk::kernel::{BrokerEvent, CloudEventRoutingArgs, Config, IncomingCloudEvent, DeliveryGuarantee, OutgoingCloudEventProcessed, RoutingResult, ProcessingResult};
+use cerk::kernel::{BrokerEvent, CloudEventRoutingArgs, Config, IncomingCloudEvent, DeliveryGuarantee, OutgoingCloudEventProcessed, RoutingResult, ProcessingResult, OutgoingCloudEvent};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
 use cloudevents::{AttributesReader, Event};
@@ -7,6 +7,14 @@ use serde_json;
 use std::{thread,time};
 use anyhow::Result;
 use std::sync::mpsc::{channel,Sender};
+use std::sync::{Arc, Mutex};
+use std::collections::HashMap;
+
+struct  Data {
+    unacked: HashMap<i32, String>,
+}
+
+type ArcData = Arc<Mutex<Data>>;
 
 fn build_connection(id: &InternalServerId, config: Config) -> Result<Mosquitto> {
     match config {
@@ -51,7 +59,7 @@ fn build_connection(id: &InternalServerId, config: Config) -> Result<Mosquitto> 
     }
 }
 
-fn connect(id: InternalServerId, client: Mosquitto, sender_to_kernel: BoxedSender) -> Result<Sender<()>> {
+fn connect(id: InternalServerId, client: Mosquitto, sender_to_kernel: BoxedSender, data: ArcData) -> Result<Sender<()>> {
     let (sender, receiver) = channel();
     thread::spawn(move || {
         let mut callbacks = client.callbacks(Vec::<()>::new());
@@ -70,8 +78,17 @@ fn connect(id: InternalServerId, client: Mosquitto, sender_to_kernel: BoxedSende
             receiver.recv().unwrap();
             debug!("received ack for cloud event -> will ack to mqtt");
         });
-        callbacks.on_publish(|data, id| {
-            debug!("received on_publish {}", id);
+        callbacks.on_publish(|publish_data, publish_id| {
+            debug!("received on_publish {}", publish_id);
+            if let Some(event_id) = data.clone().lock().as_mut().unwrap().unacked.remove(&publish_id) {
+                sender_to_kernel.send(BrokerEvent::OutgoingCloudEventProcessed(OutgoingCloudEventProcessed{
+                    result: ProcessingResult::Successful,
+                    sender_id: id.clone(),
+                    routing_id: event_id,
+                }));
+            } else {
+                warn!("on_publish {} was not expected", publish_id)
+            }
         });
         client.loop_until_disconnect(200);
     });
@@ -81,12 +98,17 @@ fn connect(id: InternalServerId, client: Mosquitto, sender_to_kernel: BoxedSende
 
 fn send_cloud_event(
     id: &InternalServerId,
-    cloud_event: &Event,
+    event: &OutgoingCloudEvent,
     client: &Mosquitto,
+    data: ArcData,
 ) -> Result<()> {
-    let serialized = serde_json::to_string(cloud_event)?;
-    // todo wait for publish confirm
-    let id = client.publish("outbox", serialized.as_bytes(), 1, false)?;
+    let serialized = serde_json::to_string(&event.cloud_event)?;
+
+    {
+        let mut data_lock = data.lock();
+        let id = client.publish("outbox", serialized.as_bytes(), 1, false)?;
+        data_lock.as_mut().unwrap().unacked.insert(id, event.routing_id.clone()).unwrap();
+    }
     debug!("sent publish with id {}", id);
     return Ok(());
 }
@@ -96,6 +118,9 @@ pub fn port_mqtt_mosquitto_start(id: InternalServerId, inbox: BoxedReceiver, sen
     info!("start mqtt port with id {}", id);
     let mut client: Option<Mosquitto> = None;
     let mut sender: Option<Sender<()>> = None;
+    let data: ArcData = Arc::new(Mutex::new(Data{
+        unacked: HashMap::new(),
+    }));
 
     loop {
         match inbox.receive() {
@@ -110,7 +135,7 @@ pub fn port_mqtt_mosquitto_start(id: InternalServerId, inbox: BoxedReceiver, sen
                 }
 
                 if let Some(ref client) = client {
-                    sender = Some(connect(id.clone(), client.clone(), sender_to_kernel.clone_boxed()).unwrap());
+                    sender = Some(connect(id.clone(), client.clone(), sender_to_kernel.clone_boxed(), data.clone()).unwrap());
                 } else {
                     // TODO
                 }
@@ -119,7 +144,7 @@ pub fn port_mqtt_mosquitto_start(id: InternalServerId, inbox: BoxedReceiver, sen
                 debug!("{} cloudevent received", &id);
                 if let Some(ref client) = client {
                     debug!("{} will send event out", &id);
-                    let result = send_cloud_event(&id, &event.cloud_event, &client);
+                    let result = send_cloud_event(&id, &event, &client, data.clone());
                     debug!("{} event sent out; successfull={}", &id, result.is_ok());
                     if event.args.delivery_guarantee.requires_acknowledgment() {
                         let process_result = match result {
