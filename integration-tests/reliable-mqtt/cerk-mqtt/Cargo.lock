@@ -106,6 +106,7 @@ dependencies = [
  "log",
  "mosquitto-client",
  "serde_json",
+ "url",
 ]
 
 [[package]]

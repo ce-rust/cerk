@@ -7,44 +7,64 @@ use serde_json;
 use std::{thread,time};
 use anyhow::Result;
 use std::sync::mpsc::{channel,Sender};
+use url::Url;
 
-fn build_connection(id: &InternalServerId, config: Config) -> Result<Mosquitto> {
+struct Connection {
+    client: Mosquitto,
+    send_topic: Option<String>,
+    send_qos: u8,
+    subscribe_topic: Option<String>,
+    subscribe_qos: u8,
+}
+
+fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection> {
     match config {
         Config::HashMap(ref config_map) => {
-            // let host = match config_map.get("host") {
-            //     Some(Config::String(host)) => host,
-            //     _ => panic!("{} invalid value for host", id),
-            // };
-            //
-            // let send_topic = match config_map.get("send_topic") {
-            //     Some(Config::String(topic)) => Some(topic.clone()),
-            //     Some(_) => panic!("{} invalid value for send_topic", id),
-            //     _ => None,
-            // };
-            //
-            // let send_qos = match config_map.get("send_qos") {
-            //     Some(Config::U8(qos)) => *qos,
-            //     Some(_) => panic!("{} invalid value for send_qos", id),
-            //     _ => 0,
-            // };
-            //
-            // let subscribe_topic = match config_map.get("subscribe_topic") {
-            //     Some(Config::String(topic)) => Some(topic.clone()),
-            //     Some(_) => panic!("{} invalid value for subscribe_topic", id),
-            //     _ => None,
-            // };
-            //
-            // let subscribe_qos = match config_map.get("subscribe_qos") {
-            //     Some(Config::U8(qos)) => *qos,
-            //     Some(_) => panic!("{} invalid value for subscribe_qos", id),
-            //     _ => 0,
-            // };
-
+            let host = match config_map.get("host") {
+                Some(Config::String(host)) => host,
+                _ => panic!("{} invalid value for host", id),
+            };
+            
+            let send_topic = match config_map.get("send_topic") {
+                Some(Config::String(topic)) => Some(topic.clone()),
+                Some(_) => panic!("{} invalid value for send_topic", id),
+                _ => None,
+            };
+            
+            let send_qos = match config_map.get("send_qos") {
+                Some(Config::U8(qos)) => *qos,
+                Some(_) => panic!("{} invalid value for send_qos", id),
+                _ => 0,
+            };
+            
+            let subscribe_topic = match config_map.get("subscribe_topic") {
+                Some(Config::String(topic)) => Some(topic.clone()),
+                Some(_) => panic!("{} invalid value for subscribe_topic", id),
+                _ => None,
+            };
+            
+            let subscribe_qos = match config_map.get("subscribe_qos") {
+                Some(Config::U8(qos)) => *qos,
+                Some(_) => panic!("{} invalid value for subscribe_qos", id),
+                _ => 0,
+            };
+            let host = Url::parse(host)?;
             let client = mosquitto_client::Mosquitto::new_session(&id.clone(), false); // keep old session
-            client.connect("localhost", 1883, 5)?;
-            client.subscribe("inbox",1)?;
+            client.connect(host.host_str().unwrap(), host.port().unwrap_or(1883).into(), 5)?;
+            if let Some(ref send_topic) = send_topic {
+                client.subscribe(&send_topic, send_qos.into())?;
+            }
+            
 
-            return Ok(client);
+            let connection = Connection {
+                client:client,
+                send_topic: send_topic,
+                send_qos: send_qos,
+                subscribe_topic: subscribe_topic,
+                subscribe_qos: subscribe_qos,
+            };
+
+            return Ok(connection);
         }
         _ => panic!("{} received invalide config", id),
     }
@@ -89,7 +109,7 @@ fn send_cloud_event(
 
 pub fn port_mqtt_mosquitto_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel: BoxedSender) {
     info!("start mqtt port with id {}", id);
-    let mut client: Option<Mosquitto> = None;
+    let mut connection: Option<Connection> = None;
     let mut sender: Option<Sender<()>> = None;
 
     loop {
@@ -100,20 +120,20 @@ pub fn port_mqtt_mosquitto_start(id: InternalServerId, inbox: BoxedReceiver, sen
             BrokerEvent::ConfigUpdated(config, _) => {
                 info!("{} received ConfigUpdated", &id);
                 match build_connection(&id, config) {
-                    Ok(new_client) => client = Some(new_client),
+                    Ok(new_connection) => connection = Some(new_connection),
                     Err(e) => error!("failed to connect {:?}", e)
                 }
 
-                if let Some(ref client) = client {
-                    sender = Some(connect(id.clone(), client.clone(), sender_to_kernel.clone_boxed()).unwrap());
+                if let Some(ref connection) = connection {
+                    sender = Some(connect(id.clone(), connection.client.clone(), sender_to_kernel.clone_boxed()).unwrap());
                 } else {
                     // TODO
                 }
             }
             BrokerEvent::OutgoingCloudEvent(event) => {
                 debug!("{} cloudevent received", &id);
-                if let Some(ref client) = client {
-                    let result = send_cloud_event(&id, &event.cloud_event, &client);
+                if let Some(ref connection) = connection {
+                    let result = send_cloud_event(&id, &event.cloud_event, &connection.client);
                     if event.args.delivery_guarantee.requires_acknowledgment() {
                         let process_result = match result {
                             Ok(_) => ProcessingResult::Successful,

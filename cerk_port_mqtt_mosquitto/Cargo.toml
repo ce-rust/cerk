@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 log = "0.4.0"
 env_logger = "0.7.1"
+url = "2"
 cerk = { version = "0.2", path = "../cerk" }
 cloudevents-sdk = "0.3.0"
 serde_json = "1.0"
