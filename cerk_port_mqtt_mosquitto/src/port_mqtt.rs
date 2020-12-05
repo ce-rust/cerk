@@ -12,7 +12,7 @@ struct MosquittoClient<'a> {
     callbacks: Option<Callbacks<'a, Vec<()>>>,
 }
 
-fn build_connection(id: &InternalServerId, config: Config, data: &mut MosquittoClient) -> Result<()> {
+fn build_connection<'a>(id: &InternalServerId, config: Config, data: &'a mut MosquittoClient<'a>) -> Result<()> {
     match config {
         Config::HashMap(ref config_map) => {
             let host = match config_map.get("host") {
@@ -45,17 +45,17 @@ fn build_connection(id: &InternalServerId, config: Config, data: &mut MosquittoC
             };
 
             data.client = Some(mosquitto_client::Mosquitto::new(&id.clone()));
-            data.client.unwrap().connect("localhost", 1883)?;
-            data.client.unwrap().subscribe("test",1)?;
+            data.client.as_ref().unwrap().connect("localhost", 1883)?;
+            data.client.as_ref().unwrap().subscribe("test",1)?;
 
 
             data.callbacks = Some(data.client.as_ref().unwrap().callbacks(Vec::<()>::new()));
 
-            data.callbacks.unwrap().on_message(|data,msg| {
+            data.callbacks.as_mut().unwrap().on_message(|data,msg| {
                 debug!("{:?} {:?}", data, msg);
             });
 
-            let cloned_client = data.client.unwrap().clone();
+            let cloned_client = data.client.as_ref().unwrap().clone();
             thread::spawn(move || {
                 cloned_client.loop_until_disconnect(200);
             });
