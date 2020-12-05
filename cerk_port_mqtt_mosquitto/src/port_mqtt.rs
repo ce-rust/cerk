@@ -7,12 +7,7 @@ use serde_json;
 use std::{thread,time};
 use anyhow::Result;
 
-struct MosquittoClient<'a> {
-    client: Option<Mosquitto>,
-    callbacks: Option<Callbacks<'a, Vec<()>>>,
-}
-
-fn build_connection(id: &InternalServerId, config: Config, data: &mut MosquittoClient) -> Result<()> {
+fn build_connection(id: &InternalServerId, config: Config) -> Result<Mosquitto> {
     match config {
         Config::HashMap(ref config_map) => {
             let host = match config_map.get("host") {
@@ -44,35 +39,42 @@ fn build_connection(id: &InternalServerId, config: Config, data: &mut MosquittoC
                 _ => 0,
             };
 
-            data.client = Some(mosquitto_client::Mosquitto::new(&id.clone()));
-            data.client.unwrap().connect("localhost", 1883)?;
-            data.client.unwrap().subscribe("test",1)?;
+            let client = mosquitto_client::Mosquitto::new(&id.clone());
+            client.connect("localhost", 1883)?;
+            client.subscribe("inbox",1)?;
 
-
-            data.callbacks = Some(data.client.as_ref().unwrap().callbacks(Vec::<()>::new()));
-
-            data.callbacks.unwrap().on_message(|data,msg| {
-                debug!("{:?} {:?}", data, msg);
-            });
-
-            let cloned_client = data.client.unwrap().clone();
-            thread::spawn(move || {
-                cloned_client.loop_until_disconnect(200);
-            });
-
-            return Ok(());
+            return Ok(client);
         }
         _ => panic!("{} received invalide config", id),
     }
 }
 
+fn connect(client: Mosquitto) -> Result<()> {
+    thread::spawn(move || {
+        let mut callbacks = client.callbacks(Vec::<()>::new());
+        callbacks.on_message(|data,msg| {
+            debug!("{:?} {:?}", data, msg);
+        });
+        client.loop_until_disconnect(200);
+    });
+
+    return Ok(());
+}
+
+fn send_cloud_event(
+    id: &InternalServerId,
+    cloud_event: &Event,
+    client: &Mosquitto,
+) -> Result<()> {
+    let serialized = serde_json::to_string(cloud_event)?;
+    client.publish("outbox", serialized.as_bytes(), 1, false);
+    return Ok(());
+}
+
 
 pub fn port_mqtt_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel: BoxedSender) {
     info!("start mqtt port with id {}", id);
-    let mut client: MosquittoClient = MosquittoClient{
-        client: None,
-        callbacks: None,
-    };
+    let mut client: Option<Mosquitto> = None;
 
     loop {
         match inbox.receive() {
@@ -81,10 +83,16 @@ pub fn port_mqtt_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
             }
             BrokerEvent::ConfigUpdated(config, _) => {
                 info!("{} received ConfigUpdated", &id);
-                build_connection(&id, config, &mut client);
+                client = Some(build_connection(&id, config).unwrap());
+                if let Some(ref client) = client {
+                    connect(client.clone());
+                }
             }
             BrokerEvent::OutgoingCloudEvent(event) => {
                 debug!("{} cloudevent received", &id);
+                if let Some(ref client) = client {
+                    send_cloud_event(&id, &event.cloud_event, &client).unwrap();
+                }
             }
             broker_event => warn!("event {} not implemented", broker_event),
         }
