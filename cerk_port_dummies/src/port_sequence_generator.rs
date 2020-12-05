@@ -1,14 +1,18 @@
-use cerk::kernel::{BrokerEvent, CloudEventRoutingArgs, IncomingCloudEvent, Config, DeliveryGuarantee, ConfigHelpers, ProcessingResult};
+use anyhow::{Context, Result};
+use cerk::kernel::{
+    BrokerEvent, CloudEventRoutingArgs, Config, ConfigHelpers, DeliveryGuarantee,
+    IncomingCloudEvent, ProcessingResult,
+};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
 use chrono::Utc;
 use cloudevents::{Event, EventBuilder, EventBuilderV10};
+use std::convert::TryFrom;
 use std::env;
+use std::option::Option;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
-use anyhow::{Result, Context};
-use std::convert::TryFrom;
-use std::sync::{Arc, Mutex};
 
 type ArcSequenceGenData = Arc<Mutex<SequenceGeneratorData>>;
 
@@ -43,25 +47,36 @@ impl Default for SequenceGeneratorConfig {
     }
 }
 
+macro_rules! get_config {
+    ($data:expr, $field:tt) => {
+        $data
+            .lock()
+            .map_err(|e| anyhow!("failed to acquire data: {:?}", e))?
+            .config
+            .as_ref()
+            .ok_or(anyhow!("failed to get config"))?
+            .$field
+    };
+}
+
 fn get_sleep_between_messages() -> Result<Duration> {
-    Ok(Duration::from_millis(if let Ok(time) = env::var("GENERATOR_SLEEP_MS") {
-        match time.parse() {
-            Ok(time) => time,
-            Err(e) => {
-                bail!(
-                    "failed to parse GENERATOR_SLEEP_MS {:?}",
-                    e
-                )
+    Ok(Duration::from_millis(
+        if let Ok(time) = env::var("GENERATOR_SLEEP_MS") {
+            match time.parse() {
+                Ok(time) => time,
+                Err(e) => bail!("failed to parse GENERATOR_SLEEP_MS {:?}", e),
             }
-        }
-    } else {
-        DEFAULT_SLEEP_MS
-    }))
+        } else {
+            DEFAULT_SLEEP_MS
+        },
+    ))
 }
 
 fn get_amount() -> Result<Option<u32>> {
     if let Ok(amount) = env::var("GENERATOR_AMOUNT") {
-        Ok(Some(amount.parse().context("failed to parse GENERATOR_AMOUNT")?))
+        Ok(Some(
+            amount.parse().context("failed to parse GENERATOR_AMOUNT")?,
+        ))
     } else {
         Ok(None)
     }
@@ -84,48 +99,63 @@ fn get_delivery_guarantee(config: &Config) -> Result<DeliveryGuarantee> {
     }
 }
 
-fn send_events(id: &InternalServerId, sender_to_kernel: &BoxedSender, data: ArcSequenceGenData) {
-    let amount = {
-        let data_unwrapped = data.lock().unwrap();
-        data_unwrapped.config.as_ref().unwrap().amount
-    };
+fn send_events(
+    id: &InternalServerId,
+    sender_to_kernel: &BoxedSender,
+    data: ArcSequenceGenData,
+) -> Result<()> {
+    let amount = get_config!(data, amount);
     if let Some(amount) = amount {
         for i in 1..=amount {
-            send_event_and_track(id, sender_to_kernel, i, &data);
+            send_event_and_track(id, sender_to_kernel, i, &data)?;
         }
     } else {
         for i in 1.. {
-            send_event_and_track(id, sender_to_kernel, i, &data);
+            send_event_and_track(id, sender_to_kernel, i, &data)?;
         }
     }
-    info!("{} finished generating events!", &id)
+    info!("{} finished generating events!", &id);
+    Ok(())
 }
 
-fn send_event_and_track(id: &String, sender_to_kernel: &BoxedSender, i: u32, data: &ArcSequenceGenData) {
-    let (unack_max_cound, delivery_guarantee, sleep_between_messages) = {
-        let data_unwrapped = data.lock().unwrap();
-        let config = data_unwrapped.config.as_ref().unwrap();
-        (config.unack_max_cound, config.delivery_guarantee.clone(), config.sleep_between_messages)
-    };
-    while delivery_guarantee.requires_acknowledgment() && data.lock().unwrap().missing_deliveries.len() >= unack_max_cound {
+fn send_event_and_track(
+    id: &String,
+    sender_to_kernel: &BoxedSender,
+    i: u32,
+    data: &ArcSequenceGenData,
+) -> Result<()> {
+    let unack_max_cound = get_config!(data, unack_max_cound);
+    let delivery_guarantee = get_config!(data, delivery_guarantee);
+    let sleep_between_messages = get_config!(data, sleep_between_messages);
+    while delivery_guarantee.requires_acknowledgment()
+        && data.lock().unwrap().missing_deliveries.len() >= unack_max_cound
+    {
         warn!("{} received unack_max_cound - wait with resending", id);
         thread::sleep(Duration::from_millis(10));
     }
-    data.lock().as_mut().unwrap().missing_deliveries.push(format!("{}", i));
+    data.lock()
+        .as_mut()
+        .unwrap()
+        .missing_deliveries
+        .push(format!("{}", i));
     send_event(id, sender_to_kernel, i, delivery_guarantee);
     thread::sleep(sleep_between_messages.clone());
+    Ok(())
 }
 
-fn send_event(id: &String, sender_to_kernel: &BoxedSender, i: u32, delivery_guarantee: DeliveryGuarantee) {
+fn send_event(
+    id: &String,
+    sender_to_kernel: &BoxedSender,
+    i: u32,
+    delivery_guarantee: DeliveryGuarantee,
+) {
     debug!("send dummy event with sequence number {} to kernel", i);
 
     sender_to_kernel.send(BrokerEvent::IncomingCloudEvent(IncomingCloudEvent {
         routing_id: i.clone().to_string(),
         incoming_id: id.clone(),
         cloud_event: generate_sequence_event(i),
-        args: CloudEventRoutingArgs{
-            delivery_guarantee,
-        },
+        args: CloudEventRoutingArgs { delivery_guarantee },
     }));
 }
 
@@ -168,7 +198,6 @@ pub fn port_sequence_generator_start(
         config: None,
         missing_deliveries: vec![],
     };
-    let mut task: Option<tokio::task::JoinHandle<()>> = None;
     let data: ArcSequenceGenData = Arc::new(Mutex::new(data));
     loop {
         match inbox.receive() {
@@ -176,7 +205,10 @@ pub fn port_sequence_generator_start(
             BrokerEvent::ConfigUpdated(config, _) => {
                 data.lock().as_mut().unwrap().config = Some(match build_config(&id, &config) {
                     Err(e) => {
-                        error!("failed to read config -> will fallback to default; error: {:?}", e);
+                        error!(
+                            "failed to read config -> will fallback to default; error: {:?}",
+                            e
+                        );
                         SequenceGeneratorConfig::default()
                     }
                     Ok(settings) => settings,
@@ -185,32 +217,63 @@ pub fn port_sequence_generator_start(
                 let data = data.clone();
                 let id = id.clone();
                 let sender_to_kernel = sender_to_kernel.clone_boxed();
-                task = Some(tokio.spawn(async move {
-                    send_events(&id, &sender_to_kernel, data.clone());
-                }));
+                tokio.spawn(async move {
+                    if let Err(e) = send_events(&id, &sender_to_kernel, data.clone()) {
+                        error!("failed to generate sequence: {:?}", e)
+                    }
+                });
             }
             BrokerEvent::IncomingCloudEventProcessed(routing_id, result) => {
-                let delivery_guarantee = data.lock().unwrap().config.as_ref().unwrap().delivery_guarantee;
-                if delivery_guarantee.requires_acknowledgment() {
-                    let idx = data.lock().unwrap().missing_deliveries.iter().position(|e| *e == routing_id);
-                    if let Some(idx) = idx {
-                        match result {
-                            ProcessingResult::Successful => {
-                                data.lock().unwrap().missing_deliveries.remove(idx);
-                            }
-                            ProcessingResult::PermanentError | ProcessingResult::TransientError => {
-                                // just resend it with a delay
-                                thread::sleep(Duration::from_millis(10));
-                                // the routing id is just the sequence id
-                                send_event(&id, &sender_to_kernel, routing_id.parse().unwrap(), delivery_guarantee);
-                            }
-                        }
-                    }
+                if let Err(e) = process_incomming_event_result(
+                    &id,
+                    &sender_to_kernel,
+                    data.clone(),
+                    routing_id,
+                    result,
+                ) {
+                    error!("failed to process IncomingCloudEventProcessed: {:?}", e);
                 }
             }
             broker_event => warn!("event {} not implemented", broker_event),
         }
     }
+}
+
+fn process_incomming_event_result(
+    id: &String,
+    sender_to_kernel: &BoxedSender,
+    data: Arc<Mutex<SequenceGeneratorData>>,
+    routing_id: String,
+    result: ProcessingResult,
+) -> Result<()> {
+    let delivery_guarantee = get_config!(data, delivery_guarantee);
+    if delivery_guarantee.requires_acknowledgment() {
+        let idx = data
+            .lock()
+            .unwrap()
+            .missing_deliveries
+            .iter()
+            .position(|e| *e == routing_id);
+        if let Some(idx) = idx {
+            match result {
+                ProcessingResult::Successful => {
+                    data.lock().unwrap().missing_deliveries.remove(idx);
+                }
+                ProcessingResult::PermanentError | ProcessingResult::TransientError => {
+                    // just resend it with a delay
+                    thread::sleep(Duration::from_millis(10));
+                    // the routing id is just the sequence id
+                    send_event(
+                        &id,
+                        &sender_to_kernel,
+                        routing_id.parse().unwrap(),
+                        delivery_guarantee,
+                    );
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 /// This is the pointer for the main function to start the port.

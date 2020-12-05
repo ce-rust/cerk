@@ -3,7 +3,9 @@ extern crate log;
 
 use env_logger::Env;
 
-use cerk::kernel::{bootstrap, BrokerEvent, Config, ScheduleInternalServer, StartOptions, DeliveryGuarantee};
+use cerk::kernel::{
+    bootstrap, BrokerEvent, Config, DeliveryGuarantee, ScheduleInternalServer, StartOptions,
+};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::{InternalServerFn, InternalServerId};
 use cerk_port_dummies::{PORT_SEQUENCE_GENERATOR, PORT_SEQUENCE_VALIDATOR};
@@ -28,7 +30,15 @@ fn static_config_loader_start(
                     String::from("router"),
                 ));
                 sender_to_kernel.send(BrokerEvent::ConfigUpdated(
-                    Config::HashMap([("delivery_guarantee".to_string(), Config::from(DeliveryGuarantee::AtLeastOnce))].iter().cloned().collect()),
+                    Config::HashMap(
+                        [(
+                            "delivery_guarantee".to_string(),
+                            Config::from(DeliveryGuarantee::AtLeastOnce),
+                        )]
+                        .iter()
+                        .cloned()
+                        .collect(),
+                    ),
                     String::from(DUMMY_SEQUENCE_GENERATOR),
                 ));
                 sender_to_kernel.send(BrokerEvent::ConfigUpdated(
