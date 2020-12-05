@@ -15,6 +15,7 @@ struct  Data {
     unacked: HashMap<i32, String>,
 }
 
+#[derive(Clone)]
 struct Connection {
     client: Mosquitto,
     send_topic: Option<String>,
@@ -60,14 +61,11 @@ fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection>
             debug!("create new session: {}", id);
             let client = mosquitto_client::Mosquitto::new_session(&id.clone(), false); // keep old session
             client.threaded();
+            client.reconnect_delay_set(1, 300, true);
             let host_name = host.host_str().unwrap();
             let host_port = host.port().unwrap_or(1883);
             debug!("connect to: {}:{}", host_name, host_port);
             client.connect(host_name, host_port.into(), 5)?;
-            if let Some(ref subscribe_topic) = subscribe_topic {
-                debug!("subscribe to: {} with qos {}", subscribe_topic, subscribe_qos);
-                client.subscribe(&subscribe_topic, subscribe_qos.into())?;
-            }
             
 
             let connection = Connection {
@@ -84,13 +82,13 @@ fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection>
     }
 }
 
-fn connect(id: InternalServerId, client: Mosquitto, sender_to_kernel: BoxedSender, data: ArcData) -> Result<Sender<()>> {
+fn connect(id: InternalServerId, connection: Connection, sender_to_kernel: BoxedSender, data: ArcData) -> Result<Sender<()>> {
     let (sender, receiver) = channel();
     thread::spawn(move || {
-        let mut callbacks = client.callbacks(Vec::<()>::new());
-        callbacks.on_message(|data,msg| {
-            let cloudevent: Event = serde_json::from_str(msg.text()).unwrap();
+        let mut callbacks = connection.client.callbacks(Vec::<()>::new());
+        callbacks.on_message(|_,msg| {
             debug!("received cloud event (on_message)");
+            let cloudevent: Event = serde_json::from_str(msg.text()).unwrap();
             sender_to_kernel.send(BrokerEvent::IncomingCloudEvent(IncomingCloudEvent{
                 incoming_id:id.clone(),
                 routing_id: "abc".to_string(),
@@ -103,19 +101,30 @@ fn connect(id: InternalServerId, client: Mosquitto, sender_to_kernel: BoxedSende
             receiver.recv().unwrap();
             debug!("received ack for cloud event -> will ack to mqtt");
         });
-        callbacks.on_publish(|publish_data, publish_id| {
-            debug!("received on_publish {}", publish_id);
-            if let Some(event_id) = data.clone().lock().as_mut().unwrap().unacked.remove(&publish_id) {
+        callbacks.on_publish(|_, message_id| {
+            let mut data_lock = data.lock().unwrap();
+            debug!("{} published message with id {} successfully", id, message_id);
+            if let Some(routing_id) = data_lock.unacked.remove(&message_id) {
                 sender_to_kernel.send(BrokerEvent::OutgoingCloudEventProcessed(OutgoingCloudEventProcessed{
                     result: ProcessingResult::Successful,
                     sender_id: id.clone(),
-                    routing_id: event_id,
+                    routing_id: routing_id,
                 }));
             } else {
-                warn!("on_publish {} was not expected", publish_id)
+                warn!("on_publish {} was not expected", message_id)
             }
         });
-        client.loop_until_disconnect(200);
+        callbacks.on_connect(|_, connection_id|{
+            debug!("{} connected: {}", id, connection_id);
+            if let Some(ref subscribe_topic) = connection.subscribe_topic {
+                debug!("subscribe to: {} with qos {}", subscribe_topic, connection.subscribe_qos);
+                connection.client.subscribe(&subscribe_topic, connection.subscribe_qos.into()).unwrap();
+            }
+        });
+        callbacks.on_disconnect(|_, connection_id|{
+            debug!("{} disconnected: {}", id, connection_id);
+        });
+        connection.client.loop_until_disconnect(200);
     });
 
     return Ok(sender);
@@ -130,11 +139,11 @@ fn send_cloud_event(
     let serialized = serde_json::to_string(&event.cloud_event)?;
     
     {
-        let mut data_lock = data.lock();
-        let id = client.publish("outbox", serialized.as_bytes(), 1, false)?;
-        data_lock.as_mut().unwrap().unacked.insert(id, event.routing_id.clone()).unwrap();
+        let mut data_lock = data.lock().unwrap();
+        let message_id = connection.client.publish("outbox", serialized.as_bytes(), 1, false)?;
+        data_lock.unacked.insert(message_id, event.routing_id.clone());
+        debug!("{} sent publish with id {}", id, message_id);
     }
-    debug!("sent publish with id {}", id);
     return Ok(());
 }
 
@@ -163,9 +172,9 @@ pub fn port_mqtt_mosquitto_start(id: InternalServerId, inbox: BoxedReceiver, sen
                     sender = Some(
                         connect(
                             id.clone(), 
-                            connection.client.clone(), 
+                            connection.clone(), 
                             sender_to_kernel.clone_boxed(), 
-                            data.clone().unwrap()
+                            data.clone()
                         ).unwrap()
                     );
                 } else {
@@ -177,23 +186,6 @@ pub fn port_mqtt_mosquitto_start(id: InternalServerId, inbox: BoxedReceiver, sen
                 if let Some(ref connection) = connection {
                     debug!("{} will send event out", &id);
                     let result = send_cloud_event(&id, &event, &connection, data.clone());
-                    debug!("{} event sent out; successfull={}", &id, result.is_ok());
-                    if event.args.delivery_guarantee.requires_acknowledgment() {
-                        let process_result = match result {
-                            Ok(_) => ProcessingResult::Successful,
-                            Err(e) => {
-                                error!("failed to publish message: {:?}", e);
-                                ProcessingResult::PermanentError // todo permanent or transient
-                            }
-                        };
-                        sender_to_kernel.send(BrokerEvent::OutgoingCloudEventProcessed(OutgoingCloudEventProcessed{
-                            routing_id: event.routing_id,
-                            result: process_result,
-                            sender_id: id.clone(),
-                        }))
-                    }else {
-                        debug!("no ack needed")
-                    }
                 } else {
                     error!("client is null - cant send event");
                 }
