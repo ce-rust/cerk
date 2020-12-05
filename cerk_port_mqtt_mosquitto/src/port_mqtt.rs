@@ -1,5 +1,5 @@
 use mosquitto_client::{Mosquitto,Callbacks};
-use cerk::kernel::{BrokerEvent, CloudEventRoutingArgs, Config, IncomingCloudEvent, DeliveryGuarantee};
+use cerk::kernel::{BrokerEvent, CloudEventRoutingArgs, Config, IncomingCloudEvent, DeliveryGuarantee, OutgoingCloudEventProcessed, RoutingResult, ProcessingResult};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
 use cloudevents::{AttributesReader, Event};
@@ -78,7 +78,8 @@ fn send_cloud_event(
     client: &Mosquitto,
 ) -> Result<()> {
     let serialized = serde_json::to_string(cloud_event)?;
-    client.publish("outbox", serialized.as_bytes(), 1, false);
+    // todo wait for publish confirm
+    client.publish_wait("outbox", serialized.as_bytes(), 1, false, 100)?;
     return Ok(());
 }
 
@@ -105,12 +106,27 @@ pub fn port_mqtt_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
             BrokerEvent::OutgoingCloudEvent(event) => {
                 debug!("{} cloudevent received", &id);
                 if let Some(ref client) = client {
-                    send_cloud_event(&id, &event.cloud_event, &client).unwrap();
+                    let result = send_cloud_event(&id, &event.cloud_event, &client);
+                    if event.args.delivery_guarantee.requires_acknowledgment() {
+                        let process_result = match result {
+                            Ok(_) => ProcessingResult::Successful,
+                            Err(e) => {
+                                error!("failed to publish message: {:?}", e);
+                                ProcessingResult::PermanentError // todo permanent or transient
+                            }
+                        };
+                        sender_to_kernel.send(BrokerEvent::OutgoingCloudEventProcessed(OutgoingCloudEventProcessed{
+                            routing_id: event.routing_id,
+                            result: process_result,
+                            sender_id: id.clone(),
+                        }))
+                    }
                 } else {
                     // TODO
                 }
             }
             BrokerEvent::IncomingCloudEventProcessed(event_id, result) => {
+                // todo check result
                 if let Some(ref sender) = sender {
                     sender.send(()).unwrap();
                 } else {
