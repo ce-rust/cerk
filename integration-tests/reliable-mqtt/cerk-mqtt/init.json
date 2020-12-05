@@ -1,0 +1,10 @@
+{
+  "scheduler": "THREADING_SCHEDULER",
+  "router": "ROUTER_BROADCAST",
+  "config_loader": "CONFIG_LOADER_FILE",
+  "ports": {
+    "inbox": "PORT_MQTT_MOSQUITTO",
+    "outbox": "PORT_MQTT_MOSQUITTO",
+    "failing": "PORT_MQTT_MOSQUITTO"
+  }
+}

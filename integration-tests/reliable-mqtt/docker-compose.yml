@@ -1,0 +1,39 @@
+version: '3.7'
+
+services:
+  limited:
+    image: eclipse-mosquitto:1.6.12
+    volumes:
+      - ./mosquitto_limited.conf:/mosquitto/config/mosquitto.conf
+    ports:
+      - 1883:1883
+  unlimited:
+    image: eclipse-mosquitto:1.6.12
+    volumes:
+      - ./mosquitto_unlimited.conf:/mosquitto/config/mosquitto.conf
+    ports:
+      - 1884:1883
+  cerk:
+    image: lazzaretti/docker-rust-cerk:0.3.0
+    volumes:
+      - ../../:/cerk/
+    working_dir: /cerk/integration-tests/reliable-mqtt/cerk-mqtt
+    command: cargo run
+    depends_on:
+      - limited
+      - unlimited
+    links:
+      - limited
+      - unlimited
+  test-executor:
+    image: lazzaretti/docker-rust-cerk:0.3.0
+    volumes:
+      - ../../:/cerk/
+    working_dir: /cerk/integration-tests/reliable-mqtt/test-executor
+    command: cargo test -- --test-threads 1 --nocapture # have side effects -> run in sequentially
+    depends_on:
+      - limited
+      - unlimited
+    links:
+      - limited
+      - unlimited
