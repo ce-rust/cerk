@@ -49,11 +49,16 @@ fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection>
                 _ => 0,
             };
             let host = Url::parse(host)?;
+            debug!("create new session: {}", id);
             let client = mosquitto_client::Mosquitto::new_session(&id.clone(), false); // keep old session
             client.threaded();
-            client.connect(host.host_str().unwrap(), host.port().unwrap_or(1883).into(), 5)?;
-            if let Some(ref send_topic) = send_topic {
-                client.subscribe(&send_topic, send_qos.into())?;
+            let host_name = host.host_str().unwrap();
+            let host_port = host.port().unwrap_or(1883);
+            debug!("connect to: {}:{}", host_name, host_port);
+            client.connect(host_name, host_port.into(), 5)?;
+            if let Some(ref subscribe_topic) = subscribe_topic {
+                debug!("subscribe to: {} with qos {}", subscribe_topic, subscribe_qos);
+                client.subscribe(&subscribe_topic, subscribe_qos.into())?;
             }
             
 
@@ -102,11 +107,15 @@ fn connect(id: InternalServerId, client: Mosquitto, sender_to_kernel: BoxedSende
 fn send_cloud_event(
     id: &InternalServerId,
     cloud_event: &Event,
-    client: &Mosquitto,
+    connection: &Connection,
 ) -> Result<()> {
     let serialized = serde_json::to_string(cloud_event)?;
     // todo wait for publish confirm
-    let id = client.publish("outbox", serialized.as_bytes(), 1, false)?;
+    let id = if let Some(ref send_topic) = connection.send_topic {
+        connection.client.publish(send_topic, serialized.as_bytes(), connection.send_qos.into(), false)?
+    } else {
+        bail!("no send_topic configured")
+    };
     debug!("sent publish with id {}", id);
     return Ok(());
 }
@@ -139,7 +148,7 @@ pub fn port_mqtt_mosquitto_start(id: InternalServerId, inbox: BoxedReceiver, sen
                 debug!("{} cloudevent received", &id);
                 if let Some(ref connection) = connection {
                     debug!("{} will send event out", &id);
-                    let result = send_cloud_event(&id, &event.cloud_event, &connection.client);
+                    let result = send_cloud_event(&id, &event.cloud_event, &connection);
                     debug!("{} event sent out; successfull={}", &id, result.is_ok());
                     if event.args.delivery_guarantee.requires_acknowledgment() {
                         let process_result = match result {
