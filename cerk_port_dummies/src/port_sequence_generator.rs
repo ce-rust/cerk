@@ -256,7 +256,9 @@ fn process_incomming_event_result(
                 ProcessingResult::Successful => {
                     data.lock().unwrap().missing_deliveries.remove(idx);
                 }
-                ProcessingResult::PermanentError | ProcessingResult::TransientError => {
+                ProcessingResult::PermanentError
+                | ProcessingResult::TransientError
+                | ProcessingResult::Timeout => {
                     // just resend it with a delay
                     thread::sleep(Duration::from_millis(10));
                     // the routing id is just the sequence id

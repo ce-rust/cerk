@@ -8,17 +8,48 @@ use crate::kernel::{CloudEventMessageRoutingId, ProcessingResult};
 use crate::runtime::channel::{BoxedReceiver, BoxedSender};
 use crate::runtime::InternalServerId;
 use std::collections::HashMap;
+use std::ops::Add;
+use std::time::{Duration, SystemTime};
 
 const ROUTER_ID: &str = "router";
 const CONFIG_LOADER_ID: &str = "config_loader";
+const ROUTING_TTL_MS: u64 = 100;
 
 struct PendingDelivery {
     sender: InternalServerId,
     missing_receivers: Vec<InternalServerId>,
+    ttl: SystemTime,
 }
 
 type Outboxes = HashMap<InternalServerId, BoxedSender>;
 type PendingDeliveries = HashMap<CloudEventMessageRoutingId, PendingDelivery>;
+
+fn clean_pending_deliveries(outboxes: &Outboxes, pending_deliveries: &mut PendingDeliveries) {
+    let now = SystemTime::now();
+    if pending_deliveries.len() > 0 {
+        let to_remove: Vec<CloudEventMessageRoutingId> = {
+            let dead_messages: HashMap<&CloudEventMessageRoutingId, &PendingDelivery> =
+                pending_deliveries
+                    .iter()
+                    .filter(|(_, v)| v.ttl > now)
+                    .collect();
+            for (routing_id, data) in dead_messages.iter() {
+                warn!("ttl exceeded for routing_id={}, will send back to receiver={} with  ProcessingResult::Timeout", routing_id, data.sender);
+                outboxes
+                    .get(&data.sender)
+                    .unwrap()
+                    .send(BrokerEvent::IncomingCloudEventProcessed(
+                        (*routing_id).clone(),
+                        ProcessingResult::Timeout,
+                    ));
+            }
+            dead_messages.iter().map(|(k, _)| *k).cloned().collect()
+        };
+        for routing_id in to_remove {
+            pending_deliveries.remove_entry(&routing_id);
+        }
+    }
+}
 
 fn process_routing_result(
     event: RoutingResult,
@@ -42,12 +73,14 @@ fn process_routing_result(
                 .map(|event| event.destination_id.clone())
                 .collect();
 
+            clean_pending_deliveries(outboxes, pending_deliveries);
             if pending_deliveries
                 .insert(
                     routing_id.clone(),
                     PendingDelivery {
                         sender: receiver_id,
                         missing_receivers,
+                        ttl: SystemTime::now().add(Duration::from_millis(ROUTING_TTL_MS)),
                     },
                 )
                 .is_some()
@@ -204,7 +237,8 @@ pub fn kernel_start(
     sender_to_scheduler: BoxedSender,
 ) {
     let mut outboxes = Outboxes::new();
-    // todo this list could grow and entries could potentially be there for ever - TTL at kernel level?
+    // old entries are deleted with clean_pending_deliveries() before new are inserted.
+    // At the moment this is only done before a new event is created, if this should change with e.g. a job add a lock! as in 24bb886a37c187936d906a0df90a9e90a3cf4255
     let mut pending_deliveries = PendingDeliveries::new();
 
     sender_to_scheduler.send(BrokerEvent::ScheduleInternalServer(
