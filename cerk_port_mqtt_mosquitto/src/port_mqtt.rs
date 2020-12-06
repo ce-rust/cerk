@@ -154,15 +154,18 @@ fn send_cloud_event(
     let serialized = serde_json::to_string(&event.cloud_event)?;
     
     {
+    if let Some(ref send_topic) = connection.send_topic {
         let mut data_lock = data.lock().unwrap();
         let message_id = connection.client.publish(
-            connection.send_topic.to_string(), 
-            serialized.as_bytes(), 
-            connection.send_qos.into(), 
-            false
+            send_topic,
+            serialized.as_bytes(),
+            connection.send_qos.into(),
+            false,
         )?;
         data_lock.unacked.insert(message_id, event.routing_id.clone());
         debug!("{} sent publish with id {}", id, message_id);
+    } else {
+        error!("{} not send_topic configured", id);
     }
     return Ok(());
 }
