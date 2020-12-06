@@ -38,6 +38,7 @@ fn clean_pending_deliveries(outboxes: &Outboxes, pending_deliveries: &mut Pendin
                     .filter(|(_, v)| v.ttl > now)
                     .collect();
             for (routing_id, data) in dead_messages.iter() {
+                warn!("ttl exceeded for routing_id={}, will send back to receiver={} with  ProcessingResult::Timeout", routing_id, data.sender);
                 outboxes
                     .get(&data.sender)
                     .unwrap()
