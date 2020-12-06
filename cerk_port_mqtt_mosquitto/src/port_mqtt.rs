@@ -91,7 +91,7 @@ fn connect(id: InternalServerId, connection: Connection, sender_to_kernel: Boxed
             let cloudevent: Event = serde_json::from_str(msg.text()).unwrap();
             sender_to_kernel.send(BrokerEvent::IncomingCloudEvent(IncomingCloudEvent{
                 incoming_id:id.clone(),
-                routing_id: "abc".to_string(),
+                routing_id: cloudevent.id().to_string(),
                 cloud_event: cloudevent,
                 args: CloudEventRoutingArgs {
                     delivery_guarantee: DeliveryGuarantee::AtLeastOnce
