@@ -8,22 +8,56 @@ use crate::kernel::{CloudEventMessageRoutingId, ProcessingResult};
 use crate::runtime::channel::{BoxedReceiver, BoxedSender};
 use crate::runtime::InternalServerId;
 use std::collections::HashMap;
+use std::ops::Add;
+use std::sync::Mutex;
+use std::time::{Duration, SystemTime};
 
 const ROUTER_ID: &str = "router";
 const CONFIG_LOADER_ID: &str = "config_loader";
+const ROUTING_TTL_MS: u64 = 100;
 
 struct PendingDelivery {
     sender: InternalServerId,
     missing_receivers: Vec<InternalServerId>,
+    ttl: SystemTime,
 }
 
 type Outboxes = HashMap<InternalServerId, BoxedSender>;
 type PendingDeliveries = HashMap<CloudEventMessageRoutingId, PendingDelivery>;
+type PendingDeliveriesMutex = Mutex<PendingDeliveries>;
+
+fn clean_pending_deliveries(outboxes: &Outboxes, pending_deliveries: &mut PendingDeliveriesMutex) {
+    let now = SystemTime::now();
+    let mut pending_deliveries = pending_deliveries.lock();
+    let pending_deliveries = pending_deliveries.as_mut().unwrap();
+    if pending_deliveries.len() > 0 {
+        let to_remove: Vec<CloudEventMessageRoutingId> = {
+            let dead_messages: HashMap<&CloudEventMessageRoutingId, &PendingDelivery> =
+                pending_deliveries
+                    .iter()
+                    .filter(|(_, v)| v.ttl > now)
+                    .collect();
+            for (routing_id, data) in dead_messages.iter() {
+                outboxes
+                    .get(&data.sender)
+                    .unwrap()
+                    .send(BrokerEvent::IncomingCloudEventProcessed(
+                        (*routing_id).clone(),
+                        ProcessingResult::Timeout,
+                    ));
+            }
+            dead_messages.iter().map(|(k, _)| *k).cloned().collect()
+        };
+        for routing_id in to_remove {
+            pending_deliveries.remove_entry(&routing_id);
+        }
+    }
+}
 
 fn process_routing_result(
     event: RoutingResult,
     outboxes: &mut Outboxes,
-    pending_deliveries: &mut PendingDeliveries,
+    pending_deliveries: &mut PendingDeliveriesMutex,
 ) {
     let RoutingResult {
         routing_id,
@@ -42,12 +76,17 @@ fn process_routing_result(
                 .map(|event| event.destination_id.clone())
                 .collect();
 
+            clean_pending_deliveries(outboxes, pending_deliveries);
             if pending_deliveries
+                .lock()
+                .as_mut()
+                .unwrap()
                 .insert(
                     routing_id.clone(),
                     PendingDelivery {
                         sender: receiver_id,
                         missing_receivers,
+                        ttl: SystemTime::now().add(Duration::from_millis(ROUTING_TTL_MS)),
                     },
                 )
                 .is_some()
@@ -74,7 +113,7 @@ fn process_routing_result(
 fn process_outgoing_cloud_event_processed(
     event: OutgoingCloudEventProcessed,
     outboxes: &mut Outboxes,
-    pending_deliveries: &mut PendingDeliveries,
+    pending_deliveries: &mut PendingDeliveriesMutex,
 ) {
     let OutgoingCloudEventProcessed {
         routing_id,
@@ -86,6 +125,8 @@ fn process_outgoing_cloud_event_processed(
         sender_id, routing_id
     );
     let mut resolved_missing_delivery = false;
+    let mut pending_deliveries = pending_deliveries.lock();
+    let pending_deliveries = pending_deliveries.as_mut().unwrap();
     if let Some(delivery) = pending_deliveries.get_mut(&routing_id) {
         match result {
             ProcessingResult::Successful => {
@@ -132,7 +173,7 @@ fn process_broker_event(
     broker_event: BrokerEvent,
     outboxes: &mut Outboxes,
     number_of_servers: usize,
-    pending_deliveries: &mut PendingDeliveries,
+    pending_deliveries: &mut PendingDeliveriesMutex,
 ) {
     match broker_event {
         BrokerEvent::InternalServerScheduled(id, sender_to_server) => {
@@ -204,8 +245,8 @@ pub fn kernel_start(
     sender_to_scheduler: BoxedSender,
 ) {
     let mut outboxes = Outboxes::new();
-    // todo this list could grow and entries could potentially be there for ever - TTL at kernel level?
-    let mut pending_deliveries = PendingDeliveries::new();
+    // old entries are deleted with clean_pending_deliveries() before new are inserted
+    let mut pending_deliveries = Mutex::new(PendingDeliveries::new());
 
     sender_to_scheduler.send(BrokerEvent::ScheduleInternalServer(
         ScheduleInternalServer {

@@ -546,7 +546,7 @@ async fn ack_nack_pending_event(
         ProcessingResult::TransientError => {
             nack_message(channel, pending_event.delivery_tag, true).await?
         }
-        ProcessingResult::PermanentError => {
+        ProcessingResult::PermanentError | ProcessingResult::Timeout => {
             nack_message(channel, pending_event.delivery_tag, false).await?
         }
     };
