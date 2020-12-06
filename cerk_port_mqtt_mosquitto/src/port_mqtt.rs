@@ -140,7 +140,12 @@ fn send_cloud_event(
     
     {
         let mut data_lock = data.lock().unwrap();
-        let message_id = connection.client.publish("outbox", serialized.as_bytes(), 1, false)?;
+        let message_id = connection.client.publish(
+            connection.send_topic.to_string(), 
+            serialized.as_bytes(), 
+            connection.send_qos.into(), 
+            false
+        )?;
         data_lock.unacked.insert(message_id, event.routing_id.clone());
         debug!("{} sent publish with id {}", id, message_id);
     }
