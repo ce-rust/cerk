@@ -3,7 +3,7 @@ use std::convert::TryFrom;
 
 /// Message delivery guarantees for the routing (defined per port channel)
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub enum DeliveryGuarantee {
     /// unspecified behaviour, the default
     Unspecified = 0,

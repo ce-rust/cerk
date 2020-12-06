@@ -19,6 +19,9 @@ edition = "2018"
 name = "hello_world"
 path = "src/hello_world/main.rs"
 [[bin]]
+name = "hello_world_reliable"
+path = "src/hello_world_reliable/main.rs"
+[[bin]]
 name = "unix_socket"
 path = "src/unix_socket/main.rs"
 [[bin]]
