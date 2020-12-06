@@ -17,8 +17,8 @@ services:
     image: lazzaretti/docker-rust-cerk:0.3.0
     volumes:
       - ../../:/cerk/
-      - ../mqtt/mqtt/libmosquitto.so.1:/usr/local/lib/libmosquitto.so
-      - ../mqtt/mqtt/libmosquitto.so.1:/usr/lib/libmosquitto.so.1
+      - ../../lib/libmosquitto.so.1:/usr/local/lib/libmosquitto.so
+      - ../../lib/libmosquitto.so.1:/usr/lib/libmosquitto.so.1
     working_dir: /cerk/integration-tests/reliable-mqtt/cerk-mqtt
     command: cargo run
     depends_on:
