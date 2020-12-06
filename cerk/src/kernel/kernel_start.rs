@@ -9,7 +9,6 @@ use crate::runtime::channel::{BoxedReceiver, BoxedSender};
 use crate::runtime::InternalServerId;
 use std::collections::HashMap;
 use std::ops::Add;
-use std::sync::Mutex;
 use std::time::{Duration, SystemTime};
 
 const ROUTER_ID: &str = "router";
@@ -24,12 +23,9 @@ struct PendingDelivery {
 
 type Outboxes = HashMap<InternalServerId, BoxedSender>;
 type PendingDeliveries = HashMap<CloudEventMessageRoutingId, PendingDelivery>;
-type PendingDeliveriesMutex = Mutex<PendingDeliveries>;
 
-fn clean_pending_deliveries(outboxes: &Outboxes, pending_deliveries: &mut PendingDeliveriesMutex) {
+fn clean_pending_deliveries(outboxes: &Outboxes, pending_deliveries: &mut PendingDeliveries) {
     let now = SystemTime::now();
-    let mut pending_deliveries = pending_deliveries.lock();
-    let pending_deliveries = pending_deliveries.as_mut().unwrap();
     if pending_deliveries.len() > 0 {
         let to_remove: Vec<CloudEventMessageRoutingId> = {
             let dead_messages: HashMap<&CloudEventMessageRoutingId, &PendingDelivery> =
@@ -58,7 +54,7 @@ fn clean_pending_deliveries(outboxes: &Outboxes, pending_deliveries: &mut Pendin
 fn process_routing_result(
     event: RoutingResult,
     outboxes: &mut Outboxes,
-    pending_deliveries: &mut PendingDeliveriesMutex,
+    pending_deliveries: &mut PendingDeliveries,
 ) {
     let RoutingResult {
         routing_id,
@@ -79,9 +75,6 @@ fn process_routing_result(
 
             clean_pending_deliveries(outboxes, pending_deliveries);
             if pending_deliveries
-                .lock()
-                .as_mut()
-                .unwrap()
                 .insert(
                     routing_id.clone(),
                     PendingDelivery {
@@ -114,7 +107,7 @@ fn process_routing_result(
 fn process_outgoing_cloud_event_processed(
     event: OutgoingCloudEventProcessed,
     outboxes: &mut Outboxes,
-    pending_deliveries: &mut PendingDeliveriesMutex,
+    pending_deliveries: &mut PendingDeliveries,
 ) {
     let OutgoingCloudEventProcessed {
         routing_id,
@@ -126,8 +119,6 @@ fn process_outgoing_cloud_event_processed(
         sender_id, routing_id
     );
     let mut resolved_missing_delivery = false;
-    let mut pending_deliveries = pending_deliveries.lock();
-    let pending_deliveries = pending_deliveries.as_mut().unwrap();
     if let Some(delivery) = pending_deliveries.get_mut(&routing_id) {
         match result {
             ProcessingResult::Successful => {
@@ -174,7 +165,7 @@ fn process_broker_event(
     broker_event: BrokerEvent,
     outboxes: &mut Outboxes,
     number_of_servers: usize,
-    pending_deliveries: &mut PendingDeliveriesMutex,
+    pending_deliveries: &mut PendingDeliveries,
 ) {
     match broker_event {
         BrokerEvent::InternalServerScheduled(id, sender_to_server) => {
@@ -246,8 +237,9 @@ pub fn kernel_start(
     sender_to_scheduler: BoxedSender,
 ) {
     let mut outboxes = Outboxes::new();
-    // old entries are deleted with clean_pending_deliveries() before new are inserted
-    let mut pending_deliveries = Mutex::new(PendingDeliveries::new());
+    // old entries are deleted with clean_pending_deliveries() before new are inserted.
+    // At the moment this is only done before a new event is created, if this should change with e.g. a job add a lock! as in 24bb886a37c187936d906a0df90a9e90a3cf4255
+    let mut pending_deliveries = PendingDeliveries::new();
 
     sender_to_scheduler.send(BrokerEvent::ScheduleInternalServer(
         ScheduleInternalServer {
