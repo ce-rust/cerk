@@ -57,16 +57,18 @@ fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection>
                 Some(_) => panic!("{} invalid value for subscribe_qos", id),
                 _ => 0,
             };
+
             let host = Url::parse(host)?;
+            let host_name = host.host_str().unwrap();
+            let host_port = host.port().unwrap_or(1883);
+
             debug!("create new session: {}", id);
+            debug!("connect to: {}:{}", host_name, host_port);
+
             let client = mosquitto_client::Mosquitto::new_session(&id.clone(), false); // keep old session
             client.threaded();
             client.reconnect_delay_set(1, 300, true);
-            let host_name = host.host_str().unwrap();
-            let host_port = host.port().unwrap_or(1883);
-            debug!("connect to: {}:{}", host_name, host_port);
             client.connect(host_name, host_port.into(), 5)?;
-            
 
             let connection = Connection {
                 client:client,
@@ -82,8 +84,12 @@ fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection>
     }
 }
 
-fn connect(id: InternalServerId, connection: Connection, sender_to_kernel: BoxedSender, data: ArcData) -> Result<Sender<()>> {
+fn connect(id: InternalServerId, connection: Connection, sender_to_kernel: BoxedSender, data: ArcData) -> Result<Sender<ProcessingResult>> {
     let (sender, receiver) = channel();
+    let sub_delivery_guarantee = match connection.subscribe_qos {
+        1 => DeliveryGuarantee::AtLeastOnce,
+        _ => DeliveryGuarantee::Unspecified,
+    };
     thread::spawn(move || {
         let mut callbacks = connection.client.callbacks(Vec::<()>::new());
         callbacks.on_message(|_,msg| {
@@ -94,14 +100,23 @@ fn connect(id: InternalServerId, connection: Connection, sender_to_kernel: Boxed
                 routing_id: cloudevent.id().to_string(),
                 cloud_event: cloudevent,
                 args: CloudEventRoutingArgs {
-                    delivery_guarantee: DeliveryGuarantee::AtLeastOnce
+                    delivery_guarantee: sub_delivery_guarantee
                 }
             }));
-            debug!("wait for ack of cloud event - block");
-            receiver.recv().unwrap();
-            debug!("received ack for cloud event -> will ack to mqtt");
+            if sub_delivery_guarantee == DeliveryGuarantee::AtLeastOnce {
+                debug!("ack required - block on_message");
+                let result = receiver.recv().unwrap();
+                debug!("received result for incomming cloud even: {}", result);
+                match result {
+                    ProcessingResult::Successful => debug!("exiting on_message handler now"),
+                    _ => panic!("processing failed"),
+                }
+            } else {
+                debug!("no ack required - exit on_message");
+            }
         });
         callbacks.on_publish(|_, message_id| {
+            debug!("request lock for unacked messages list");
             let mut data_lock = data.lock().unwrap();
             debug!("{} published message with id {} successfully", id, message_id);
             if let Some(routing_id) = data_lock.unacked.remove(&message_id) {
@@ -156,7 +171,7 @@ fn send_cloud_event(
 pub fn port_mqtt_mosquitto_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel: BoxedSender) {
     info!("start mqtt port with id {}", id);
     let mut connection: Option<Connection> = None;
-    let mut sender: Option<Sender<()>> = None;
+    let mut sender: Option<Sender<ProcessingResult>> = None;
     let data: ArcData = Arc::new(Mutex::new(Data{
         unacked: HashMap::new(),
     }));
@@ -169,21 +184,18 @@ pub fn port_mqtt_mosquitto_start(id: InternalServerId, inbox: BoxedReceiver, sen
             BrokerEvent::ConfigUpdated(config, _) => {
                 info!("{} received ConfigUpdated", &id);
                 match build_connection(&id, config) {
-                    Ok(new_connection) => connection = Some(new_connection),
+                    Ok(new_connection) => {
+                        sender = Some(
+                            connect(
+                                id.clone(), 
+                                new_connection.clone(), 
+                                sender_to_kernel.clone_boxed(), 
+                                data.clone()
+                            ).unwrap()
+                        );
+                        connection = Some(new_connection);
+                    },
                     Err(e) => error!("failed to connect {:?}", e)
-                }
-
-                if let Some(ref connection) = connection {
-                    sender = Some(
-                        connect(
-                            id.clone(), 
-                            connection.clone(), 
-                            sender_to_kernel.clone_boxed(), 
-                            data.clone()
-                        ).unwrap()
-                    );
-                } else {
-                    // TODO
                 }
             }
             BrokerEvent::OutgoingCloudEvent(event) => {
@@ -192,16 +204,16 @@ pub fn port_mqtt_mosquitto_start(id: InternalServerId, inbox: BoxedReceiver, sen
                     debug!("{} will send event out", &id);
                     let result = send_cloud_event(&id, &event, &connection, data.clone());
                 } else {
-                    error!("client is null - cant send event");
+                    error!("no active connection - cant send event");
                 }
             }
             BrokerEvent::IncomingCloudEventProcessed(event_id, result) => {
                 // todo check result
                 if let Some(ref sender) = sender {
-                    debug!("received IncomingCloudEventProcessed -> will ack");
-                    sender.send(()).unwrap();
+                    debug!("received IncomingCloudEventProcessed -> send result to on_message handler");
+                    sender.send(result).unwrap();
                 } else {
-                    // TODO
+                    error!("no active connection - cant send result");
                 }
             }
             broker_event => warn!("event {} not implemented", broker_event),
