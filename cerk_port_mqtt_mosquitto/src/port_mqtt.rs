@@ -2,17 +2,16 @@ use anyhow::Result;
 use cerk::kernel::{
     BrokerEvent, CloudEventRoutingArgs, Config, ConfigHelpers, DeliveryGuarantee,
     IncomingCloudEvent, OutgoingCloudEvent, OutgoingCloudEventProcessed, ProcessingResult,
-    RoutingResult,
 };
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
 use cloudevents::{AttributesReader, Event};
-use mosquitto_client::{Callbacks, Mosquitto};
+use mosquitto_client::Mosquitto;
 use serde_json;
 use std::collections::HashMap;
 use std::sync::mpsc::{channel, Sender};
 use std::sync::{Arc, Mutex};
-use std::{thread, time};
+use std::thread;
 use url::Url;
 
 struct Data {
@@ -46,7 +45,7 @@ fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection>
 
     let client = mosquitto_client::Mosquitto::new_session(&id.clone(), false); // keep old session
     client.threaded();
-    client.reconnect_delay_set(1, 300, true);
+    client.reconnect_delay_set(1, 300, true)?;
     client.connect(host_name, host_port.into(), 5)?;
 
     let connection = Connection {
@@ -131,7 +130,7 @@ fn connect(
         callbacks.on_disconnect(|_, connection_id| {
             debug!("{} disconnected: {}", id, connection_id);
         });
-        connection.client.loop_until_disconnect(200);
+        connection.client.loop_until_disconnect(200).unwrap();
     });
 
     return Ok(sender);
@@ -202,12 +201,12 @@ pub fn port_mqtt_mosquitto_start(
                 debug!("{} cloudevent received", &id);
                 if let Some(ref connection) = connection {
                     debug!("{} will send event out", &id);
-                    let result = send_cloud_event(&id, &event, &connection, data.clone());
+                    send_cloud_event(&id, &event, &connection, data.clone()).unwrap();
                 } else {
                     error!("no active connection - cant send event");
                 }
             }
-            BrokerEvent::IncomingCloudEventProcessed(event_id, result) => {
+            BrokerEvent::IncomingCloudEventProcessed(_event_id, result) => {
                 // todo check result
                 if let Some(ref sender) = sender {
                     debug!(
