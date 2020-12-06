@@ -1,5 +1,8 @@
 use crate::routing_rules::{CloudEventFields, RoutingRules, RoutingTable};
-use cerk::kernel::{BrokerEvent, Config, IncomingCloudEvent, OutgoingCloudEvent, RoutingResult};
+use anyhow::Result;
+use cerk::kernel::{
+    BrokerEvent, Config, IncomingCloudEvent, OutgoingCloudEvent, ProcessingResult, RoutingResult,
+};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
 use cloudevents::{AttributesReader, Event};
@@ -42,10 +45,10 @@ fn route_to_port(rules: &RoutingRules, cloud_event: &Event) -> bool {
 }
 
 fn route_event(
-    event: IncomingCloudEvent,
+    event: &IncomingCloudEvent,
     sender_to_kernel: &BoxedSender,
-    port_config: &RoutingTable,
-) {
+    port_config: &Option<RoutingTable>,
+) -> Result<()> {
     let IncomingCloudEvent {
         cloud_event,
         routing_id,
@@ -53,6 +56,8 @@ fn route_event(
         args,
     } = event;
     let routing: Vec<_> = port_config
+        .as_ref()
+        .ok_or(anyhow!("no config"))?
         .iter()
         .filter(|(_, rules)| route_to_port(rules, &cloud_event))
         .map(|(port_id, _)| OutgoingCloudEvent {
@@ -63,11 +68,13 @@ fn route_event(
         })
         .collect();
     sender_to_kernel.send(BrokerEvent::RoutingResult(RoutingResult {
-        routing_id,
-        incoming_id,
+        routing_id: routing_id.clone(),
+        incoming_id: incoming_id.clone(),
         routing,
-        args,
-    }))
+        args: args.clone(),
+        result: ProcessingResult::Successful,
+    }));
+    Ok(())
 }
 
 fn parse_config(config_update: String) -> Result<RoutingTable, SerdeErrorr> {
@@ -82,10 +89,15 @@ pub fn router_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel
         match inbox.receive() {
             BrokerEvent::Init => info!("{} initiated", id),
             BrokerEvent::IncomingCloudEvent(event) => {
-                if let Some(config) = config.as_ref() {
-                    route_event(event, &sender_to_kernel, config);
-                } else {
-                    error!("No configs defined yet, event will be droped");
+                if let Err(e) = route_event(&event, &sender_to_kernel, &config) {
+                    error!("routing failed! {:?}", e);
+                    sender_to_kernel.send(BrokerEvent::RoutingResult(RoutingResult {
+                        result: ProcessingResult::PermanentError,
+                        incoming_id: event.incoming_id,
+                        routing: vec![],
+                        routing_id: event.routing_id,
+                        args: event.args,
+                    }));
                 }
             }
             BrokerEvent::ConfigUpdated(updated_config, _) => {
