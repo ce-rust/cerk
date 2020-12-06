@@ -1,7 +1,8 @@
 use anyhow::Result;
 use cerk::kernel::{
-    BrokerEvent, CloudEventRoutingArgs, Config, DeliveryGuarantee, IncomingCloudEvent,
-    OutgoingCloudEvent, OutgoingCloudEventProcessed, ProcessingResult, RoutingResult,
+    BrokerEvent, CloudEventRoutingArgs, Config, ConfigHelpers, DeliveryGuarantee,
+    IncomingCloudEvent, OutgoingCloudEvent, OutgoingCloudEventProcessed, ProcessingResult,
+    RoutingResult,
 };
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
@@ -30,61 +31,33 @@ struct Connection {
 type ArcData = Arc<Mutex<Data>>;
 
 fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection> {
-    match config {
-        Config::HashMap(ref config_map) => {
-            let host = match config_map.get("host") {
-                Some(Config::String(host)) => host,
-                _ => panic!("{} invalid value for host", id),
-            };
+    let host = config.get_op_val_string("host")?.unwrap();
+    let send_topic = config.get_op_val_string("send_topic")?;
+    let send_qos = config.get_op_val_u8("send_qos")?.unwrap_or(0);
+    let subscribe_topic = config.get_op_val_string("subscribe_topic")?;
+    let subscribe_qos = config.get_op_val_u8("subscribe_qos")?.unwrap_or(0);
 
-            let send_topic = match config_map.get("send_topic") {
-                Some(Config::String(topic)) => Some(topic.clone()),
-                Some(_) => panic!("{} invalid value for send_topic", id),
-                _ => None,
-            };
+    let host = Url::parse(&host)?;
+    let host_name = host.host_str().unwrap();
+    let host_port = host.port().unwrap_or(1883);
 
-            let send_qos = match config_map.get("send_qos") {
-                Some(Config::U8(qos)) => *qos,
-                Some(_) => panic!("{} invalid value for send_qos", id),
-                _ => 0,
-            };
+    debug!("create new session: {}", id);
+    debug!("connect to: {}:{}", host_name, host_port);
 
-            let subscribe_topic = match config_map.get("subscribe_topic") {
-                Some(Config::String(topic)) => Some(topic.clone()),
-                Some(_) => panic!("{} invalid value for subscribe_topic", id),
-                _ => None,
-            };
+    let client = mosquitto_client::Mosquitto::new_session(&id.clone(), false); // keep old session
+    client.threaded();
+    client.reconnect_delay_set(1, 300, true);
+    client.connect(host_name, host_port.into(), 5)?;
 
-            let subscribe_qos = match config_map.get("subscribe_qos") {
-                Some(Config::U8(qos)) => *qos,
-                Some(_) => panic!("{} invalid value for subscribe_qos", id),
-                _ => 0,
-            };
+    let connection = Connection {
+        client: client,
+        send_topic: send_topic,
+        send_qos: send_qos,
+        subscribe_topic: subscribe_topic,
+        subscribe_qos: subscribe_qos,
+    };
 
-            let host = Url::parse(host)?;
-            let host_name = host.host_str().unwrap();
-            let host_port = host.port().unwrap_or(1883);
-
-            debug!("create new session: {}", id);
-            debug!("connect to: {}:{}", host_name, host_port);
-
-            let client = mosquitto_client::Mosquitto::new_session(&id.clone(), false); // keep old session
-            client.threaded();
-            client.reconnect_delay_set(1, 300, true);
-            client.connect(host_name, host_port.into(), 5)?;
-
-            let connection = Connection {
-                client: client,
-                send_topic: send_topic,
-                send_qos: send_qos,
-                subscribe_topic: subscribe_topic,
-                subscribe_qos: subscribe_qos,
-            };
-
-            return Ok(connection);
-        }
-        _ => panic!("{} received invalide config", id),
-    }
+    return Ok(connection);
 }
 
 fn connect(
