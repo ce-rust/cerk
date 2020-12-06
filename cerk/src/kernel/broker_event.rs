@@ -159,6 +159,8 @@ pub struct RoutingResult {
     pub routing: Vec<OutgoingCloudEvent>,
     /// routing arguments to define how a CloudEvent should be routed - this config is used by the kernel; the args for the ports are inside the `Vec<OutgoingCloudEvent>`
     pub args: CloudEventRoutingArgs,
+    /// outcome of the routing, was it successful?
+    pub result: ProcessingResult,
 }
 
 /// Struct for `BrokerEvent::OutgoingCloudEvent`

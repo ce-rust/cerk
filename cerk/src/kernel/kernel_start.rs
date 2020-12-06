@@ -61,46 +61,72 @@ fn process_routing_result(
         routing,
         incoming_id: receiver_id,
         args,
+        result,
     } = event;
-    debug!("received RoutingResult for event_id={}", &routing_id);
+    debug!(
+        "received RoutingResult status={} for event_id={}",
+        result, &routing_id
+    );
 
-    if routing.is_empty() {
-        debug!("routing is empty - nothing to do");
-    } else {
-        if args.delivery_guarantee.requires_acknowledgment() {
-            let missing_receivers: Vec<_> = routing
-                .iter()
-                .map(|event| event.destination_id.clone())
-                .collect();
+    match result {
+        ProcessingResult::Successful => {
+            if routing.is_empty() {
+                debug!("routing is empty - nothing to do; ack if needed");
+                if args.delivery_guarantee.requires_acknowledgment() {
+                    outboxes.get(&receiver_id).unwrap().send(
+                        BrokerEvent::IncomingCloudEventProcessed(
+                            routing_id,
+                            ProcessingResult::Successful,
+                        ),
+                    );
+                }
+            } else {
+                if args.delivery_guarantee.requires_acknowledgment() {
+                    let missing_receivers: Vec<_> = routing
+                        .iter()
+                        .map(|event| event.destination_id.clone())
+                        .collect();
 
-            clean_pending_deliveries(outboxes, pending_deliveries);
-            if pending_deliveries
-                .insert(
-                    routing_id.clone(),
-                    PendingDelivery {
-                        sender: receiver_id,
-                        missing_receivers,
-                        ttl: SystemTime::now().add(Duration::from_millis(ROUTING_TTL_MS)),
-                    },
-                )
-                .is_some()
-            {
-                error!(
-                    "a routing for event_id={} already existed, the old one was overwritten",
-                    &routing_id
-                );
+                    clean_pending_deliveries(outboxes, pending_deliveries);
+                    if pending_deliveries
+                        .insert(
+                            routing_id.clone(),
+                            PendingDelivery {
+                                sender: receiver_id,
+                                missing_receivers,
+                                ttl: SystemTime::now().add(Duration::from_millis(ROUTING_TTL_MS)),
+                            },
+                        )
+                        .is_some()
+                    {
+                        error!(
+                            "a routing for event_id={} already existed, the old one was overwritten",
+                            &routing_id
+                        );
+                    }
+                } else {
+                    debug!("no acknowledgments needed for event_id={}", &routing_id)
+                }
+
+                for subevent in routing {
+                    outboxes
+                        .get(&subevent.destination_id)
+                        .unwrap()
+                        .send(BrokerEvent::OutgoingCloudEvent(subevent));
+                }
+                debug!("all routings sent for event_id={}", routing_id);
             }
-        } else {
-            debug!("no acknowledgments needed for event_id={}", &routing_id)
         }
-
-        for subevent in routing {
-            outboxes
-                .get(&subevent.destination_id)
-                .unwrap()
-                .send(BrokerEvent::OutgoingCloudEvent(subevent));
+        s @ ProcessingResult::PermanentError
+        | s @ ProcessingResult::TransientError
+        | s @ ProcessingResult::Timeout => {
+            if args.delivery_guarantee.requires_acknowledgment() {
+                outboxes
+                    .get(&receiver_id)
+                    .unwrap()
+                    .send(BrokerEvent::IncomingCloudEventProcessed(routing_id, s));
+            }
         }
-        debug!("all routings sent for event_id={}", routing_id);
     }
 }
 
