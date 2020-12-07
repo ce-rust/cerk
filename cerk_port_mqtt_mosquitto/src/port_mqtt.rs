@@ -30,6 +30,8 @@ struct Connection {
 type ArcData = Arc<Mutex<Data>>;
 
 fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection> {
+    const ONE_SECOND: u32 = 1;
+    const FIVE_MINUTES: u32 = 300;
     let host = config.get_op_val_string("host")?.unwrap();
     let send_topic = config.get_op_val_string("send_topic")?;
     let send_qos = config.get_op_val_u8("send_qos")?.unwrap_or(0);
@@ -45,7 +47,7 @@ fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection>
 
     let client = mosquitto_client::Mosquitto::new_session(&id.clone(), false); // keep old session
     client.threaded();
-    client.reconnect_delay_set(1, 300, true)?;
+    client.reconnect_delay_set(ONE_SECOND, FIVE_MINUTES, true)?;
     client.connect(host_name, host_port.into(), 5)?;
 
     let connection = Connection {
@@ -83,13 +85,13 @@ fn connect(
                     delivery_guarantee: sub_delivery_guarantee,
                 },
             }));
-            if sub_delivery_guarantee == DeliveryGuarantee::AtLeastOnce {
+            if sub_delivery_guarantee.requires_acknowledgment() {
                 debug!("ack required - block on_message");
                 let result = receiver.recv().unwrap();
                 debug!("received result for incomming cloud even: {}", result);
                 match result {
                     ProcessingResult::Successful => debug!("exiting on_message handler now"),
-                    _ => panic!("processing failed"),
+                    _ => panic!("message could not be forwarded, must prevent on_message from exiting (otherwise PUBACK would be sent)"),
                 }
             } else {
                 debug!("no ack required - exit on_message");
@@ -208,7 +210,6 @@ pub fn port_mqtt_mosquitto_start(
                 }
             }
             BrokerEvent::IncomingCloudEventProcessed(_event_id, result) => {
-                // todo check result
                 if let Some(ref sender) = sender {
                     debug!(
                         "received IncomingCloudEventProcessed -> send result to on_message handler"
