@@ -21,8 +21,8 @@ spec:
         - name: chaoskube
           image: quay.io/linki/chaoskube:v0.21.0
           args:
-            # kill a pod every 10 minutes
-            - --interval=1m
+            # kill a pod every 10 s
+            - --interval=10s
             # only consider pods with this annotation
             - --annotations=chaos.alpha.kubernetes.io/enabled=true
             # exclude all DaemonSet pods
@@ -31,8 +31,8 @@ spec:
             - --namespaces=!kube-system
             # let's make sure we all agree on what the above times mean
             - --timezone=UTC
-            # exclude all pods that haven't been running for at least one hour
-            - --minimum-age=1m
+            # exclude all pods that haven't been running for at least 10s
+            - --minimum-age=10s
             # terminate pods for real: this disables dry-run mode which is on by default
             - --no-dry-run
           securityContext:
