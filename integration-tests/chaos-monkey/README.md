@@ -39,5 +39,5 @@ You need a kubernetes cluster, e.g. a local minikube installation <https://minik
     1. Delete the routers `kubectl delete deployments.apps cerk-deployment`
     2. Deploy the router with no delivery guarantee `kubectl apply -f continuous-run-config/ -f 100k-no-guarantee/ -f cerk/`
     3. Delete the generator and printer `kubectl delete deployments.apps cerk-generator-deployment cerk-printer-deployment` and wait until the pods were deleted (`kubectl get pod -w`), too. 
-    4. Redeploy the generator and printer `kubectl apply -f continuous-run-config/ -f 100k-messages-config/ -f cerk-printer/ -f cerk-generator/`
+    4. Redeploy the generator and printer `kubectl apply -f continuous-run-config/ -f 100k-no-guarantee/ -f 100k-messages-config/ -f cerk-printer/ -f cerk-generator/`
     5. Observe the result: `kubectl logs --follow deployment/cerk-printer-deployment` - probably it will not reach the end with the delivery of all 100k messages
