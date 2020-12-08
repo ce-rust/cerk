@@ -29,7 +29,9 @@ data:
             }
           ]
         },
-        "sequence-generator": null,
+        "sequence-generator": {
+          "delivery_guarantee": 2
+        },
         "health": {
           "ports_to_check": ["ampq"]
         }

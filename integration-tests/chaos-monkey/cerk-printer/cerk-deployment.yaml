@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: cerk-printer
-          image: cloudeventsrouter/cerk:common-0.0.7
+          image: cloudeventsrouter/cerk:common-0.0.9
           envFrom:
             - configMapRef:
                 name: cerk-printer-env-config
