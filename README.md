@@ -123,6 +123,17 @@ cargo doc --no-deps --open
 2. `cd <crate>`
 3. `cargo readme > README.md`
 
+## Release Management
+
+Release management is organized by cargo-workspaces.
+
+pre-requirement: `cargo install cargo-workspaces`
+
+1. check out master and create a new branch `release`
+2. `cargo workspaces version --allow-branch="release"`
+3. `cargo workspaces publish --allow-branch="release" --from-git --skip-published --no-git-push --no-git-tag`
+4. merge it back into the master with a pull request
+
 ## License
 
 Apache-2.0

@@ -19,6 +19,11 @@ pub enum ProcessingResult {
     /// The send action was not successful.
     /// However, the error is permanent (e.g., parsing or config error) and should not be retried.
     PermanentError,
+
+    /// The send action was not responded by all components in the given time.
+    /// The kernel canceled the routing.
+    /// At the moment there is no guarantee that the timout will be sent after a certain time, it is only to prevent the tracking table to grow.
+    Timeout,
 }
 
 /// from result to ProcessingResult; for every error a `ProcessingResult::PermanentError` is used
