@@ -4,7 +4,7 @@ extern crate cerk_loader_file;
 use cerk_config_loader_file::CONFIG_LOADER_FILE;
 use cerk_loader_file::{start, ComponentStartLinks};
 use cerk_port_amqp::PORT_AMQP;
-use cerk_port_dummies::{PORT_PRINTER, PORT_SEQUENCE_GENERATOR};
+use cerk_port_dummies::{PORT_PRINTER, PORT_SEQUENCE_GENERATOR, PORT_SEQUENCE_VALIDATOR};
 use cerk_port_health_check_http::PORT_HEALTH_CHECK_HTTP;
 use cerk_port_mqtt::PORT_MQTT;
 use cerk_port_unix_socket::{PORT_INPUT_UNIX_SOCKET, PORT_OUTPUT_UNIX_SOCKET};
@@ -25,6 +25,7 @@ fn main() {
             PORT_INPUT_UNIX_SOCKET,
             PORT_OUTPUT_UNIX_SOCKET,
             PORT_SEQUENCE_GENERATOR,
+            PORT_SEQUENCE_VALIDATOR,
             PORT_PRINTER,
             PORT_HEALTH_CHECK_HTTP
         ],
