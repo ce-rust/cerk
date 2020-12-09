@@ -41,7 +41,7 @@ impl Default for SequenceGeneratorConfig {
         SequenceGeneratorConfig {
             sleep_between_messages: Duration::from_secs(1),
             amount: None,
-            delivery_guarantee: DeliveryGuarantee::Unspecified,
+            delivery_guarantee: DeliveryGuarantee::BestEffort,
             unack_max_cound: DEFAULT_UNACK_MAX_COUNT,
         }
     }
