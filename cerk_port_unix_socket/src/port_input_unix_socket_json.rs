@@ -80,7 +80,7 @@ fn liten_to_stream(
 ///
 /// # Limitations
 ///
-/// * **reliability** this port does not support any `DeliveryGuarantee` other then `Unspecified` and so does never send a `IncomingCloudEventProcessed` message
+/// * **reliability** this port does not support any `DeliveryGuarantee` other then `BestEffort` and so does never send a `IncomingCloudEventProcessed` message
 ///
 /// # open issues
 ///
