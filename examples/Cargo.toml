@@ -43,9 +43,6 @@ path = "src/unix_socket_and_mqtt_on_armv7/main.rs"
 name = "mqtt-to-printer"
 path = "src/mqtt/mqtt-to-printer/main.rs"
 [[bin]]
-name = "mqtt-mosquitto"
-path = "../integration-tests/mqtt/mqtt/src/main.rs"
-[[bin]]
 name = "rule_based_routing"
 path = "src/rule_based_routing/main.rs"
 
