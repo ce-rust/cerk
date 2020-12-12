@@ -18,9 +18,9 @@ The project was initially created during the student research project [CloudEven
 
 ## Get Started
 
-The easiest way to use the router is to use the [docker image](https://hub.docker.com/repository/docker/cloudeventsrouter/cerk) from docker hub.
+The easiest way to use the router is to use the [docker image](https://hub.docker.com/repository/docker/cloudeventsrouter/cerk) from Docker Hub.
 
-If you like to build the router by yourself, start with an [example](#examples), may the [hello world example](https://github.com/ce-rust/cerk/tree/master/examples/src/hello_world).
+If you like to build the router by yourself, start with an [example](#examples). E.g. the [hello world example](https://github.com/ce-rust/cerk/tree/master/examples/src/hello_world).
 
 
 ## Components
