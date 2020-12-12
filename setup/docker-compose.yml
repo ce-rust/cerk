@@ -5,7 +5,11 @@ services:
     build: archlinux
     volumes: 
       - ..:/cerk/
+      - ../lib/libmosquitto.so.1:/usr/local/lib/libmosquitto.so
+      - ../lib/libmosquitto.so.1:/usr/lib/libmosquitto.so.1
   ubuntulinux:
     build: ubuntulinux
     volumes: 
       - ..:/cerk/
+      - ../lib/libmosquitto.so.1:/usr/local/lib/libmosquitto.so
+      - ../lib/libmosquitto.so.1:/usr/lib/libmosquitto.so.1
