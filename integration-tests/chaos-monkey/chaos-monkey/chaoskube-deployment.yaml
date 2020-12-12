@@ -1,0 +1,52 @@
+# from https://github.com/linki/chaoskube/blob/master/examples/chaoskube.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chaoskube
+  labels:
+    app: chaoskube
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: chaoskube
+  template:
+    metadata:
+      labels:
+        app: chaoskube
+    spec:
+      serviceAccountName: chaoskube
+      containers:
+        - name: chaoskube
+          image: quay.io/linki/chaoskube:v0.21.0
+          args:
+            # kill a pod every 10 s
+            - --interval=10s
+            # only consider pods with this annotation
+            - --annotations=chaos.alpha.kubernetes.io/enabled=true
+            # exclude all DaemonSet pods
+            - --kinds=!DaemonSet
+            # exclude all pods in the kube-system namespace
+            - --namespaces=!kube-system
+            # let's make sure we all agree on what the above times mean
+            - --timezone=UTC
+            # exclude all pods that haven't been running for at least 10s
+            - --minimum-age=10s
+            # terminate pods for real: this disables dry-run mode which is on by default
+            - --no-dry-run
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: chaoskube
+  labels:
+    app: chaoskube

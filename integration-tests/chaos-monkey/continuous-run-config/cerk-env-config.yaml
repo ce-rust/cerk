@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cerk-env-config
+data:
+  RUST_LOG: info
+  CONFIG_PATH: './config.json'

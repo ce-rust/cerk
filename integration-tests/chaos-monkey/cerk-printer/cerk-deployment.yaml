@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cerk-printer-deployment
+  labels:
+    app: cerk-printer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cerk-printer
+  template:
+    metadata:
+      labels:
+        app: cerk-printer
+    spec:
+      containers:
+        - name: cerk-printer
+          image: cloudeventsrouter/cerk:common-0.0.9
+          envFrom:
+            - configMapRef:
+                name: cerk-printer-env-config
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          volumeMounts:
+            - name: cerk-configs
+              mountPath: /init.json
+              subPath: init.json
+            - name: cerk-configs
+              mountPath: /config.json
+              subPath: config.json
+            - name: cerk-configs
+              mountPath: /validator-conifg.json
+              subPath: validator-conifg.json
+      volumes:
+        - name: cerk-configs
+          configMap:
+              name: cerk-printer-configs
