@@ -5,9 +5,9 @@ use amq_protocol_types::{AMQPValue, LongLongUInt};
 use anyhow::{Context, Result};
 use async_std::future::timeout;
 use cerk::kernel::{
-    BrokerEvent, CloudEventMessageRoutingId, CloudEventRoutingArgs, Config, DeliveryGuarantee,
-    HealthCheckRequest, HealthCheckResponse, HealthCheckStatus, IncomingCloudEvent,
-    OutgoingCloudEvent, OutgoingCloudEventProcessed, ProcessingResult,
+    BrokerEvent, CloudEventMessageRoutingId, CloudEventRoutingArgs, Config, ConfigHelpers,
+    DeliveryGuarantee, HealthCheckRequest, HealthCheckResponse, HealthCheckStatus,
+    IncomingCloudEvent, OutgoingCloudEvent, OutgoingCloudEventProcessed, ProcessingResult,
 };
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
@@ -25,6 +25,10 @@ use std::convert::TryFrom;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+/// The default prefetch count per channel.
+/// The channel to the kernel has a size of 50 so it should be smaller then that.
+const DEFAULT_PREFETCH_COUNT: u16 = 30;
+
 struct PendingDelivery {
     consume_channel_id: String,
     delivery_tag: LongLongUInt,
@@ -38,6 +42,7 @@ struct AmqpConsumeOptions {
     ensure_dlx: bool,
     bind_to_exchange: Option<String>,
     delivery_guarantee: DeliveryGuarantee,
+    prefetch_count: u16,
 }
 
 struct AmqpPublishOptions {
@@ -55,7 +60,7 @@ struct AmqpOptions {
 fn try_get_delivery_option(config: &HashMap<String, Config>) -> Result<DeliveryGuarantee> {
     Ok(match config.get("delivery_guarantee") {
         Some(config) => DeliveryGuarantee::try_from(config)?,
-        _ => DeliveryGuarantee::Unspecified,
+        _ => DeliveryGuarantee::BestEffort,
     })
 }
 
@@ -88,6 +93,10 @@ fn build_config(id: &InternalServerId, config: &Config) -> Result<AmqpOptions> {
                             },
                             delivery_guarantee: try_get_delivery_option(consumer)?,
                             channel: None,
+                            prefetch_count: consumer_config
+                                .get_op_val_u32("prefetch_count")?
+                                .map(|v| v as u16)
+                                .unwrap_or(DEFAULT_PREFETCH_COUNT),
                         };
 
                         if let Some(Config::String(name)) = consumer.get("name") {
@@ -210,6 +219,9 @@ async fn setup_consume_channel(
             .confirm_select(ConfirmSelectOptions { nowait: false })
             .await?;
     }
+    channel
+        .basic_qos(channel_options.prefetch_count, BasicQosOptions::default())
+        .await?;
     if channel_options.ensure_queue {
         let mut queue_args = FieldTable::default();
         if channel_options.ensure_dlx {
@@ -263,16 +275,43 @@ async fn setup_consume_channel(
     let weak_clone = pending_deliveries.clone();
     async_global_executor::spawn(async move {
         info!("will consume");
-        while let Some(delivery) = consumer.next().await {
-            if let Err(e) = receive_message(
-                &cloned_name,
-                &cloned_sender,
-                &cloned_id,
-                weak_clone.clone(),
-                &delivery,
-                &cloned_delivery_guarantee,
-            ) {
-                warn!("{} error while receive_message: {:?}", &cloned_id, e)
+        while let Some(delivery_result) = consumer.next().await {
+            let cloned_sender = cloned_sender.clone_boxed();
+            match delivery_result.as_ref() {
+                Ok((channel, delivery)) => {
+                    match receive_message(
+                        &cloned_name,
+                        channel,
+                        delivery,
+                        cloned_sender,
+                        &cloned_id,
+                        weak_clone.clone(),
+                        &cloned_delivery_guarantee,
+                    ) {
+                        Ok(send_immediate_ack) => {
+                            if send_immediate_ack {
+                                if let Err(e) = ack_message(channel, delivery.delivery_tag)
+                                    .await
+                                    .context("failed to ack message")
+                                {
+                                    error!("failed to ack message {:?}", e);
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            error!(
+                                "{} error while receive_message: {:?} -> reject message",
+                                &cloned_id, e
+                            );
+                            if let Err(e) =
+                                nack_message(channel, delivery.delivery_tag, false).await
+                            {
+                                error!("failed to nack message {:?}", e);
+                            }
+                        }
+                    }
+                }
+                Err(e) => error!("error in consumer: {:?}", e),
             }
         }
     })
@@ -349,40 +388,46 @@ async fn setup_publish_channel(
 
 fn receive_message(
     name: &String,
-    sender: &BoxedSender,
+    channel: &Channel,
+    delivery: &Delivery,
+    sender: BoxedSender,
     id: &String,
     pending_deliveries: Arc<Mutex<HashMap<String, PendingDelivery>>>,
-    delivery: &lapin::Result<(Channel, Delivery)>,
     delivery_guarantee: &DeliveryGuarantee,
-) -> Result<()> {
-    let (channel, delivery) = delivery.as_ref().expect("error in consumer");
+) -> Result<bool> {
     debug!("{} received CloudEvent on queue {}", id, channel.id());
     let payload_str = std::str::from_utf8(&delivery.data).unwrap();
+    let send_immediate_ack: bool;
     match serde_json::from_str::<Event>(&payload_str) {
         Ok(cloud_event) => {
             debug!("{} deserialized event successfully", id);
             let routing_id = get_event_id(&cloud_event, &delivery.delivery_tag);
-            info!(
-                "pending_deliveries size: {}",
-                pending_deliveries.clone().lock().unwrap().len()
-            );
-            if pending_deliveries
-                .clone()
-                .lock()
-                .unwrap()
-                .insert(
-                    routing_id.to_string(),
-                    PendingDelivery {
-                        delivery_tag: delivery.delivery_tag.clone(),
-                        consume_channel_id: name.to_string(),
-                    },
-                )
-                .is_some()
-            {
-                error!(
-                    "failed event_id={} was already in the table - this should not happen",
-                    &routing_id
+            if delivery_guarantee.requires_acknowledgment() {
+                info!(
+                    "pending_deliveries size: {}",
+                    pending_deliveries.clone().lock().unwrap().len()
                 );
+                if pending_deliveries
+                    .clone()
+                    .lock()
+                    .unwrap()
+                    .insert(
+                        routing_id.to_string(),
+                        PendingDelivery {
+                            delivery_tag: delivery.delivery_tag.clone(),
+                            consume_channel_id: name.to_string(),
+                        },
+                    )
+                    .is_some()
+                {
+                    bail!(
+                        "failed event_id={} was already in the table - this should not happen",
+                        &routing_id
+                    );
+                }
+                send_immediate_ack = false
+            } else {
+                send_immediate_ack = true
             }
             sender.send(BrokerEvent::IncomingCloudEvent(IncomingCloudEvent {
                 incoming_id: id.clone(),
@@ -398,7 +443,7 @@ fn receive_message(
         }
     }
 
-    Ok(())
+    Ok(send_immediate_ack)
 }
 
 fn get_event_id(cloud_event: &Event, delivery_tag: &LongLongUInt) -> String {
@@ -453,6 +498,26 @@ async fn publish_cloud_event(
     Ok(confirmation)
 }
 
+async fn ack_message(channel: &Channel, delivery_tag: LongLongUInt) -> Result<()> {
+    channel
+        .basic_ack(delivery_tag, BasicAckOptions::default())
+        .await?;
+    Ok(())
+}
+
+async fn nack_message(channel: &Channel, delivery_tag: LongLongUInt, requeue: bool) -> Result<()> {
+    channel
+        .basic_nack(
+            delivery_tag,
+            BasicNackOptions {
+                multiple: false,
+                requeue,
+            },
+        )
+        .await?;
+    Ok(())
+}
+
 async fn ack_nack_pending_event(
     configuration_option: &Option<AmqpOptions>,
     pending_deliveries: &mut HashMap<String, PendingDelivery>,
@@ -476,31 +541,13 @@ async fn ack_nack_pending_event(
         .context("channel not open")?;
     match result {
         ProcessingResult::Successful => {
-            channel
-                .basic_ack(pending_event.delivery_tag, BasicAckOptions::default())
-                .await?
+            ack_message(channel, pending_event.delivery_tag).await?;
         }
         ProcessingResult::TransientError => {
-            channel
-                .basic_nack(
-                    pending_event.delivery_tag,
-                    BasicNackOptions {
-                        multiple: false,
-                        requeue: true,
-                    },
-                )
-                .await?
+            nack_message(channel, pending_event.delivery_tag, true).await?
         }
-        ProcessingResult::PermanentError => {
-            channel
-                .basic_nack(
-                    pending_event.delivery_tag,
-                    BasicNackOptions {
-                        multiple: false,
-                        requeue: false,
-                    },
-                )
-                .await?
+        ProcessingResult::PermanentError | ProcessingResult::Timeout => {
+            nack_message(channel, pending_event.delivery_tag, false).await?
         }
     };
     Ok(())
@@ -620,3 +667,20 @@ pub fn port_amqp_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
 
 /// This is the pointer for the main function to start the port.
 pub static PORT_AMQP: InternalServerFnRefStatic = &(port_amqp_start as InternalServerFn);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn minimal_config() -> Result<()> {
+        let uri = "amqp://127.0.0.1:5672/%2f".to_string();
+        let map = [("uri".to_string(), Config::String(uri.to_string()))];
+        let config = build_config(
+            &"an-id".to_string(),
+            &Config::HashMap(map.iter().cloned().collect()),
+        )?;
+        assert_eq!(config.uri, uri);
+        Ok(())
+    }
+}

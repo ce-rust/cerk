@@ -1,6 +1,6 @@
 [package]
 name = "cerk_examples"
-version = "0.1.0"
+version = "0.2.6"
 authors = [
     "Linus Basig <linus@basig.me>",
     "Fabrizio Lazzaretti <fabrizio@lazzaretti.me>"
@@ -18,6 +18,9 @@ edition = "2018"
 [[bin]]
 name = "hello_world"
 path = "src/hello_world/main.rs"
+[[bin]]
+name = "hello_world_reliable"
+path = "src/hello_world_reliable/main.rs"
 [[bin]]
 name = "unix_socket"
 path = "src/unix_socket/main.rs"

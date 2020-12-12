@@ -151,7 +151,7 @@ let config = Config::HashMap(map);
 
 ## Limitations
 
-* **reliability** this port does not support any `DeliveryGuarantee` other then `Unspecified` (QoS 0) for incomming events (see https://github.com/ce-rust/cerk/issues/71)
+* **reliability** this port does not support any `DeliveryGuarantee` other then `BestEffort` (QoS 0) for incomming events (see https://github.com/ce-rust/cerk/issues/71)
 
 
 ## Update Readme

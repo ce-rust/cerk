@@ -98,7 +98,7 @@ pub fn port_sequence_validator_start(
             BrokerEvent::OutgoingCloudEvent(event) => {
                 let result = match process_event(&mut data, &event.cloud_event) {
                     Err(e) => {
-                        error!("{} failed to process event {:?}", id, e);
+                        error!("{} failed to process event: {:?}", id, e);
                         ProcessingResult::PermanentError
                     }
                     Ok(_) => ProcessingResult::Successful,

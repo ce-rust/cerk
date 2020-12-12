@@ -129,7 +129,7 @@ async fn setup_connection(
 
     let routing_args = CloudEventRoutingArgs {
         delivery_guarantee: match connection.subscribe_qos {
-            0 => DeliveryGuarantee::Unspecified,
+            0 => DeliveryGuarantee::BestEffort,
             _ => panic!("The MQTT Port Currently only supports QoS 0 (see https://github.com/ce-rust/cerk/issues/71)"),
         },
     };

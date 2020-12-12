@@ -14,7 +14,7 @@ pub fn load_by_path<'a>(path: String, links: ComponentStartLinks<'static>) -> Re
 }
 
 fn load<'a>(links: ComponentStartLinks<'static>) -> Result<StartOptions> {
-    let path = env::var("CONFIG_PATH").unwrap_or(String::from("./init.json"));
+    let path = env::var("INIT_PATH").unwrap_or(String::from("./init.json"));
     load_by_path(path, links)
 }
 

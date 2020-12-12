@@ -1,27 +1,24 @@
+use anyhow::Result;
 use cerk::kernel::{
-    BrokerEvent, CloudEventMessageRoutingId, CloudEventRoutingArgs, Config, OutgoingCloudEvent,
-    RoutingResult,
+    BrokerEvent, Config, IncomingCloudEvent, OutgoingCloudEvent, ProcessingResult, RoutingResult,
 };
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
-use cloudevents::Event;
+use std::convert::TryFrom;
 
 fn route_event(
-    incoming_port: InternalServerId,
     sender_to_kernel: &BoxedSender,
-    port_ids: &Vec<Config>,
-    event_id: CloudEventMessageRoutingId,
-    cloud_event: Event,
-    args: CloudEventRoutingArgs,
-) {
-    let routing: Vec<_> = port_ids
+    config: &Config,
+    event: &IncomingCloudEvent,
+) -> Result<()> {
+    let routing: Vec<_> = Vec::<Config>::try_from(config)?
         .iter()
         .filter_map(|port_id| match port_id {
             Config::String(port_id) => Some(OutgoingCloudEvent {
-                routing_id: event_id.clone(),
-                cloud_event: cloud_event.clone(),
+                routing_id: event.routing_id.clone(),
+                cloud_event: event.cloud_event.clone(),
                 destination_id: port_id.clone(),
-                args: args.clone(),
+                args: event.args.clone(),
             }),
             _ => {
                 error!("No valid routing config found, message could not be routed!");
@@ -31,11 +28,13 @@ fn route_event(
         .collect();
 
     sender_to_kernel.send(BrokerEvent::RoutingResult(RoutingResult {
-        routing_id: event_id,
-        incoming_id: incoming_port,
+        routing_id: event.routing_id.clone(),
+        incoming_id: event.incoming_id.clone(),
         routing,
-        args,
-    }))
+        args: event.args.clone(),
+        result: ProcessingResult::Successful,
+    }));
+    Ok(())
 }
 
 /// This is the main function to start the router.
@@ -45,17 +44,18 @@ pub fn router_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_kernel
     loop {
         match inbox.receive() {
             BrokerEvent::Init => info!("{} initiated", id),
-            BrokerEvent::IncomingCloudEvent(event) => match &config {
-                Config::Vec(port_ids) => route_event(
-                    event.incoming_id,
-                    &sender_to_kernel,
-                    &port_ids,
-                    event.routing_id,
-                    event.cloud_event,
-                    event.args,
-                ),
-                _ => error!("No valid routing config found, message could not be routed!"),
-            },
+            BrokerEvent::IncomingCloudEvent(event) => {
+                if let Err(e) = route_event(&sender_to_kernel, &config, &event) {
+                    error!("failed to rout message! {:?}", e);
+                    sender_to_kernel.send(BrokerEvent::RoutingResult(RoutingResult {
+                        result: ProcessingResult::PermanentError,
+                        incoming_id: event.incoming_id,
+                        routing: vec![],
+                        routing_id: event.routing_id,
+                        args: event.args,
+                    }));
+                }
+            }
             BrokerEvent::ConfigUpdated(updated_config, _) => config = updated_config,
             broker_event => warn!("event {} not implemented", broker_event),
         }

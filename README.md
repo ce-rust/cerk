@@ -1,6 +1,9 @@
 # CERK
 
 [![Build status](https://badge.buildkite.com/4494e29d5f2c47e3fe998af46dff78a447800a76a68024e392.svg?branch=master)](https://buildkite.com/ce-rust/cerk)
+[![Crates.io](https://img.shields.io/crates/v/cerk)](https://docs.rs/cerk/*/cerk/)
+[![Docs status](https://docs.rs/cerk/badge.svg)](https://docs.rs/cerk/)
+![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/cloudeventsrouter/cerk)
 
 [CERK](https://github.com/ce-rust/cerk) is an open-source [CloudEvents](https://github.com/cloudevents/spec) Router written in Rust with a MicroKernel architecture.
 
@@ -9,6 +12,16 @@
 CERK lets you route your [CloudEvents](https://github.com/cloudevents/spec) between different different ports.
 Ports are transport layer bindings over which CloudEvents can be exchanged.
 It is built with modularity and portability in mind.
+
+The project was initially created during the student research project [CloudEvents Router](https://eprints.hsr.ch/832/).
+
+
+## Get Started
+
+The easiest way to use the router is to use the [docker image](https://hub.docker.com/repository/docker/cloudeventsrouter/cerk) from Docker Hub.
+
+If you like to build the router by yourself, start with an [example](#examples). E.g. the [hello world example](https://github.com/ce-rust/cerk/tree/master/examples/src/hello_world).
+
 
 ## Components
 
@@ -122,6 +135,17 @@ cargo doc --no-deps --open
 1. `cargo install cargo-readme`
 2. `cd <crate>`
 3. `cargo readme > README.md`
+
+## Release Management
+
+Release management is organized by cargo-workspaces.
+
+pre-requirement: `cargo install cargo-workspaces`
+
+1. check out master and create a new branch `release`
+2. `cargo workspaces version --allow-branch="release"`
+3. `cargo workspaces publish --allow-branch="release" --from-git --skip-published --no-git-push --no-git-tag`
+4. merge it back into the master with a pull request
 
 ## License
 
