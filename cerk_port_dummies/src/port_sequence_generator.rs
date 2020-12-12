@@ -41,7 +41,7 @@ impl Default for SequenceGeneratorConfig {
         SequenceGeneratorConfig {
             sleep_between_messages: Duration::from_secs(1),
             amount: None,
-            delivery_guarantee: DeliveryGuarantee::Unspecified,
+            delivery_guarantee: DeliveryGuarantee::BestEffort,
             unack_max_cound: DEFAULT_UNACK_MAX_COUNT,
         }
     }
@@ -256,7 +256,9 @@ fn process_incomming_event_result(
                 ProcessingResult::Successful => {
                     data.lock().unwrap().missing_deliveries.remove(idx);
                 }
-                ProcessingResult::PermanentError | ProcessingResult::TransientError => {
+                ProcessingResult::PermanentError
+                | ProcessingResult::TransientError
+                | ProcessingResult::Timeout => {
                     // just resend it with a delay
                     thread::sleep(Duration::from_millis(10));
                     // the routing id is just the sequence id

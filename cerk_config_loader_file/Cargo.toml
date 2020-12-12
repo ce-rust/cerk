@@ -1,6 +1,6 @@
 [package]
 name = "cerk_config_loader_file"
-version = "0.2.0"
+version = "0.2.6"
 authors = [
     "Linus Basig <linus@basig.me>",
     "Fabrizio Lazzaretti <fabrizio@lazzaretti.me>"

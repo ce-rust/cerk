@@ -70,7 +70,7 @@ fn connect(
     let (sender, receiver) = channel();
     let sub_delivery_guarantee = match connection.subscribe_qos {
         1 => DeliveryGuarantee::AtLeastOnce,
-        _ => DeliveryGuarantee::Unspecified,
+        _ => DeliveryGuarantee::BestEffort,
     };
     thread::spawn(move || {
         let mut callbacks = connection.client.callbacks(Vec::<()>::new());

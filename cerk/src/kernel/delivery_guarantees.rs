@@ -5,8 +5,8 @@ use std::convert::TryFrom;
 #[repr(u8)]
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub enum DeliveryGuarantee {
-    /// unspecified behaviour, the default
-    Unspecified = 0,
+    /// best effort: there is no guarantee that a message will be routed, the default
+    BestEffort = 0,
     /// At Least Once the message should be received at the destination
     AtLeastOnce = 2,
 }
@@ -15,7 +15,7 @@ impl DeliveryGuarantee {
     /// Does the selected delivery guarantee requires an acknowledgment?
     pub fn requires_acknowledgment(&self) -> bool {
         match self {
-            DeliveryGuarantee::Unspecified => false,
+            DeliveryGuarantee::BestEffort => false,
             _ => true,
         }
     }
@@ -23,7 +23,7 @@ impl DeliveryGuarantee {
 
 impl Default for DeliveryGuarantee {
     fn default() -> Self {
-        DeliveryGuarantee::Unspecified
+        DeliveryGuarantee::BestEffort
     }
 }
 
@@ -39,7 +39,7 @@ impl TryFrom<&Config> for DeliveryGuarantee {
     fn try_from(value: &Config) -> Result<Self, Self::Error> {
         if let Config::U8(number) = value {
             match number {
-                0 => Ok(DeliveryGuarantee::Unspecified),
+                0 => Ok(DeliveryGuarantee::BestEffort),
                 2 => Ok(DeliveryGuarantee::AtLeastOnce),
                 _ => bail!("number out of range"),
             }

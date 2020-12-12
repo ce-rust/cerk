@@ -60,7 +60,7 @@ struct AmqpOptions {
 fn try_get_delivery_option(config: &HashMap<String, Config>) -> Result<DeliveryGuarantee> {
     Ok(match config.get("delivery_guarantee") {
         Some(config) => DeliveryGuarantee::try_from(config)?,
-        _ => DeliveryGuarantee::Unspecified,
+        _ => DeliveryGuarantee::BestEffort,
     })
 }
 
@@ -546,7 +546,7 @@ async fn ack_nack_pending_event(
         ProcessingResult::TransientError => {
             nack_message(channel, pending_event.delivery_tag, true).await?
         }
-        ProcessingResult::PermanentError => {
+        ProcessingResult::PermanentError | ProcessingResult::Timeout => {
             nack_message(channel, pending_event.delivery_tag, false).await?
         }
     };

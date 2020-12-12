@@ -186,7 +186,7 @@ let config = Config::HashMap(map);
 
 # Limitations
 
-* **reliability** this port does not support any `DeliveryGuarantee` other then `Unspecified` and so does never send a `OutgoingCloudEventProcessed` or `IncomingCloudEventProcessed` messages
+* **reliability** this port does not support any `DeliveryGuarantee` other then `BestEffort` and so does never send a `OutgoingCloudEventProcessed` or `IncomingCloudEventProcessed` messages
 
 */
 

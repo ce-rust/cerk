@@ -1,4 +1,4 @@
-# cerk_port_mqtt 0.2.1
+# cerk_port_mqtt
 
 [![Build status](https://badge.buildkite.com/4494e29d5f2c47e3fe998af46dff78a447800a76a68024e392.svg?branch=master)](https://buildkite.com/ce-rust/cerk)
 
@@ -189,7 +189,7 @@ let config = Config::HashMap(map);
 
 ## Limitations
 
-* **reliability** this port does not support any `DeliveryGuarantee` other then `Unspecified` and so does never send a `OutgoingCloudEventProcessed` or `IncomingCloudEventProcessed` messages
+* **reliability** this port does not support any `DeliveryGuarantee` other then `BestEffort` and so does never send a `OutgoingCloudEventProcessed` or `IncomingCloudEventProcessed` messages
 
 
 ## Update Readme

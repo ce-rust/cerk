@@ -69,6 +69,9 @@ let routing_configs = serde_json::to_string(&routing_rules).unwrap();
 #[macro_use]
 extern crate log;
 
+#[macro_use]
+extern crate anyhow;
+
 mod router;
 mod routing_rules;
 
