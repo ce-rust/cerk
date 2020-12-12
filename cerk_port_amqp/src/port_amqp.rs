@@ -1,7 +1,7 @@
 use crate::lapin_helper::{assert_exchange, assert_queue};
 use amq_protocol_types::LongString;
 use amq_protocol_types::ShortString;
-use amq_protocol_types::{AMQPValue, LongLongUInt};
+use amq_protocol_types::{AMQPValue, LongLongUInt, ShortUInt};
 use anyhow::{Context, Result};
 use async_std::future::timeout;
 use cerk::kernel::{
@@ -231,6 +231,10 @@ async fn setup_consume_channel(
             queue_args.insert(
                 ShortString::from("x-dead-letter-exchange"),
                 AMQPValue::LongString(LongString::from(dlx)),
+            );
+            queue_args.insert(
+                ShortString::from("x-delivery-limit"),
+                AMQPValue::ShortUInt(ShortUInt::from_be(3)),
             );
         }
 

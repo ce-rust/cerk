@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cerk-generator-deployment
+  labels:
+    app: cerk-generator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cerk-generator
+  template:
+    metadata:
+      labels:
+        app: cerk-generator
+    spec:
+      containers:
+        - name: cerk-generator
+          image: cloudeventsrouter/cerk:common-0.0.9
+          envFrom:
+            - configMapRef:
+                name: cerk-generator-env-config
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          volumeMounts:
+            - name: cerk-configs
+              mountPath: /init.json
+              subPath: init.json
+            - name: cerk-configs
+              mountPath: /config.json
+              subPath: config.json
+      volumes:
+        - name: cerk-configs
+          configMap:
+              name: cerk-generator-configs
