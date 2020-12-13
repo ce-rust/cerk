@@ -197,19 +197,21 @@ mod test {
             }
         }
 
-        try_join!(
+        let (
+            inbox_observer_result,
+            outbox_observer,
+            stored_messages_observer_result
+        ) = try_join!(
             timeout(Duration::from_secs(20), inbox_observer),
             timeout(Duration::from_secs(20), outbox_observer),
             timeout(Duration::from_secs(20), stored_messages_observer),
         )?;
 
-        info!("test done, disconnecting now");
+        inbox_observer_result?;
+        outbox_observer?;
+        stored_messages_observer_result?;
 
-        try_join!(
-            inbox_client.disconnect_after(Duration::from_secs(1)),
-            outbox_client.disconnect_after(Duration::from_secs(1)),
-            stored_messages_client.disconnect_after(Duration::from_secs(1)),
-        )?;
+        info!("test done");
 
         return Ok(());
     }
