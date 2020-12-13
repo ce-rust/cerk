@@ -6,7 +6,7 @@ extern crate anyhow;
 
 extern crate ctor;
 
-use anyhow::*;
+use anyhow::{Context, Result};
 use async_std;
 use async_std::future::timeout;
 use async_std::prelude::*;
@@ -197,19 +197,9 @@ mod test {
             }
         }
 
-        let (
-            inbox_observer_result,
-            outbox_observer,
-            stored_messages_observer_result
-        ) = try_join!(
-            timeout(Duration::from_secs(20), inbox_observer),
-            timeout(Duration::from_secs(20), outbox_observer),
-            timeout(Duration::from_secs(20), stored_messages_observer),
-        )?;
-
-        inbox_observer_result?;
-        outbox_observer?;
-        stored_messages_observer_result?;
+        timeout(Duration::from_secs(20), inbox_observer).await.context("Failed to publish all expected messages")??;
+        timeout(Duration::from_secs(20), outbox_observer).await.context("Failed to publish 1 message to outbox")??;
+        timeout(Duration::from_secs(20), stored_messages_observer).await.context("Failed build backpressure")??;
 
         info!("test done");
 
