@@ -1,17 +1,27 @@
 [package]
 name = "cerk_port_mqtt_mosquitto"
 version = "0.1.0"
-authors = ["Linus Basig <linus@basig.me>"]
+authors = [
+    "Linus Basig <linus@basig.me>",
+    "Fabrizio Lazzaretti <fabrizio@lazzaretti.me>"
+]
+description = "This is a package for CERK. CERK is an open source CloudEvents Router written in Rust with a MicroKernel architecture."
+license = "Apache-2.0"
+repository = "https://github.com/ce-rust/cerk"
+documentation = "https://github.com/ce-rust/cerk"
+homepage = "https://github.com/ce-rust/cerk"
+keywords = ["cloudevents", "router", "cerk", "health-check"]
+readme = "README.md"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-log = "0.4.0"
-env_logger = "0.7.1"
+log = "0.4"
+env_logger = "0.7"
 url = "2"
 cerk = { version = "0.2", path = "../cerk" }
-cloudevents-sdk = "0.3.0"
+cloudevents-sdk = "0.3"
 serde_json = "1.0"
 mosquitto-client = { git = "https://github.com/jsloth/mosquitto-client", rev="7913a98bfe6d35aaec9b541e7be4b817c42d91e0" } #fork of "0.1.5"
 anyhow = "1.0"

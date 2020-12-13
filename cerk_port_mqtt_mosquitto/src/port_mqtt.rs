@@ -105,13 +105,12 @@ fn connect(
                 id, message_id
             );
             if let Some(routing_id) = data_lock.unacked.remove(&message_id) {
-                sender_to_kernel.send(BrokerEvent::OutgoingCloudEventProcessed(
-                    OutgoingCloudEventProcessed {
-                        result: ProcessingResult::Successful,
-                        sender_id: id.clone(),
-                        routing_id: routing_id,
-                    },
-                ));
+                send_processed_event(
+                    id.clone(),
+                    &sender_to_kernel,
+                    routing_id,
+                    ProcessingResult::Successful,
+                );
             } else {
                 warn!("on_publish {} was not expected", message_id)
             }
@@ -164,6 +163,21 @@ fn send_cloud_event(
     return Ok(());
 }
 
+fn send_processed_event(
+    sender_id: InternalServerId,
+    sender_to_kernel: &BoxedSender,
+    routing_id: String,
+    result: ProcessingResult,
+) {
+    sender_to_kernel.send(BrokerEvent::OutgoingCloudEventProcessed(
+        OutgoingCloudEventProcessed {
+            result,
+            sender_id,
+            routing_id,
+        },
+    ));
+}
+
 /// This is the main function to start the port.
 pub fn port_mqtt_mosquitto_start(
     id: InternalServerId,
@@ -184,29 +198,49 @@ pub fn port_mqtt_mosquitto_start(
             }
             BrokerEvent::ConfigUpdated(config, _) => {
                 info!("{} received ConfigUpdated", &id);
-                match build_connection(&id, config) {
-                    Ok(new_connection) => {
-                        sender = Some(
-                            connect(
-                                id.clone(),
-                                new_connection.clone(),
-                                sender_to_kernel.clone_boxed(),
-                                data.clone(),
-                            )
-                            .unwrap(),
-                        );
-                        connection = Some(new_connection);
+                connection = match build_connection(&id, config) {
+                    Ok(new_connection) => Some(new_connection),
+                    Err(e) => {
+                        error!("failed to parse connection config {:?}", e);
+                        None
                     }
-                    Err(e) => error!("failed to connect {:?}", e),
+                };
+                if let Some(ref connection) = connection {
+                    sender = match connect(
+                        id.clone(),
+                        connection.clone(),
+                        sender_to_kernel.clone_boxed(),
+                        data.clone(),
+                    ) {
+                        Ok(connection) => Some(connection),
+                        Err(e) => {
+                            error!("failed to connect {:?}", e);
+                            None
+                        }
+                    };
                 }
             }
             BrokerEvent::OutgoingCloudEvent(event) => {
                 debug!("{} cloudevent received", &id);
                 if let Some(ref connection) = connection {
                     debug!("{} will send event out", &id);
-                    send_cloud_event(&id, &event, &connection, data.clone()).unwrap();
+                    if let Err(e) = send_cloud_event(&id, &event, &connection, data.clone()) {
+                        error!("failed to send event {:?}", e);
+                        send_processed_event(
+                            id.clone(),
+                            &sender_to_kernel,
+                            event.routing_id.clone(),
+                            ProcessingResult::TransientError,
+                        );
+                    }
                 } else {
-                    error!("no active connection - cant send event");
+                    error!("no active connection - can't send event");
+                    send_processed_event(
+                        id.clone(),
+                        &sender_to_kernel,
+                        event.routing_id.clone(),
+                        ProcessingResult::TransientError,
+                    );
                 }
             }
             BrokerEvent::IncomingCloudEventProcessed(_event_id, result) => {
@@ -216,7 +250,7 @@ pub fn port_mqtt_mosquitto_start(
                     );
                     sender.send(result).unwrap();
                 } else {
-                    error!("no active connection - cant send result");
+                    error!("no active connection - can't send result");
                 }
             }
             broker_event => warn!("event {} not implemented", broker_event),

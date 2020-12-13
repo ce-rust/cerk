@@ -20,6 +20,5 @@ exclude = [
     "integration-tests/reliable-amqp/cerk-amqp",
     "integration-tests/reliable-amqp/test-executor",
     "integration-tests/reliable-mqtt/cerk-mqtt",
-    "integration-tests/reliable-mqtt/test-executor",
-    "integration-tests/mqtt/mqtt"
+    "integration-tests/reliable-mqtt/test-executor"
 ]

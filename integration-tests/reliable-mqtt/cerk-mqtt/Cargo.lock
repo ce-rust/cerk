@@ -46,7 +46,7 @@ checksum = "2e8c087f005730276d1096a652e92a8bacee2e2472bcc9715a74d2bec38b5820"
 
 [[package]]
 name = "cerk"
-version = "0.2.3"
+version = "0.2.6"
 dependencies = [
  "anyhow",
  "cloudevents-sdk",
@@ -71,7 +71,7 @@ dependencies = [
 
 [[package]]
 name = "cerk_config_loader_file"
-version = "0.2.0"
+version = "0.2.6"
 dependencies = [
  "anyhow",
  "cerk",
@@ -85,7 +85,7 @@ dependencies = [
 
 [[package]]
 name = "cerk_loader_file"
-version = "0.2.1"
+version = "0.2.6"
 dependencies = [
  "anyhow",
  "cerk",
@@ -111,8 +111,9 @@ dependencies = [
 
 [[package]]
 name = "cerk_router_broadcast"
-version = "0.2.1"
+version = "0.2.6"
 dependencies = [
+ "anyhow",
  "cerk",
  "cloudevents-sdk",
  "log",
@@ -120,7 +121,7 @@ dependencies = [
 
 [[package]]
 name = "cerk_runtime_threading"
-version = "0.2.1"
+version = "0.2.6"
 dependencies = [
  "cerk",
  "log",

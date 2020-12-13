@@ -1,5 +1,7 @@
 # cerk_port_mqtt_mosquitto
 
+[![Build status](https://badge.buildkite.com/4494e29d5f2c47e3fe998af46dff78a447800a76a68024e392.svg?branch=master)](https://buildkite.com/ce-rust/cerk)
+
 
 This is a package for [CERK](https://github.com/ce-rust/cerk).
 CERK is an open source [CloudEvents](https://github.com/cloudevents/spec) Router written in Rust with a MicroKernel architecture.
@@ -20,8 +22,12 @@ A good overview is provided on [GitHub](https://github.com/ce-rust/cerk/).
 
 This port publishes and/or subscribe CloudEvents to/from an MQTT topic.
 
-The port is implemented with the [Mosquitto Client](https://docs.rs/mosquitto-client/0.1.5/mosquitto_client/)
-and sends and receives messages according to the CloudEvents specification (see [MQTT Protocol Binding for CloudEvents v1.0](https://github.com/cloudevents/spec/blob/v1.0/mqtt-protocol-binding.md))
+The port is implemented with a fork of the [Mosquitto Client](https://docs.rs/mosquitto-client/0.1.5/mosquitto_client/)
+and sends and receives messages according to the CloudEvents specification (see [MQTT Protocol Binding for CloudEvents v1.0](https://github.com/cloudevents/spec/blob/v1.0/mqtt-protocol-binding.md)).
+
+The reason we are currently using a fork is that the version published on crates.io does currently not support the latest version of libmosquitto.
+Because we proposed a [change to libmostquitto](https://github.com/eclipse/mosquitto/pull/1932) to better support our usecase we need to use the headerfiles of latest version of libmosquitto.
+The goal is to used the published version at some point because otherwise this port can't be published on crates.io (see https://github.com/ce-rust/cerk/issues/88).
 
 
 ## Configurations
@@ -150,3 +156,14 @@ let map: HashMap<String, Config> = [
 let config = Config::HashMap(map);
 ```
 
+
+## Update Readme
+
+The original readme text is a Rust doc comment in the [lib.rs](./src/lib.rs) file
+
+1. `cargo install cargo-readme`
+2. `cargo readme  > README.md`
+
+## License
+
+Apache-2.0
