@@ -3,8 +3,8 @@
   "router": "ROUTER_BROADCAST",
   "config_loader": "CONFIG_LOADER_FILE",
   "ports": {
-    "inbox": "PORT_MQTT_MOSQUITTO",
-    "outbox": "PORT_MQTT_MOSQUITTO",
-    "failing": "PORT_MQTT_MOSQUITTO"
+    "inbox_port": "PORT_MQTT_MOSQUITTO",
+    "outbox_port": "PORT_MQTT_MOSQUITTO",
+    "rejecting_port": "PORT_MQTT_MOSQUITTO"
   }
 }
