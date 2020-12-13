@@ -30,8 +30,8 @@ struct Connection {
 type ArcData = Arc<Mutex<Data>>;
 
 fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection> {
-    const ONE_SECOND: u32 = 1;
-    const FIVE_MINUTES: u32 = 300;
+    const RECONNECT_DELAY_MIN_SECONDS: u32 = 1;
+    const RECONNECT_DELAY_MAX_SECONDS: u32 = 300;
     let host = config.get_op_val_string("host")?.unwrap();
     let send_topic = config.get_op_val_string("send_topic")?;
     let send_qos = config.get_op_val_u8("send_qos")?.unwrap_or(0);
@@ -39,7 +39,7 @@ fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection>
     let subscribe_qos = config.get_op_val_u8("subscribe_qos")?.unwrap_or(0);
 
     let host = Url::parse(&host)?;
-    let host_name = host.host_str().unwrap();
+    let host_name = host.host_str().ok_or(anyhow!("no host was provided"))?;
     let host_port = host.port().unwrap_or(1883);
 
     debug!("create new session: {}", id);
@@ -47,15 +47,19 @@ fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection>
 
     let client = mosquitto_client::Mosquitto::new_session(&id.clone(), false); // keep old session
     client.threaded();
-    client.reconnect_delay_set(ONE_SECOND, FIVE_MINUTES, true)?;
+    client.reconnect_delay_set(
+        RECONNECT_DELAY_MIN_SECONDS,
+        RECONNECT_DELAY_MAX_SECONDS,
+        true,
+    )?;
     client.connect(host_name, host_port.into(), 5)?;
 
     let connection = Connection {
-        client: client,
-        send_topic: send_topic,
-        send_qos: send_qos,
-        subscribe_topic: subscribe_topic,
-        subscribe_qos: subscribe_qos,
+        client,
+        send_topic,
+        send_qos,
+        subscribe_topic,
+        subscribe_qos,
     };
 
     return Ok(connection);

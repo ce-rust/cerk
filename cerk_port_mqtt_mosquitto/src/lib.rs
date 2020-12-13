@@ -33,7 +33,7 @@ The configurations should be of type `cerk::kernel::Config::HashMap` and have at
 
 ## Required Fields
 
-## host
+### host
 
 The value has to by of type `Config::String` and contain a host name with protocol and port.
 
@@ -60,13 +60,13 @@ Currently, the following values are supported:
 
 E.g. `Config::U8(1)`
 
-## subscribe_topic
+### subscribe_topic
 
 The value has to by of type `Config::String` and contain the MQTT topic which the router should subscribe to.
 
 E.g. `Config::String(String::from("outbox"))`
 
-## subscribe_qos
+### subscribe_qos
 
 The value has to by of type `Config::U8` and contain the [quality of service](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718099) for message delivery.
 
@@ -156,6 +156,9 @@ let config = Config::HashMap(map);
 */
 
 #![deny(missing_docs)]
+
+#[macro_use]
+extern crate anyhow;
 
 #[macro_use]
 extern crate log;
