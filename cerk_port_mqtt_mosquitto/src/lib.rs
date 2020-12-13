@@ -38,7 +38,7 @@ The goal is to used the published version at some point because otherwise this p
 
 # Configurations
 
-The configurations should be of type `cerk::kernel::Config::HashMap` and have at least the entires:
+The configurations should be of type `cerk::kernel::Config::HashMap` and can have at the following fields:
 
 ## Required Fields
 
