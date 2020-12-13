@@ -3,6 +3,15 @@
 [![Build status](https://badge.buildkite.com/4494e29d5f2c47e3fe998af46dff78a447800a76a68024e392.svg?branch=master)](https://buildkite.com/ce-rust/cerk)
 
 
+> :warning:  **this port requires a special build of libmosquitto to be present locally**: [`feat/reliable` branch of https://github.com/ce-rust/mosquitto](https://github.com/ce-rust/mosquitto/tree/feat/reliable)
+>
+> The reason for this limitation is that the current version of libmosquitto acknowledges a received PUBLISH message automatically before the content of the message is handed over to the application.
+> This patch needs to stay until this issue is fixed upstream (see https://github.com/eclipse/mosquitto/pull/1932).
+>
+> This repository comes with a prebuild version of libmosquitto with the fix applied for x86_64-linux (see [lib/libmosquitto.so.1](../lib/libmosquitto.so.1)).
+> All the docker compose setups use this binary.
+> To build and install the patched version on your machine, please use `make build` and `make install`.
+
 This is a package for [CERK](https://github.com/ce-rust/cerk).
 CERK is an open source [CloudEvents](https://github.com/cloudevents/spec) Router written in Rust with a MicroKernel architecture.
 
@@ -36,7 +45,7 @@ The configurations should be of type `cerk::kernel::Config::HashMap` and have at
 
 ### Required Fields
 
-### host
+#### host
 
 The value has to by of type `Config::String` and contain a host name with protocol and port.
 
@@ -63,13 +72,13 @@ Currently, the following values are supported:
 
 E.g. `Config::U8(1)`
 
-### subscribe_topic
+#### subscribe_topic
 
 The value has to by of type `Config::String` and contain the MQTT topic which the router should subscribe to.
 
 E.g. `Config::String(String::from("outbox"))`
 
-### subscribe_qos
+#### subscribe_qos
 
 The value has to by of type `Config::U8` and contain the [quality of service](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718099) for message delivery.
 

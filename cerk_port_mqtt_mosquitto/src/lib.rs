@@ -1,5 +1,14 @@
 /*!
 
+> :warning:  **this port requires a special build of libmosquitto to be present locally**: [`feat/reliable` branch of https://github.com/ce-rust/mosquitto](https://github.com/ce-rust/mosquitto/tree/feat/reliable)
+>
+> The reason for this limitation is that the current version of libmosquitto acknowledges a received PUBLISH message automatically before the content of the message is handed over to the application.
+> This patch needs to stay until this issue is fixed upstream (see https://github.com/eclipse/mosquitto/pull/1932).
+>
+> This repository comes with a prebuild version of libmosquitto with the fix applied for x86_64-linux (see [lib/libmosquitto.so.1](../lib/libmosquitto.so.1)).
+> All the docker compose setups use this binary.
+> To build and install the patched version on your machine, please use `make build` and `make install`.
+
 This is a package for [CERK](https://github.com/ce-rust/cerk).
 CERK is an open source [CloudEvents](https://github.com/cloudevents/spec) Router written in Rust with a MicroKernel architecture.
 
