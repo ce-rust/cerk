@@ -1,0 +1,267 @@
+use anyhow::Result;
+use cerk::kernel::{
+    BrokerEvent, CloudEventRoutingArgs, Config, ConfigHelpers, DeliveryGuarantee,
+    IncomingCloudEvent, OutgoingCloudEvent, OutgoingCloudEventProcessed, ProcessingResult,
+};
+use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
+use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
+use cloudevents::{AttributesReader, Event};
+use mosquitto_client::Mosquitto;
+use serde_json;
+use std::collections::HashMap;
+use std::sync::mpsc::{channel, Sender};
+use std::sync::{Arc, Mutex};
+use std::thread;
+use url::Url;
+
+struct Data {
+    unacked: HashMap<i32, String>,
+}
+
+#[derive(Clone)]
+struct Connection {
+    client: Mosquitto,
+    send_topic: Option<String>,
+    send_qos: u8,
+    subscribe_topic: Option<String>,
+    subscribe_qos: u8,
+}
+
+type ArcData = Arc<Mutex<Data>>;
+
+fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection> {
+    const RECONNECT_DELAY_MIN_SECONDS: u32 = 1;
+    const RECONNECT_DELAY_MAX_SECONDS: u32 = 300;
+    let host = config.get_op_val_string("host")?.unwrap();
+    let send_topic = config.get_op_val_string("send_topic")?;
+    let send_qos = config.get_op_val_u8("send_qos")?.unwrap_or(0);
+    let subscribe_topic = config.get_op_val_string("subscribe_topic")?;
+    let subscribe_qos = config.get_op_val_u8("subscribe_qos")?.unwrap_or(0);
+
+    let host = Url::parse(&host)?;
+    let host_name = host.host_str().ok_or(anyhow!("no host was provided"))?;
+    let host_port = host.port().unwrap_or(1883);
+
+    debug!("create new session: {}", id);
+    debug!("connect to: {}:{}", host_name, host_port);
+
+    let client = mosquitto_client::Mosquitto::new_session(&id.clone(), false); // keep old session
+    client.threaded();
+    client.reconnect_delay_set(
+        RECONNECT_DELAY_MIN_SECONDS,
+        RECONNECT_DELAY_MAX_SECONDS,
+        true,
+    )?;
+    client.connect(host_name, host_port.into(), 5)?;
+
+    let connection = Connection {
+        client,
+        send_topic,
+        send_qos,
+        subscribe_topic,
+        subscribe_qos,
+    };
+
+    return Ok(connection);
+}
+
+fn connect(
+    id: InternalServerId,
+    connection: Connection,
+    sender_to_kernel: BoxedSender,
+    data: ArcData,
+) -> Result<Sender<ProcessingResult>> {
+    let (sender, receiver) = channel();
+    let sub_delivery_guarantee = match connection.subscribe_qos {
+        1 => DeliveryGuarantee::AtLeastOnce,
+        _ => DeliveryGuarantee::BestEffort,
+    };
+    thread::spawn(move || {
+        let mut callbacks = connection.client.callbacks(Vec::<()>::new());
+        callbacks.on_message(|_, msg| {
+            debug!("received cloud event (on_message)");
+            let cloudevent: Event = serde_json::from_str(msg.text()).unwrap();
+            sender_to_kernel.send(BrokerEvent::IncomingCloudEvent(IncomingCloudEvent {
+                incoming_id: id.clone(),
+                routing_id: cloudevent.id().to_string(),
+                cloud_event: cloudevent,
+                args: CloudEventRoutingArgs {
+                    delivery_guarantee: sub_delivery_guarantee,
+                },
+            }));
+            if sub_delivery_guarantee.requires_acknowledgment() {
+                debug!("ack required - block on_message");
+                let result = receiver.recv().unwrap();
+                debug!("received result for incomming cloud even: {}", result);
+                match result {
+                    ProcessingResult::Successful => debug!("exiting on_message handler now"),
+                    _ => panic!("message could not be forwarded, must prevent on_message from exiting (otherwise PUBACK would be sent)"),
+                }
+            } else {
+                debug!("no ack required - exit on_message");
+            }
+        });
+        callbacks.on_publish(|_, message_id| {
+            debug!("request lock for unacked messages list");
+            let mut data_lock = data.lock().unwrap();
+            debug!(
+                "{} published message with id {} successfully",
+                id, message_id
+            );
+            if let Some(routing_id) = data_lock.unacked.remove(&message_id) {
+                send_processed_event(
+                    id.clone(),
+                    &sender_to_kernel,
+                    routing_id,
+                    ProcessingResult::Successful,
+                );
+            } else {
+                warn!("on_publish {} was not expected", message_id)
+            }
+        });
+        callbacks.on_connect(|_, connection_id| {
+            debug!("{} connected: {}", id, connection_id);
+            if let Some(ref subscribe_topic) = connection.subscribe_topic {
+                debug!(
+                    "subscribe to: {} with qos {}",
+                    subscribe_topic, connection.subscribe_qos
+                );
+                connection
+                    .client
+                    .subscribe(&subscribe_topic, connection.subscribe_qos.into())
+                    .unwrap();
+            }
+        });
+        callbacks.on_disconnect(|_, connection_id| {
+            debug!("{} disconnected: {}", id, connection_id);
+        });
+        connection.client.loop_until_disconnect(200).unwrap();
+    });
+
+    return Ok(sender);
+}
+
+fn send_cloud_event(
+    id: &InternalServerId,
+    event: &OutgoingCloudEvent,
+    connection: &Connection,
+    data: ArcData,
+) -> Result<()> {
+    let serialized = serde_json::to_string(&event.cloud_event)?;
+
+    if let Some(ref send_topic) = connection.send_topic {
+        let mut data_lock = data.lock().unwrap();
+        let message_id = connection.client.publish(
+            send_topic,
+            serialized.as_bytes(),
+            connection.send_qos.into(),
+            false,
+        )?;
+        data_lock
+            .unacked
+            .insert(message_id, event.routing_id.clone());
+        debug!("{} sent publish with id {}", id, message_id);
+    } else {
+        error!("{} not send_topic configured", id);
+    }
+    return Ok(());
+}
+
+fn send_processed_event(
+    sender_id: InternalServerId,
+    sender_to_kernel: &BoxedSender,
+    routing_id: String,
+    result: ProcessingResult,
+) {
+    sender_to_kernel.send(BrokerEvent::OutgoingCloudEventProcessed(
+        OutgoingCloudEventProcessed {
+            result,
+            sender_id,
+            routing_id,
+        },
+    ));
+}
+
+/// This is the main function to start the port.
+pub fn port_mqtt_mosquitto_start(
+    id: InternalServerId,
+    inbox: BoxedReceiver,
+    sender_to_kernel: BoxedSender,
+) {
+    info!("start mqtt port with id {}", id);
+    let mut connection: Option<Connection> = None;
+    let mut sender: Option<Sender<ProcessingResult>> = None;
+    let data: ArcData = Arc::new(Mutex::new(Data {
+        unacked: HashMap::new(),
+    }));
+
+    loop {
+        match inbox.receive() {
+            BrokerEvent::Init => {
+                info!("{} initiated", id);
+            }
+            BrokerEvent::ConfigUpdated(config, _) => {
+                info!("{} received ConfigUpdated", &id);
+                connection = match build_connection(&id, config) {
+                    Ok(new_connection) => Some(new_connection),
+                    Err(e) => {
+                        error!("failed to parse connection config {:?}", e);
+                        None
+                    }
+                };
+                if let Some(ref connection) = connection {
+                    sender = match connect(
+                        id.clone(),
+                        connection.clone(),
+                        sender_to_kernel.clone_boxed(),
+                        data.clone(),
+                    ) {
+                        Ok(connection) => Some(connection),
+                        Err(e) => {
+                            error!("failed to connect {:?}", e);
+                            None
+                        }
+                    };
+                }
+            }
+            BrokerEvent::OutgoingCloudEvent(event) => {
+                debug!("{} cloudevent received", &id);
+                if let Some(ref connection) = connection {
+                    debug!("{} will send event out", &id);
+                    if let Err(e) = send_cloud_event(&id, &event, &connection, data.clone()) {
+                        error!("failed to send event {:?}", e);
+                        send_processed_event(
+                            id.clone(),
+                            &sender_to_kernel,
+                            event.routing_id.clone(),
+                            ProcessingResult::TransientError,
+                        );
+                    }
+                } else {
+                    error!("no active connection - can't send event");
+                    send_processed_event(
+                        id.clone(),
+                        &sender_to_kernel,
+                        event.routing_id.clone(),
+                        ProcessingResult::TransientError,
+                    );
+                }
+            }
+            BrokerEvent::IncomingCloudEventProcessed(_event_id, result) => {
+                if let Some(ref sender) = sender {
+                    debug!(
+                        "received IncomingCloudEventProcessed -> send result to on_message handler"
+                    );
+                    sender.send(result).unwrap();
+                } else {
+                    error!("no active connection - can't send result");
+                }
+            }
+            broker_event => warn!("event {} not implemented", broker_event),
+        }
+    }
+}
+
+/// This is the pointer for the main function to start the port.
+pub static PORT_MQTT_MOSQUITTO: InternalServerFnRefStatic =
+    &(port_mqtt_mosquitto_start as InternalServerFn);

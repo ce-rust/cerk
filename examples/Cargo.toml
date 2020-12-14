@@ -58,6 +58,7 @@ cerk_port_dummies = { path = "../cerk_port_dummies" }
 cerk_port_health_check_http = { path = "../cerk_port_health_check_http" }
 cerk_port_unix_socket = { path = "../cerk_port_unix_socket" }
 cerk_port_mqtt = { path = "../cerk_port_mqtt" }
+cerk_port_mqtt_mosquitto = { path = "../cerk_port_mqtt_mosquitto" }
 cerk_port_amqp = { path = "../cerk_port_amqp" }
 cerk_router_rule_based = { path = "../cerk_router_rule_based" }
 serde_json = "1.0.42"

@@ -23,3 +23,4 @@ check cerk_port_unix_socket
 check cerk_router_broadcast
 check cerk_router_rule_based
 check cerk_runtime_threading
+check cerk_port_mqtt_mosquitto
