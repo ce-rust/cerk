@@ -1,0 +1,25 @@
+[package]
+name = "example_unix_socket_and_mqtt_on_armv7"
+version = "0.2.6"
+authors = [
+    "Linus Basig <linus@basig.me>",
+    "Fabrizio Lazzaretti <fabrizio@lazzaretti.me>"
+]
+description = "example_unix_socket_and_mqtt_on_armv7"
+license = "Apache-2.0"
+repository = "https://github.com/ce-rust/cerk"
+documentation = "https://github.com/ce-rust/cerk"
+homepage = "https://github.com/ce-rust/cerk"
+keywords = ["cloudevents", "router"]
+edition = "2018"
+
+[dependencies]
+log = "0.4.0"
+env_logger = "0.7.1"
+cerk = { path = "../../cerk" }
+cerk_runtime_threading = { path = "../../cerk_runtime_threading" }
+cerk_port_dummies = { path = "../../cerk_port_dummies" }
+cerk_port_unix_socket = { path = "../../cerk_port_unix_socket" }
+cerk_port_mqtt = { path = "../../cerk_port_mqtt" }
+cerk_router_rule_based = { path = "../../cerk_router_rule_based" }
+serde_json = "1.0.42"

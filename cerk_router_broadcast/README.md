@@ -35,10 +35,10 @@ let config = Config::Vec(vec![Config::String(String::from("output-port"))]);
 
 ## Examples
 
-* [Hello World Example](https://github.com/ce-rust/cerk/tree/master/examples/src/hello_world)
-* [UNIX Socket Example](https://github.com/ce-rust/cerk/tree/master/examples/src/unix_socket)
-* [AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/src/amqp_to_printer/)
-* [Sequence to AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/src/sequence_to_amqp_to_printer/)
+* [Hello World Example](https://github.com/ce-rust/cerk/tree/master/examples/examples/src/hello_world)
+* [UNIX Socket Example](https://github.com/ce-rust/cerk/tree/master/examples/examples/src/unix_socket)
+* [AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/examples/src/amqp_to_printer/)
+* [Sequence to AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/examples/src/sequence_to_amqp_to_printer/)
 
 
 ## Update Readme

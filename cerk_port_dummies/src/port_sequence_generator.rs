@@ -180,9 +180,9 @@ pub fn generate_sequence_event(i: u32) -> Event {
 ///
 /// # Examples
 ///
-/// * [Hello World](https://github.com/ce-rust/cerk/tree/master/examples/src/hello_world)
-/// * [Hello World Reliable](https://github.com/ce-rust/cerk/tree/master/examples/src/hello_world_reliable)
-/// * [Generator to MQTT](https://github.com/ce-rust/cerk/tree/master/examples/src/mqtt/)
+/// * [Hello World](https://github.com/ce-rust/cerk/tree/master/examples/examples/src/hello_world)
+/// * [Hello World Reliable](https://github.com/ce-rust/cerk/tree/master/examples/examples/src/hello_world_reliable)
+/// * [Generator to MQTT](https://github.com/ce-rust/cerk/tree/master/examples/examples/src/mqtt/)
 ///
 pub fn port_sequence_generator_start(
     id: InternalServerId,

@@ -12,7 +12,8 @@ members = [
     "cerk_router_broadcast",
     "cerk_router_rule_based",
     "cerk_runtime_threading",
-    "examples",
+    "examples/examples",
+    "examples/unix_socket_and_mqtt_on_armv7"
 ]
 
 exclude = [

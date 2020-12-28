@@ -76,7 +76,7 @@ fn liten_to_stream(
 ///
 /// # Examples
 ///
-/// * [UNIX Socket Example](https://github.com/ce-rust/cerk/tree/master/examples/src/unix_socket)
+/// * [UNIX Socket Example](https://github.com/ce-rust/cerk/tree/master/examples/examples/src/unix_socket)
 ///
 /// # Limitations
 ///

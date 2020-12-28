@@ -23,9 +23,9 @@ A Scheduler implementation for CERK based on the `std::thread` model.
 
 ## Examples
 
-* [Generator to MQTT](https://github.com/ce-rust/cerk/tree/master/examples/src/mqtt/)
-* [Sequence to AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/src/sequence_to_amqp_to_printer/)
-* [AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/src/amqp_to_printer/)
+* [Generator to MQTT](https://github.com/ce-rust/cerk/tree/master/examples/examples/src/mqtt/)
+* [Sequence to AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/examples/src/sequence_to_amqp_to_printer/)
+* [AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/examples/src/amqp_to_printer/)
 
 */
 

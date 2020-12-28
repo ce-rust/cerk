@@ -182,7 +182,7 @@ let config = Config::HashMap(map);
 
 # Examples
 
-* [Generator to MQTT](https://github.com/ce-rust/cerk/tree/master/examples/src/mqtt/)
+* [Generator to MQTT](https://github.com/ce-rust/cerk/tree/master/examples/examples/src/mqtt/)
 
 # Limitations
 

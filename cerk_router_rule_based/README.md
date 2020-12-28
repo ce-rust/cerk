@@ -62,7 +62,7 @@ let routing_configs = serde_json::to_string(&routing_rules).unwrap();
 
 ## Examples
 
-* [Rule Based Routing Example](https://github.com/ce-rust/cerk/tree/master/examples/src/rule_based_routing)
+* [Rule Based Routing Example](https://github.com/ce-rust/cerk/tree/master/examples/examples/src/rule_based_routing)
 
 
 
