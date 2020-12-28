@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   test:
-    image: lazzaretti/docker-rust-cerk:0.3.0
+    image: lazzaretti/docker-rust-cerk:0.4.0
     volumes:
       - .:/cerk/
       - ./lib/libmosquitto.so.1:/usr/local/lib/libmosquitto.so
@@ -15,7 +15,7 @@ services:
       && cargo fmt -- --check
       "
   doc:
-    image: lazzaretti/docker-rust-cerk:0.3.0
+    image: lazzaretti/docker-rust-cerk:0.4.0
     volumes:
       - .:/cerk/
     working_dir: /cerk

@@ -14,7 +14,7 @@ services:
     ports:
       - 1884:1883
   cerk:
-    image: lazzaretti/docker-rust-cerk:0.3.0
+    image: lazzaretti/docker-rust-cerk:0.4.0
     environment:
       - MOSQUITTO_GIT_URL=https://github.com/ce-rust/mosquitto
       - MOSQUITTO_GIT_HASH=9f834dff9095e6731937d5eac767dbaca46491ac
@@ -29,7 +29,7 @@ services:
       - limited
       - unlimited
   test-executor:
-    image: lazzaretti/docker-rust-cerk:0.3.0
+    image: lazzaretti/docker-rust-cerk:0.4.0
     volumes:
       - ../../:/cerk/
     working_dir: /cerk/integration-tests/reliable-mqtt/test-executor
