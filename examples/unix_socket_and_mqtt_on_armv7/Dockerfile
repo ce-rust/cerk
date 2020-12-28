@@ -1,7 +1,7 @@
 FROM ubuntu:18.04
 
 RUN apt-get update
-RUN apt-get install -y curl build-essential llvm clang gcc gcc-7-multilib make cmake lsb-release libssl-dev wget \
+RUN apt-get install -y curl build-essential llvm clang gcc gcc-7-multilib make cmake lsb-release libssl-dev wget git \
     && apt-get install -qq gcc-arm-linux-gnueabihf \
     && rm -rf /var/lib/apt/lists/*
 
