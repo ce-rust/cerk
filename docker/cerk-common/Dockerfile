@@ -1,4 +1,4 @@
-FROM lazzaretti/docker-rust-cerk:0.3.0 as build-env
+FROM lazzaretti/docker-rust-cerk:0.4.0 as build-env
 WORKDIR /app
 ADD . /app
 RUN cargo build --release --locked

@@ -6,13 +6,15 @@ use cerk::kernel::{
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
 use cloudevents::{AttributesReader, Event};
-use mosquitto_client::Mosquitto;
+use mosquitto_client_wrapper::Mosquitto;
 use serde_json;
 use std::collections::HashMap;
 use std::sync::mpsc::{channel, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use url::Url;
+
+const MOSQ_OPT_DELAYED_ACK: u32 = 14;
 
 struct Data {
     unacked: HashMap<i32, String>,
@@ -45,8 +47,9 @@ fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection>
     debug!("create new session: {}", id);
     debug!("connect to: {}:{}", host_name, host_port);
 
-    let client = mosquitto_client::Mosquitto::new_session(&id.clone(), false); // keep old session
-    client.threaded();
+    let client = Mosquitto::new_session(&id.clone(), false)?; // keep old session
+    client.threaded()?;
+    client.set_option(MOSQ_OPT_DELAYED_ACK, 1)?;
     client.reconnect_delay_set(
         RECONNECT_DELAY_MIN_SECONDS,
         RECONNECT_DELAY_MAX_SECONDS,

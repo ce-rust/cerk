@@ -14,6 +14,6 @@ linker = \"arm-linux-gnueabihf-gcc\"\n\
 
 RUN rustup target add armv7-unknown-linux-gnueabihf
 
-WORKDIR /cerk/
+WORKDIR /cerk/examples/unix_socket_and_mqtt_on_armv7
 
 CMD cargo build --target armv7-unknown-linux-gnueabihf --release

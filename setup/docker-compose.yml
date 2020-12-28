@@ -11,5 +11,9 @@ services:
     build: ubuntulinux
     volumes: 
       - ..:/cerk/
+      - target:/cerk/target/ # dont use target from host
       - ../lib/libmosquitto.so.1:/usr/local/lib/libmosquitto.so
       - ../lib/libmosquitto.so.1:/usr/lib/libmosquitto.so.1
+
+volumes:
+  target: {}
