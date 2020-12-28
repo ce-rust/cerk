@@ -20,7 +20,7 @@ The project was initially created during the student research project [CloudEven
 
 The easiest way to use the router is to use the [docker image](https://hub.docker.com/repository/docker/cloudeventsrouter/cerk) from Docker Hub.
 
-If you like to build the router by yourself, start with an [example](#examples). E.g. the [hello world example](https://github.com/ce-rust/cerk/tree/master/examples/src/hello_world).
+If you like to build the router by yourself, start with an [example](#examples). E.g. the [hello world example](https://github.com/ce-rust/cerk/tree/master/examples/examples/src/hello_world).
 
 
 ## Components
@@ -74,7 +74,7 @@ The ConfigLoader is responsible for providing the newest port configurations and
 | Name                                                             | Description                                          |
 |------------------------------------------------------------------|------------------------------------------------------|
 | [config_loader_file](./cerk_config_loader_file/)                 | Loads the configurations from a json based file      |
-| [config loader_static](./examples/src/hello_world/main.rs)       | Have to be implemented for each project individually |
+| [config loader_static](./examples/examples/src/hello_world/main.rs)       | Have to be implemented for each project individually |
 
 ### Loaders
 
@@ -90,13 +90,13 @@ Check out the README in the folder of each example for more details and setup in
 
 | Name                                                             | Description                        |
 |------------------------------------------------------------------|------------------------------------|
-| [Hello World](./examples/src/hello_world/)                       | Routing CloudEvents that are generated from an input port to an output port, the output port print the result to the console. |
-| [Rule Based Routing Example](./examples/src/rule_based_routing/) | CloudEvents that are generated from an input port are routed to an output port, but in this example only every tenth event gets routed to the output port because they are filterd by `id`. The `id` has to end with `0`, thus only 10,20,30,... are printed. |
-| [UNIX Socket](./examples/src/unix_socket/)                       | Routes CloudEvents from an input UNIX Socket port to an output UNIX Socket port |
-| [MQTT](./examples/src/sequence_to_mqtt/)                         | Routes CloudEvents that are generated from an input port to an output port, the output port publishes the events on an MQTT topic. A second router subscribes to the same topic with an MQTT port and routes them to a port which prints the event to stdout. |
-| [AMQP to Printer](./examples/src/amqp_to_printer/)               | Routes CloudEvents from a RabbitMQ exchange to a queue to CERK and finally prints them to the console. |
-| [Sequence to AMQP to Printer](./examples/src/sequence_to_amqp_to_printer/)   | The setup contains two routers. One Router generates events and routs them to a RabbitMQ exchange. Another router consumes the CloudEvents from a bound queue and prints them to the console. |
-| [UNIX Socket and MQTT for armv7](./examples/src/unix_socket_and_mqtt_on_armv7/) | Routes CloudEvents that are received on an input UNIX Socket port to an output UNIX Socket port and an MQTT output port. |
+| [Hello World](./examples/examples/src/hello_world/)                       | Routing CloudEvents that are generated from an input port to an output port, the output port print the result to the console. |
+| [Rule Based Routing Example](./examples/examples/src/rule_based_routing/) | CloudEvents that are generated from an input port are routed to an output port, but in this example only every tenth event gets routed to the output port because they are filterd by `id`. The `id` has to end with `0`, thus only 10,20,30,... are printed. |
+| [UNIX Socket](./examples/examples/src/unix_socket/)                       | Routes CloudEvents from an input UNIX Socket port to an output UNIX Socket port |
+| [MQTT](./examples/examples/src/mqtt/)                                     | Routes CloudEvents that are generated from an input port to an output port, the output port publishes the events on an MQTT topic. A second router subscribes to the same topic with an MQTT port and routes them to a port which prints the event to stdout. |
+| [AMQP to Printer](./examples/examples/src/amqp_to_printer/)               | Routes CloudEvents from a RabbitMQ exchange to a queue to CERK and finally prints them to the console. |
+| [Sequence to AMQP to Printer](./examples/examples/src/sequence_to_amqp_to_printer/)   | The setup contains two routers. One Router generates events and routs them to a RabbitMQ exchange. Another router consumes the CloudEvents from a bound queue and prints them to the console. |
+| [UNIX Socket and MQTT for armv7](./examples/unix_socket_and_mqtt_on_armv7/) | Routes CloudEvents that are received on an input UNIX Socket port to an output UNIX Socket port and an MQTT output port. |
 
 ## Development Setup
 

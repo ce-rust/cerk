@@ -76,7 +76,7 @@ fn main() {
 
 ## Examples
 
- * [AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/src/amqp_to_printer/)
+ * [AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/examples/src/amqp_to_printer/)
 
 */
 

@@ -5,15 +5,12 @@ authors = [
     "Linus Basig <linus@basig.me>",
     "Fabrizio Lazzaretti <fabrizio@lazzaretti.me>"
 ]
-description = "This is a package for CERK. CERK is an open source CloudEvents Router written in Rust with a MicroKernel architecture."
+description = "Exampels in a single cargo bundle"
 license = "Apache-2.0"
 repository = "https://github.com/ce-rust/cerk"
 documentation = "https://github.com/ce-rust/cerk"
 homepage = "https://github.com/ce-rust/cerk"
-keywords = ["cloudevents", "router"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [[bin]]
 name = "hello_world"
@@ -37,9 +34,6 @@ path = "src/sequence_to_amqp_to_printer/amqp_to_printer/main.rs"
 name = "sequence_to_amqp_to_printer_publisher"
 path = "src/sequence_to_amqp_to_printer/sequence_to_amqp/main.rs"
 [[bin]]
-name = "unix_socket_and_mqtt_on_armv7"
-path = "src/unix_socket_and_mqtt_on_armv7/main.rs"
-[[bin]]
 name = "mqtt-to-printer"
 path = "src/mqtt/mqtt-to-printer/main.rs"
 [[bin]]
@@ -49,16 +43,16 @@ path = "src/rule_based_routing/main.rs"
 [dependencies]
 log = "0.4.0"
 env_logger = "0.7.1"
-cerk = { path = "../cerk" }
-cerk_config_loader_file = { path = "../cerk_config_loader_file" }
-cerk_loader_file = { path = "../cerk_loader_file" }
-cerk_runtime_threading = { path = "../cerk_runtime_threading" }
-cerk_router_broadcast = { path = "../cerk_router_broadcast" }
-cerk_port_dummies = { path = "../cerk_port_dummies" }
-cerk_port_health_check_http = { path = "../cerk_port_health_check_http" }
-cerk_port_unix_socket = { path = "../cerk_port_unix_socket" }
-cerk_port_mqtt = { path = "../cerk_port_mqtt" }
-cerk_port_mqtt_mosquitto = { path = "../cerk_port_mqtt_mosquitto" }
-cerk_port_amqp = { path = "../cerk_port_amqp" }
-cerk_router_rule_based = { path = "../cerk_router_rule_based" }
+cerk = { path = "../../cerk" }
+cerk_config_loader_file = { path = "../../cerk_config_loader_file" }
+cerk_loader_file = { path = "../../cerk_loader_file" }
+cerk_runtime_threading = { path = "../../cerk_runtime_threading" }
+cerk_router_broadcast = { path = "../../cerk_router_broadcast" }
+cerk_port_dummies = { path = "../../cerk_port_dummies" }
+cerk_port_health_check_http = { path = "../../cerk_port_health_check_http" }
+cerk_port_unix_socket = { path = "../../cerk_port_unix_socket" }
+cerk_port_mqtt = { path = "../../cerk_port_mqtt" }
+cerk_port_mqtt_mosquitto = { path = "../../cerk_port_mqtt_mosquitto" }
+cerk_port_amqp = { path = "../../cerk_port_amqp" }
+cerk_router_rule_based = { path = "../../cerk_router_rule_based" }
 serde_json = "1.0.42"

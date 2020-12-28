@@ -33,8 +33,8 @@ However, it does not support the binary content mode.
 
 ### Examples
 
- * [Sequence to AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/src/sequence_to_amqp_to_printer/)
- * [AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/src/amqp_to_printer/)
+ * [Sequence to AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/examples/src/sequence_to_amqp_to_printer/)
+ * [AMQP to Printer](https://github.com/ce-rust/cerk/tree/master/examples/examples/src/amqp_to_printer/)
 
 
 ## Update Readme
