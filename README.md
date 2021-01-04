@@ -144,9 +144,8 @@ Release management is organized by cargo-workspaces.
 pre-requirement: `cargo install cargo-workspaces`
 
 1. check out master and create a new branch `release`
-2. `cargo workspaces version --allow-branch="release"`
-3. `cargo workspaces publish --allow-branch="release" --from-git --skip-published --no-git-push --no-git-tag`
-4. merge it back into the master with a pull request
+2. `cargo workspaces publish --allow-branch="release" --no-git-push`
+3. merge it back into the master with a pull request
 
 ## License
 

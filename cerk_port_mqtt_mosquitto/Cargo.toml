@@ -1,6 +1,6 @@
 [package]
 name = "cerk_port_mqtt_mosquitto"
-version = "0.1.0"
+version = "0.2.7"
 authors = [
     "Linus Basig <linus@basig.me>",
     "Fabrizio Lazzaretti <fabrizio@lazzaretti.me>"
