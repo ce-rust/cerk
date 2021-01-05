@@ -1,6 +1,6 @@
 [package]
 name = "cerk_examples"
-version = "0.2.7"
+version = "0.2.8"
 authors = [
     "Linus Basig <linus@basig.me>",
     "Fabrizio Lazzaretti <fabrizio@lazzaretti.me>"
