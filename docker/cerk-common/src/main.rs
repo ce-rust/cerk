@@ -7,6 +7,7 @@ use cerk_port_amqp::PORT_AMQP;
 use cerk_port_dummies::{PORT_PRINTER, PORT_SEQUENCE_GENERATOR, PORT_SEQUENCE_VALIDATOR};
 use cerk_port_health_check_http::PORT_HEALTH_CHECK_HTTP;
 use cerk_port_mqtt::PORT_MQTT;
+use cerk_port_mqtt_mosquitto::PORT_MQTT_MOSQUITTO;
 use cerk_port_unix_socket::{PORT_INPUT_UNIX_SOCKET, PORT_OUTPUT_UNIX_SOCKET};
 use cerk_router_broadcast::ROUTER_BROADCAST;
 use cerk_router_rule_based::ROUTER_RULE_BASED;
@@ -22,6 +23,7 @@ fn main() {
         ports: fn_to_links![
             PORT_AMQP,
             PORT_MQTT,
+            PORT_MQTT_MOSQUITTO,
             PORT_INPUT_UNIX_SOCKET,
             PORT_OUTPUT_UNIX_SOCKET,
             PORT_SEQUENCE_GENERATOR,
