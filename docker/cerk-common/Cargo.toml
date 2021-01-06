@@ -14,6 +14,7 @@ cerk_port_amqp = { version = "0.2" }
 cerk_port_dummies = { version = "0.2" }
 cerk_port_health_check_http = { version = "0.2" }
 cerk_port_mqtt = { version = "0.2" }
+cerk_port_mqtt_mosquitto = { version = "0.2" }
 cerk_port_unix_socket = { version = "0.2" }
 cerk_router_broadcast = { version = "0.2" }
 cerk_router_rule_based = { version = "0.2" }
