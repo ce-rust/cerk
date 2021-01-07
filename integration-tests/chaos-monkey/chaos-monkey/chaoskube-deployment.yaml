@@ -35,6 +35,8 @@ spec:
             - --minimum-age=10s
             # terminate pods for real: this disables dry-run mode which is on by default
             - --no-dry-run
+            # kill the pods "hard" -> immediately
+            - --grace-period=0s
           securityContext:
             runAsNonRoot: true
             runAsUser: 65534

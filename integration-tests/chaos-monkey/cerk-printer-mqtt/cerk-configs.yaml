@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cerk-printer-mqtt-configs
+data:
+  init.json: |
+    {
+      "scheduler": "THREADING_SCHEDULER",
+      "router": "ROUTER_BROADCAST",
+      "config_loader": "CONFIG_LOADER_FILE",
+      "ports": {
+        "mqtt-receiver": "PORT_MQTT_MOSQUITTO",
+        "dummy-logger-output": "PORT_PRINTER",
+        "health": "PORT_HEALTH_CHECK_HTTP",
+        "validator": "PORT_SEQUENCE_VALIDATOR"
+      }
+    }
+  config.json: |
+    {
+      "routing_rules": [
+        "dummy-logger-output",
+        "validator"
+      ],
+      "ports": {
+        "mqtt-receiver": {
+          "host": "tcp://mosquitto:1883",
+          "subscribe_topic": "out",
+          "subscribe_qos": 1
+        },
+        "dummy-logger-output": null,
+        "health": {
+          "ports_to_check": []
+        },
+        "validator": null
+      }
+    }

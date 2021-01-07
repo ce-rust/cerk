@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: cerk-printer
-          image: cloudeventsrouter/cerk:common-0.0.9
+          image: cloudeventsrouter/cerk:common-0.0.14
           envFrom:
             - configMapRef:
                 name: cerk-printer-env-config
@@ -46,3 +46,4 @@ spec:
         - name: cerk-configs
           configMap:
               name: cerk-printer-configs
+      terminationGracePeriodSeconds: 3

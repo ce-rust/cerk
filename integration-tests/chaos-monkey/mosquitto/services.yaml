@@ -1,0 +1,17 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: mosquitto
+  labels:
+    app: mosquitto
+spec:
+  type: ClusterIP
+  ports:
+   - name: mqtt
+     protocol: TCP
+     port: 1883
+   - name: websocket
+     protocol: TCP
+     port: 9001
+  selector:
+    app: mosquitto
