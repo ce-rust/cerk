@@ -7,6 +7,9 @@ RUN mkdir -p /opt/ && \
     ls -al /opt/lib
 
 ADD . /app
+
+ENV MOSQUITTO_GIT_URL=https://github.com/ce-rust/mosquitto
+ENV MOSQUITTO_GIT_HASH=9f834dff9095e6731937d5eac767dbaca46491ac
 RUN cargo build --release --locked
 
 FROM gcr.io/distroless/base-debian10
