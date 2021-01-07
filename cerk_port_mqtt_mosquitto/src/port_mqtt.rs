@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use cerk::kernel::{
     BrokerEvent, CloudEventRoutingArgs, Config, ConfigHelpers, DeliveryGuarantee,
     IncomingCloudEvent, OutgoingCloudEvent, OutgoingCloudEventProcessed, ProcessingResult,
@@ -79,8 +79,9 @@ fn connect(
     thread::spawn(move || {
         let mut callbacks = connection.client.callbacks(Vec::<()>::new());
         callbacks.on_message(|_, msg| {
-            debug!("received cloud event (on_message)");
-            let cloudevent: Event = serde_json::from_str(msg.text()).unwrap();
+            let text = msg.text();
+            debug!("received cloud event (on_message), text={}", text);
+            let cloudevent: Event = serde_json::from_str(text).with_context(|| format!("{} failed to deserialize cloudevent {}", id, text)).unwrap();
             sender_to_kernel.send(BrokerEvent::IncomingCloudEvent(IncomingCloudEvent {
                 incoming_id: id.clone(),
                 routing_id: cloudevent.id().to_string(),
