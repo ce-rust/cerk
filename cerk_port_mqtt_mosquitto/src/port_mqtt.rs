@@ -24,7 +24,6 @@ struct Data {
 struct Connection {
     client: Mosquitto,
     send_topic: Option<String>,
-    send_qos: u8,
     subscribe_topic: Option<String>,
     subscribe_qos: u8,
 }
@@ -36,7 +35,6 @@ fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection>
     const RECONNECT_DELAY_MAX_SECONDS: u32 = 300;
     let host = config.get_op_val_string("host")?.unwrap();
     let send_topic = config.get_op_val_string("send_topic")?;
-    let send_qos = config.get_op_val_u8("send_qos")?.unwrap_or(0);
     let subscribe_topic = config.get_op_val_string("subscribe_topic")?;
     let subscribe_qos = config.get_op_val_u8("subscribe_qos")?.unwrap_or(0);
 
@@ -60,7 +58,6 @@ fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection>
     let connection = Connection {
         client,
         send_topic,
-        send_qos,
         subscribe_topic,
         subscribe_qos,
     };
@@ -157,7 +154,11 @@ fn send_cloud_event(
         let message_id = connection.client.publish(
             send_topic,
             serialized.as_bytes(),
-            connection.send_qos.into(),
+            if event.args.delivery_guarantee.requires_acknowledgment() {
+                1
+            } else {
+                0
+            },
             false,
         )?;
         data_lock
