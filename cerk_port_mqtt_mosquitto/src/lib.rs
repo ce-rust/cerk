@@ -59,17 +59,6 @@ The value has to by of type `Config::String` and contain the MQTT topic name whe
 
 E.g. `Config::String(String::from("inbox"))`
 
-### send_qos
-
-The value has to by of type `Config::U8` and contain the [quality of service](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718099) for message delivery.
-
-Currently, the following values are supported:
-
-* 0: At most once delivery (default)
-* 1: At least once delivery
-
-E.g. `Config::U8(1)`
-
 ### subscribe_topic
 
 The value has to by of type `Config::String` and contain the MQTT topic which the router should subscribe to.
@@ -116,7 +105,6 @@ use cerk::kernel::Config;
 let map: HashMap<String, Config> = [
     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
     ("send_topic".to_string(), Config::String("inbox".to_string())),
-    ("send_qos".to_string(), Config::U8(1)),
 ]
 .iter()
 .cloned()
@@ -152,7 +140,6 @@ use cerk::kernel::Config;
 let map: HashMap<String, Config> = [
     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
     ("send_topic".to_string(), Config::String("inbox".to_string())),
-    ("send_qos".to_string(), Config::U8(1)),
     ("subscribe_topic".to_string(), Config::String("outbox".to_string())),
     ("subscribe_qos".to_string(), Config::U8(1)),
 ]
