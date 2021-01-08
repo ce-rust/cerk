@@ -2,7 +2,7 @@ use crate::lapin_helper::{assert_exchange, assert_queue};
 use amq_protocol_types::LongString;
 use amq_protocol_types::ShortString;
 use amq_protocol_types::{AMQPValue, LongLongUInt, ShortUInt};
-use anyhow::{Context, Error, Result};
+use anyhow::{Context, Result};
 use async_std::future::timeout;
 use cerk::kernel::{
     BrokerEvent, CloudEventMessageRoutingId, CloudEventRoutingArgs, Config, ConfigHelpers,
