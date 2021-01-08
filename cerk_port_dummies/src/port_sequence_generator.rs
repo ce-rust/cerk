@@ -114,6 +114,7 @@ fn send_events(
             send_event_and_track(id, sender_to_kernel, i, &data)?;
         }
     }
+    wait_until_delivered(id, &data, 0)?;
     info!("{} finished generating events!", &id);
     Ok(())
 }
@@ -127,12 +128,7 @@ fn send_event_and_track(
     let unack_max_count = get_config!(data, unack_max_cound);
     let delivery_guarantee = get_config!(data, delivery_guarantee);
     let sleep_between_messages = get_config!(data, sleep_between_messages);
-    while delivery_guarantee.requires_acknowledgment()
-        && data.lock().unwrap().missing_deliveries.len() >= unack_max_count
-    {
-        warn!("{} received unack_max_count - wait with resending", id);
-        thread::sleep(Duration::from_millis(10));
-    }
+    wait_until_delivered(id, data, unack_max_count)?;
     data.lock()
         .as_mut()
         .unwrap()
@@ -140,6 +136,21 @@ fn send_event_and_track(
         .push(format!("{}", i));
     send_event(id, sender_to_kernel, i, delivery_guarantee);
     thread::sleep(sleep_between_messages.clone());
+    Ok(())
+}
+
+fn wait_until_delivered(
+    id: &String,
+    data: &Arc<Mutex<SequenceGeneratorData>>,
+    unack_max_count: usize,
+) -> Result<()> {
+    let delivery_guarantee = get_config!(data, delivery_guarantee);
+    while delivery_guarantee.requires_acknowledgment()
+        && data.lock().unwrap().missing_deliveries.len() >= unack_max_count
+    {
+        warn!("{} received unack_max_count - wait with resending", id);
+        thread::sleep(Duration::from_millis(10));
+    }
     Ok(())
 }
 
