@@ -1,6 +1,6 @@
 [package]
 name = "cerk_examples"
-version = "0.2.8"
+version = "0.2.9"
 authors = [
     "Linus Basig <linus@basig.me>",
     "Fabrizio Lazzaretti <fabrizio@lazzaretti.me>"
@@ -11,6 +11,7 @@ repository = "https://github.com/ce-rust/cerk"
 documentation = "https://github.com/ce-rust/cerk"
 homepage = "https://github.com/ce-rust/cerk"
 edition = "2018"
+publish = false
 
 [[bin]]
 name = "hello_world"

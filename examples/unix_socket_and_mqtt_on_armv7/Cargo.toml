@@ -12,6 +12,7 @@ documentation = "https://github.com/ce-rust/cerk"
 homepage = "https://github.com/ce-rust/cerk"
 keywords = ["cloudevents", "router"]
 edition = "2018"
+publish = false
 
 [dependencies]
 log = "0.4.0"
