@@ -2,7 +2,7 @@ use crate::lapin_helper::{assert_exchange, assert_queue};
 use amq_protocol_types::LongString;
 use amq_protocol_types::ShortString;
 use amq_protocol_types::{AMQPValue, LongLongUInt, ShortUInt};
-use anyhow::{Context, Result};
+use anyhow::{Context, Error, Result};
 use async_std::future::timeout;
 use cerk::kernel::{
     BrokerEvent, CloudEventMessageRoutingId, CloudEventRoutingArgs, Config, ConfigHelpers,
@@ -390,6 +390,15 @@ async fn setup_publish_channel(
     Ok(channel)
 }
 
+/// handle the consumption of a message from AMQP
+///
+/// # Return Value
+///
+/// returns a [`Result`]
+///
+/// * If the consumption was successful it the bool indicates if an ack should be sent or it should wait for it.
+/// * If it failed an error is provided.
+///
 fn receive_message(
     name: &String,
     channel: &Channel,
@@ -547,10 +556,10 @@ async fn ack_nack_pending_event(
         ProcessingResult::Successful => {
             ack_message(channel, pending_event.delivery_tag).await?;
         }
-        ProcessingResult::TransientError => {
+        ProcessingResult::TransientError | ProcessingResult::Timeout => {
             nack_message(channel, pending_event.delivery_tag, true).await?
         }
-        ProcessingResult::PermanentError | ProcessingResult::Timeout => {
+        ProcessingResult::PermanentError => {
             nack_message(channel, pending_event.delivery_tag, false).await?
         }
     };
