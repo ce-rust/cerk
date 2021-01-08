@@ -124,13 +124,13 @@ fn send_event_and_track(
     i: u32,
     data: &ArcSequenceGenData,
 ) -> Result<()> {
-    let unack_max_cound = get_config!(data, unack_max_cound);
+    let unack_max_count = get_config!(data, unack_max_cound);
     let delivery_guarantee = get_config!(data, delivery_guarantee);
     let sleep_between_messages = get_config!(data, sleep_between_messages);
     while delivery_guarantee.requires_acknowledgment()
-        && data.lock().unwrap().missing_deliveries.len() >= unack_max_cound
+        && data.lock().unwrap().missing_deliveries.len() >= unack_max_count
     {
-        warn!("{} received unack_max_cound - wait with resending", id);
+        warn!("{} received unack_max_count - wait with resending", id);
         thread::sleep(Duration::from_millis(10));
     }
     data.lock()
@@ -202,8 +202,8 @@ pub fn port_sequence_generator_start(
             BrokerEvent::ConfigUpdated(config, _) => {
                 data.lock().as_mut().unwrap().config = Some(match build_config(&id, &config) {
                     Err(e) => {
-                        error!(
-                            "failed to read config -> will fallback to default; error: {:?}",
+                        info!(
+                            "was not able to read config -> will fallback to default; read error: {:?}",
                             e
                         );
                         SequenceGeneratorConfig::default()
@@ -221,7 +221,7 @@ pub fn port_sequence_generator_start(
                 });
             }
             BrokerEvent::IncomingCloudEventProcessed(routing_id, result) => {
-                if let Err(e) = process_incomming_event_result(
+                if let Err(e) = process_incoming_event_result(
                     &id,
                     &sender_to_kernel,
                     data.clone(),
@@ -236,7 +236,7 @@ pub fn port_sequence_generator_start(
     }
 }
 
-fn process_incomming_event_result(
+fn process_incoming_event_result(
     id: &String,
     sender_to_kernel: &BoxedSender,
     data: Arc<Mutex<SequenceGeneratorData>>,

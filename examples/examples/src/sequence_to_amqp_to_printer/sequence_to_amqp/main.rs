@@ -51,7 +51,12 @@ fn static_config_loader_start(
                     String::from("router"),
                 ));
                 sender_to_kernel.send(BrokerEvent::ConfigUpdated(
-                    Config::Null,
+                    Config::HashMap(
+                        [("delivery_guarantee".to_string(), Config::U8(2))]
+                            .iter()
+                            .cloned()
+                            .collect(),
+                    ),
                     String::from(DUMMY_SEQUENCE_GENERATOR),
                 ));
                 sender_to_kernel.send(BrokerEvent::ConfigUpdated(
