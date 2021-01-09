@@ -180,7 +180,7 @@ dependencies = [
  "memchr",
  "num_cpus",
  "once_cell",
- "pin-project-lite 0.2.2",
+ "pin-project-lite 0.2.3",
  "pin-utils",
  "slab",
  "wasm-bindgen-futures",
@@ -328,9 +328,9 @@ checksum = "4c0496836a84f8d0495758516b8621a622beb77c0fed418570e50764093ced48"
 
 [[package]]
 name = "cerk"
-version = "0.2.8"
+version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5aaa31fbafef06c6f58d36df10d99ded65765aa35b29a256e0bd384c2222b502"
+checksum = "cea3b9f66f12e1271d7fea8d7782e432280162522d45295adb6453b8163dcad3"
 dependencies = [
  "anyhow",
  "cloudevents-sdk",
@@ -391,9 +391,9 @@ dependencies = [
 
 [[package]]
 name = "cerk_port_amqp"
-version = "0.2.9"
+version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2362a1b05ce548efca7ef2012986ef3f9a7b8eac5a3e77d9a94380ac9118f64f"
+checksum = "7ba42058d31f497974de71128104ebaf33846f3e7a63fe4a4069b508ced89a6c"
 dependencies = [
  "amq-protocol",
  "amq-protocol-types",
@@ -411,9 +411,9 @@ dependencies = [
 
 [[package]]
 name = "cerk_port_dummies"
-version = "0.2.9"
+version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b54d051ef4d8f6f722e5dde2b3331332964eb9e28cb7412b2cfe472ac322381"
+checksum = "99b9fccd326eae1de171457d229e7303b4351982a02d584904a18fca000bff84"
 dependencies = [
  "anyhow",
  "cerk",
@@ -427,9 +427,9 @@ dependencies = [
 
 [[package]]
 name = "cerk_port_health_check_http"
-version = "0.2.8"
+version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e6474652ef1f83742d87b69061810a4bde7fc17d9166514ac8757af8247ebe69"
+checksum = "eea57e3c0f1a3a6a3cb846521656e881161565a28af78ce89b2082739f4ff573"
 dependencies = [
  "anyhow",
  "async-global-executor",
@@ -446,9 +446,9 @@ dependencies = [
 
 [[package]]
 name = "cerk_port_mqtt"
-version = "0.2.8"
+version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7155982e8272869df81d975da0290ee23fd7a8195518028aaa06d41e1665692b"
+checksum = "ea4ae702a0c703a7d35e5396d8bd3ffbe7847f1f0544ea1c20a72cf8af51f6b8"
 dependencies = [
  "cerk",
  "cloudevents-sdk",
@@ -460,9 +460,9 @@ dependencies = [
 
 [[package]]
 name = "cerk_port_mqtt_mosquitto"
-version = "0.2.9"
+version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4d48d674c12732ec313038b920a19be6211f18b153bdfc1ada9ddc172b518eb"
+checksum = "b1aea9b985d8cc26132b29cc04d004b84b04310632df86bcb3586c722c97ae28"
 dependencies = [
  "anyhow",
  "cerk",
@@ -476,9 +476,9 @@ dependencies = [
 
 [[package]]
 name = "cerk_port_unix_socket"
-version = "0.2.8"
+version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b1c47e864d1a9955c2efa4e316240050ebd0e77a72508645b3ce31b04ffe2f0"
+checksum = "d265bfa0fbf93fca0d0b565fb3cf01f58c88707ef401ec2762195da75125f739"
 dependencies = [
  "anyhow",
  "cerk",
@@ -517,9 +517,9 @@ dependencies = [
 
 [[package]]
 name = "cerk_runtime_threading"
-version = "0.2.8"
+version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "29baea0d5f45376eeecf2530f41edd7f6058e7b721ac9fa813327a1fa2c3f415"
+checksum = "81ac2c4ebf6eb49f22e9bf065fa61bab25e876ec52991785cd944f683fe12a6c"
 dependencies = [
  "cerk",
  "log",
@@ -841,7 +841,7 @@ dependencies = [
  "futures-io",
  "memchr",
  "parking",
- "pin-project-lite 0.2.2",
+ "pin-project-lite 0.2.3",
  "waker-fn",
 ]
 
@@ -874,7 +874,7 @@ checksum = "036a2107cdeb57f6d7322f1b6c363dad67cd63ca3b7d1b925bdf75bd5d96cda9"
 dependencies = [
  "futures-core",
  "futures-task",
- "pin-project-lite 0.2.2",
+ "pin-project-lite 0.2.3",
  "pin-utils",
 ]
 
@@ -1044,7 +1044,7 @@ dependencies = [
  "httparse",
  "httpdate",
  "itoa",
- "pin-project 1.0.3",
+ "pin-project 1.0.4",
  "socket2",
  "tokio",
  "tower-service",
@@ -1497,11 +1497,11 @@ dependencies = [
 
 [[package]]
 name = "pin-project"
-version = "1.0.3"
+version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a83804639aad6ba65345661744708855f9fbcb71176ea8d28d05aeb11d975e7"
+checksum = "95b70b68509f17aa2857863b6fa00bf21fc93674c7a8893de2f469f6aa7ca2f2"
 dependencies = [
- "pin-project-internal 1.0.3",
+ "pin-project-internal 1.0.4",
 ]
 
 [[package]]
@@ -1517,9 +1517,9 @@ dependencies = [
 
 [[package]]
 name = "pin-project-internal"
-version = "1.0.3"
+version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7bcc46b8f73443d15bc1c5fecbb315718491fa9187fa483f0e359323cde8b3a"
+checksum = "caa25a6393f22ce819b0f50e0be89287292fda8d425be38ee0ca14c4931d9e71"
 dependencies = [
  "proc-macro2 1.0.24",
  "quote 1.0.8",
@@ -1534,9 +1534,9 @@ checksum = "c917123afa01924fc84bb20c4c03f004d9c38e5127e3c039bbf7f4b9c76a2f6b"
 
 [[package]]
 name = "pin-project-lite"
-version = "0.2.2"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6196deb704a4cebec440b7a50d05d55410be7c923caf0447f9d052508b8dca3c"
+checksum = "ba36e0a6cc5a4c645073f4984f1ed55d09f5857d4de7c14550baa81a39ef5a17"
 
 [[package]]
 name = "pin-utils"
@@ -2000,7 +2000,7 @@ checksum = "9f47026cdc4080c07e49b37087de021820269d996f581aac150ef9e5583eefe3"
 dependencies = [
  "cfg-if 1.0.0",
  "log",
- "pin-project-lite 0.2.2",
+ "pin-project-lite 0.2.3",
  "tracing-core",
 ]
 
