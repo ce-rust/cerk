@@ -19,7 +19,6 @@ use lapin::{
     options::*, publisher_confirm::Confirmation, types::FieldTable, BasicProperties, Channel,
     Connection, ConnectionProperties, ExchangeKind,
 };
-use std::borrow::BorrowMut;
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::{Arc, Mutex};
@@ -659,9 +658,10 @@ pub fn port_amqp_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
                 }
             }
             BrokerEvent::IncomingCloudEventProcessed(event_id, result) => {
+                let mut pending_deliveries = arc_pending_deliveries.lock().unwrap();
                 let result = future::block_on(ack_nack_pending_event(
                     &configuration_option,
-                    arc_pending_deliveries.lock().unwrap().borrow_mut(),
+                    &mut pending_deliveries,
                     &event_id,
                     result,
                 ));
@@ -669,6 +669,7 @@ pub fn port_amqp_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
                     Ok(()) => debug!("IncomingCloudEventProcessed was ack/nack successful"),
                     Err(err) => warn!("IncomingCloudEventProcessed was not ack/nack {:?}", err),
                 };
+                pending_deliveries.remove_entry(&event_id);
             }
             BrokerEvent::HealthCheckRequest(event) => {
                 check_health(event, &sender_to_kernel, &connection_option)
