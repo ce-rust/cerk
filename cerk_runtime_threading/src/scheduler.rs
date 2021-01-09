@@ -1,8 +1,10 @@
-use super::channel::new_channel;
+use super::channel::{new_channel_kernel_to_component, new_channel_with_size};
 use cerk::kernel::{BrokerEvent, KernelFn, StartOptions};
 use cerk::runtime::channel::BoxedSender;
 use cerk::runtime::{InternalServerFnRefStatic, InternalServerId, ScheduleFn, ScheduleFnRefStatic};
 use std::thread;
+
+const CHANNEL_TO_KERNEL_SIZE: usize = 50;
 
 fn schedule(
     id: InternalServerId,
@@ -10,7 +12,7 @@ fn schedule(
     sender_to_kernel: &BoxedSender,
 ) {
     debug!("schedule {} thread", id);
-    let (sender_to_server, receiver_from_kernel) = new_channel();
+    let (sender_to_server, receiver_from_kernel) = new_channel_kernel_to_component();
     let server_sender_to_kernel = sender_to_kernel.clone_boxed();
     let new_server_id = id.clone();
     thread::spawn(move || {
@@ -28,8 +30,8 @@ fn schedule(
 pub fn threading_scheduler_start(start_options: StartOptions, start_kernel: KernelFn) {
     info!("start threading scheduler");
 
-    let (sender_to_scheduler, receiver_from_kernel) = new_channel();
-    let (sender_to_kernel, receiver_from_scheduler) = new_channel();
+    let (sender_to_scheduler, receiver_from_kernel) = new_channel_kernel_to_component();
+    let (sender_to_kernel, receiver_from_scheduler) = new_channel_with_size(CHANNEL_TO_KERNEL_SIZE);
 
     thread::spawn(move || {
         start_kernel(start_options, receiver_from_scheduler, sender_to_scheduler);

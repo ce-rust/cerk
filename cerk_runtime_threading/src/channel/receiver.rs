@@ -11,7 +11,7 @@ pub struct ThreadingReceiver {
 impl ThreadingReceiver {
     #[allow(missing_docs)]
     pub fn new(receiver: Receiver<BrokerEvent>) -> Self {
-        ThreadingReceiver { receiver: receiver }
+        ThreadingReceiver { receiver }
     }
 }
 

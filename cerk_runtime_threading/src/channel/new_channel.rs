@@ -1,10 +1,10 @@
 use super::{ThreadingReceiver, ThreadingSender};
+use crate::channel::sender::ThreadingKernelSender;
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
-use std::sync::mpsc::sync_channel;
+use std::sync::mpsc::{channel, sync_channel};
 
 /// Create a new channel with a `ThreadingSender` and a `ThreadingReceiver`.
-/// The implementation is based on `std::sync::mpsc` channel model.
-/// The channel has an internal buffer of 50 messages on which messages will be queued.
+/// The implementation is based on `std::sync::mpsc` sync_channel model.
 ///
 /// # Arguments
 ///
@@ -18,7 +18,15 @@ pub fn new_channel_with_size(bound: usize) -> (BoxedSender, BoxedReceiver) {
     );
 }
 
-/// crate a new channel; same as `new_channel_with_size` but with a predefined buffer size of 50.
-pub fn new_channel() -> (BoxedSender, BoxedReceiver) {
-    new_channel_with_size(50) // todo set with configs
+/// Create a new channel with a `ThreadingSender` and a `ThreadingReceiver`.
+/// The implementation is based on `std::sync::mpsc` channel model.
+///
+/// This channel has an "infinite buffer" and should only be used to send message from the kernel to other components, so that the kernel is never blocked.
+///
+pub fn new_channel_kernel_to_component() -> (BoxedSender, BoxedReceiver) {
+    let (tx, rx) = channel();
+    return (
+        Box::new(ThreadingKernelSender::new(tx)),
+        Box::new(ThreadingReceiver::new(rx)),
+    );
 }
