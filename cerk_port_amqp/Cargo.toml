@@ -1,6 +1,6 @@
 [package]
 name = "cerk_port_amqp"
-version = "0.2.9"
+version = "0.2.10"
 authors = [
     "Linus Basig <linus@basig.me>",
     "Fabrizio Lazzaretti <fabrizio@lazzaretti.me>"
