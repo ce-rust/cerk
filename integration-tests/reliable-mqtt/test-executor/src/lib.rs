@@ -188,13 +188,13 @@ mod test {
                 .data("binary", Data::Binary(data))
                 .build()?;
             let serialized = serde_json::to_string(&event).unwrap();
-            let mesage = mqtt::MessageBuilder::new()
+            let message = mqtt::MessageBuilder::new()
                 .topic("inbox")
                 .payload(serialized)
                 .qos(mqtt::QOS_1)
                 .finalize();
             if inbox_client.is_connected() {
-                inbox_client.publish(mesage).await?;
+                inbox_client.publish(message).await?;
             } else {
                 bail!("connection error")
             }

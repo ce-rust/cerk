@@ -35,7 +35,7 @@ In the logs you can see how the events are generated at the source and printed a
 [2020-12-05T08:10:28Z INFO  cerk_port_dummies::port_sequence_generator] dummy-sequence-generator start generating events
 [2020-12-05T08:10:28Z DEBUG cerk_port_dummies::port_sequence_generator] send dummy event with sequence number 1 to kernel
 [2020-12-05T08:10:28Z DEBUG cerk::kernel::kernel_start] received RoutingResult for event_id=1
-[2020-12-05T08:10:28Z DEBUG cerk::kernel::kernel_start] all routings sent for event_id=1
+[2020-12-05T08:10:28Z DEBUG cerk::kernel::kernel_start] all routing sent for event_id=1
 [2020-12-05T08:10:28Z DEBUG cerk_port_dummies::port_sequence_validator] event 1 was received
 [2020-12-05T08:10:28Z DEBUG cerk_port_dummies::port_sequence_validator] event 1 delay from generation to validator 0ms
 [2020-12-05T08:10:28Z INFO  cerk_port_dummies::port_sequence_validator] missing events: 49
@@ -43,7 +43,7 @@ In the logs you can see how the events are generated at the source and printed a
 [2020-12-05T08:10:28Z DEBUG cerk::kernel::kernel_start] delivery for event_id=1 was successful (all out port processing were successful) -> ack to sender
 [2020-12-05T08:10:29Z DEBUG cerk_port_dummies::port_sequence_generator] send dummy event with sequence number 2 to kernel
 [2020-12-05T08:10:29Z DEBUG cerk::kernel::kernel_start] received RoutingResult for event_id=2
-[2020-12-05T08:10:29Z DEBUG cerk::kernel::kernel_start] all routings sent for event_id=2
+[2020-12-05T08:10:29Z DEBUG cerk::kernel::kernel_start] all routing sent for event_id=2
 [2020-12-05T08:10:29Z DEBUG cerk_port_dummies::port_sequence_validator] event 2 was received
 [2020-12-05T08:10:29Z DEBUG cerk_port_dummies::port_sequence_validator] event 2 delay from generation to validator 0ms
 ```

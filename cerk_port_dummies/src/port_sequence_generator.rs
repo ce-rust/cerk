@@ -33,7 +33,7 @@ struct SequenceGeneratorConfig {
     sleep_between_messages: Duration,
     amount: Option<u32>,
     delivery_guarantee: DeliveryGuarantee,
-    unack_max_cound: usize,
+    unack_max_count: usize,
 }
 
 impl Default for SequenceGeneratorConfig {
@@ -42,7 +42,7 @@ impl Default for SequenceGeneratorConfig {
             sleep_between_messages: Duration::from_secs(1),
             amount: None,
             delivery_guarantee: DeliveryGuarantee::BestEffort,
-            unack_max_cound: DEFAULT_UNACK_MAX_COUNT,
+            unack_max_count: DEFAULT_UNACK_MAX_COUNT,
         }
     }
 }
@@ -87,7 +87,7 @@ fn build_config(_id: &InternalServerId, config: &Config) -> Result<SequenceGener
         sleep_between_messages: get_sleep_between_messages()?,
         amount: get_amount()?,
         delivery_guarantee: get_delivery_guarantee(config)?,
-        unack_max_cound: DEFAULT_UNACK_MAX_COUNT,
+        unack_max_count: DEFAULT_UNACK_MAX_COUNT,
     })
 }
 
@@ -125,7 +125,7 @@ fn send_event_and_track(
     i: u32,
     data: &ArcSequenceGenData,
 ) -> Result<()> {
-    let unack_max_count = get_config!(data, unack_max_cound);
+    let unack_max_count = get_config!(data, unack_max_count);
     let delivery_guarantee = get_config!(data, delivery_guarantee);
     let sleep_between_messages = get_config!(data, sleep_between_messages);
     wait_until_delivered(id, data, unack_max_count)?;
