@@ -145,6 +145,7 @@ pre-requirement: `cargo install cargo-workspaces`
 
 1. check out master and create a new branch `release`
 2. `cargo workspaces publish --allow-branch="release" --no-git-push`
+   sometimes the publish command hangs ... if so, you could repeat the cargo publish with the script `./publish-packages.sh`
 3. update the dependencies of the docker container `(cd docker/cerk-common; cargo update)`
 4. merge it back into the master with a pull request
 

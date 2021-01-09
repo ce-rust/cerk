@@ -1,12 +1,24 @@
 {
   "routing_rules": [
-    "dummy-logger-output"
+    "dummy-logger-output",
+    "validator"
   ],
   "ports": {
-    "sequence-generator-input": null,
+    "ampq": {
+      "uri": "amqp://127.0.0.1:5672/%2f",
+      "consume_channels": [
+        {
+          "name": "output",
+          "ensure_queue": true,
+          "bind_to_exchange": "output",
+          "delivery_guarantee": 2
+        }
+      ]
+    },
     "dummy-logger-output": null,
     "health": {
-      "ports_to_check": []
-    }
+      "ports_to_check": ["ampq"]
+    },
+    "validator": null
   }
 }

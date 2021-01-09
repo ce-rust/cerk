@@ -328,9 +328,9 @@ checksum = "4c0496836a84f8d0495758516b8621a622beb77c0fed418570e50764093ced48"
 
 [[package]]
 name = "cerk"
-version = "0.2.10"
+version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cea3b9f66f12e1271d7fea8d7782e432280162522d45295adb6453b8163dcad3"
+checksum = "a0001e83d3af741a81f186af79cad5945491379ed89bdc40ead49320e5c8b37c"
 dependencies = [
  "anyhow",
  "cloudevents-sdk",
@@ -391,9 +391,9 @@ dependencies = [
 
 [[package]]
 name = "cerk_port_amqp"
-version = "0.2.10"
+version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ba42058d31f497974de71128104ebaf33846f3e7a63fe4a4069b508ced89a6c"
+checksum = "7fbb4660ffb58623a435083c52ed46da532416cf03b570423394cad510fc3ab2"
 dependencies = [
  "amq-protocol",
  "amq-protocol-types",
@@ -411,9 +411,9 @@ dependencies = [
 
 [[package]]
 name = "cerk_port_dummies"
-version = "0.2.10"
+version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "99b9fccd326eae1de171457d229e7303b4351982a02d584904a18fca000bff84"
+checksum = "baa3e675e86e5fc416218ff6950887dd7942fa709e3084662efa7b7228d9d781"
 dependencies = [
  "anyhow",
  "cerk",
@@ -427,9 +427,9 @@ dependencies = [
 
 [[package]]
 name = "cerk_port_health_check_http"
-version = "0.2.10"
+version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eea57e3c0f1a3a6a3cb846521656e881161565a28af78ce89b2082739f4ff573"
+checksum = "a2164af3e8bb669fa8fd9e9505864ba251caf2f03343cce84a66b2d94f40dd2c"
 dependencies = [
  "anyhow",
  "async-global-executor",
@@ -446,9 +446,9 @@ dependencies = [
 
 [[package]]
 name = "cerk_port_mqtt"
-version = "0.2.10"
+version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea4ae702a0c703a7d35e5396d8bd3ffbe7847f1f0544ea1c20a72cf8af51f6b8"
+checksum = "552598b192d655ecb87fd1f3bc761085c64df494d1b9b3665f5956fd27c2475e"
 dependencies = [
  "cerk",
  "cloudevents-sdk",
@@ -460,9 +460,9 @@ dependencies = [
 
 [[package]]
 name = "cerk_port_mqtt_mosquitto"
-version = "0.2.10"
+version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1aea9b985d8cc26132b29cc04d004b84b04310632df86bcb3586c722c97ae28"
+checksum = "3db25b483c57b92e0608bc2a0651db0b3cd39163adfcc17b2d86435997a567a0"
 dependencies = [
  "anyhow",
  "cerk",
@@ -476,9 +476,9 @@ dependencies = [
 
 [[package]]
 name = "cerk_port_unix_socket"
-version = "0.2.10"
+version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d265bfa0fbf93fca0d0b565fb3cf01f58c88707ef401ec2762195da75125f739"
+checksum = "13bf6c08d25399d000cd3e163d04187ea665a8b903a5c8f2b5b7ccc04c7e49fd"
 dependencies = [
  "anyhow",
  "cerk",
@@ -502,9 +502,9 @@ dependencies = [
 
 [[package]]
 name = "cerk_router_rule_based"
-version = "0.2.8"
+version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3eb7e3d877ba47c088c7c968d880b566961f538f5ef2a93a3af229ce0851361c"
+checksum = "313d4a25587f6585b33fdef9c273dc17d9d4ef051866272836e9ef8b1781eb85"
 dependencies = [
  "anyhow",
  "cerk",
@@ -517,9 +517,9 @@ dependencies = [
 
 [[package]]
 name = "cerk_runtime_threading"
-version = "0.2.10"
+version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81ac2c4ebf6eb49f22e9bf065fa61bab25e876ec52991785cd944f683fe12a6c"
+checksum = "958c32c74e90786c56693da6eab023fe12a7c60fbfc656e05cc904e27ac2ac9c"
 dependencies = [
  "cerk",
  "log",

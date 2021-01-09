@@ -3,8 +3,9 @@
   "router": "ROUTER_BROADCAST",
   "config_loader": "CONFIG_LOADER_FILE",
   "ports": {
-    "sequence-generator-input": "PORT_SEQUENCE_GENERATOR",
+    "ampq": "PORT_AMQP",
     "dummy-logger-output": "PORT_PRINTER",
-    "health": "PORT_HEALTH_CHECK_HTTP"
+    "health": "PORT_HEALTH_CHECK_HTTP",
+    "validator": "PORT_SEQUENCE_VALIDATOR"
   }
 }
