@@ -24,7 +24,7 @@ fn build_configs(id: &InternalServerId, config: Config) -> (CreateOptions, MqttO
                 info!("new config");
                 mqtt_config = mqtt_config.server_uri(host);
             } else {
-                panic!("{} received invalide config, no host as String", id);
+                panic!("{} received invalid config, no host as String", id);
             }
 
             let send_topic = if let Some(Config::String(topic)) = config_map.get("send_topic") {
@@ -46,7 +46,7 @@ fn build_configs(id: &InternalServerId, config: Config) -> (CreateOptions, MqttO
                         if let Config::String(item) = item {
                             item.clone()
                         }else{
-                            panic!("{} received invalide config, subscribe_topics is not Config::Vec of Strings", id);
+                            panic!("{} received invalid config, subscribe_topics is not Config::Vec of Strings", id);
                         }
                     }).collect()
             } else {
@@ -58,7 +58,7 @@ fn build_configs(id: &InternalServerId, config: Config) -> (CreateOptions, MqttO
                     if let Config::U8(item) = item {
                         *item
                     }else{
-                        panic!("{} received invalide config, subscribe_qos is not Config::Vec of U8s", id);
+                        panic!("{} received invalid config, subscribe_qos is not Config::Vec of U8s", id);
                     }
                 }).collect()
             } else {
@@ -66,14 +66,14 @@ fn build_configs(id: &InternalServerId, config: Config) -> (CreateOptions, MqttO
             };
 
             if subscribe_topics.len() != subscribe_qos.len() {
-                panic!("{} received invalide config: subscribe_topics and subscribe_qos needs to have the same size", id);
+                panic!("{} received invalid config: subscribe_topics and subscribe_qos needs to have the same size", id);
             }
 
             if let Some(Config::U8(persistence)) = config_map.get("persistence") {
                 match persistence {
                     0 => mqtt_config = mqtt_config.persistence(PersistenceType::File),
                     1 => mqtt_config = mqtt_config.persistence(PersistenceType::None),
-                    _ => panic!("{} received invalide config: persistence", id),
+                    _ => panic!("{} received invalid config: persistence", id),
                 }
             } else {
                 mqtt_config = mqtt_config.persistence(PersistenceType::None);
@@ -88,7 +88,7 @@ fn build_configs(id: &InternalServerId, config: Config) -> (CreateOptions, MqttO
                 },
             )
         }
-        _ => panic!("{} received invalide config", id),
+        _ => panic!("{} received invalid config", id),
     }
 }
 
