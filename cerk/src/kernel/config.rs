@@ -152,13 +152,13 @@ mod tests {
                 .collect(),
         );
         assert_eq!(conf.get_op_val_string("test")?, Some("val".to_string()));
-        assert_eq!(conf.get_op_val_string("nonexsiting")?, None);
+        assert_eq!(conf.get_op_val_string("nonexisting")?, None);
         Ok(())
     }
 
     #[test]
     fn get_string_fail() {
-        assert!(Config::U8(1).get_op_val_string("nonexsiting").is_err());
+        assert!(Config::U8(1).get_op_val_string("nonexisting").is_err());
         let config = Config::HashMap(
             [("test".to_string(), Config::U8(1))]
                 .iter()
@@ -177,7 +177,7 @@ mod tests {
                 .collect(),
         );
         assert_eq!(conf.get_op_val_u32("test")?, Some(3));
-        assert_eq!(conf.get_op_val_u32("nonexsiting")?, None);
+        assert_eq!(conf.get_op_val_u32("nonexisting")?, None);
         Ok(())
     }
 }

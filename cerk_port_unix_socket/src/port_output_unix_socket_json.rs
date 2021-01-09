@@ -62,7 +62,7 @@ fn update_config(id: &String, config: &Config) -> Result<UnixListener> {
     info!("{} received ConfigUpdated", id);
     match config {
         Config::String(socket_path) => Ok(UnixListener::bind(socket_path)?),
-        _ => bail!("{} received invalide config", id),
+        _ => bail!("{} received invalid config", id),
     }
 }
 

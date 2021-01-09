@@ -64,7 +64,7 @@ The Router is responsible for deciding to which port a received CloudEvent shoul
 
 | Name                                                     | Description                        |
 |----------------------------------------------------------|------------------------------------|
-| [cerk_router_broadcast](./cerk_router_broadcast/)        | The broadcast router forwards all incomming CloudEvents to the configured ports. |
+| [cerk_router_broadcast](./cerk_router_broadcast/)        | The broadcast router forwards all incoming CloudEvents to the configured ports. |
 | [cerk_router_rule_based](./cerk_router_rule_based/)      | The rule-based router routes events based on the given configuration. The configurations are structured in a tree format. One configuration tree per output port needs to be configured. The operations  `And`, `Or`, `Contains`, `StartsWith` and more are supported. |
 
 ### ConfigLoaders
@@ -91,7 +91,7 @@ Check out the README in the folder of each example for more details and setup in
 | Name                                                             | Description                        |
 |------------------------------------------------------------------|------------------------------------|
 | [Hello World](./examples/examples/src/hello_world/)                       | Routing CloudEvents that are generated from an input port to an output port, the output port print the result to the console. |
-| [Rule Based Routing Example](./examples/examples/src/rule_based_routing/) | CloudEvents that are generated from an input port are routed to an output port, but in this example only every tenth event gets routed to the output port because they are filterd by `id`. The `id` has to end with `0`, thus only 10,20,30,... are printed. |
+| [Rule Based Routing Example](./examples/examples/src/rule_based_routing/) | CloudEvents that are generated from an input port are routed to an output port, but in this example only every tenth event gets routed to the output port because they are filtered by `id`. The `id` has to end with `0`, thus only 10,20,30,... are printed. |
 | [UNIX Socket](./examples/examples/src/unix_socket/)                       | Routes CloudEvents from an input UNIX Socket port to an output UNIX Socket port |
 | [MQTT](./examples/examples/src/mqtt/)                                     | Routes CloudEvents that are generated from an input port to an output port, the output port publishes the events on an MQTT topic. A second router subscribes to the same topic with an MQTT port and routes them to a port which prints the event to stdout. |
 | [AMQP to Printer](./examples/examples/src/amqp_to_printer/)               | Routes CloudEvents from a RabbitMQ exchange to a queue to CERK and finally prints them to the console. |
