@@ -7,7 +7,7 @@ use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
 use cloudevents::{AttributesReader, Event};
 use serde_json;
-use serde_json::error::Error as SerdeErrorr;
+use serde_json::error::Error as SerdeError;
 
 fn compare_field<F>(field: &CloudEventFields, cloud_event: &Event, compare: F) -> bool
 where
@@ -77,7 +77,7 @@ fn route_event(
     Ok(())
 }
 
-fn parse_config(config_update: String) -> Result<RoutingTable, SerdeErrorr> {
+fn parse_config(config_update: String) -> Result<RoutingTable, SerdeError> {
     serde_json::from_str::<RoutingTable>(&config_update)
 }
 

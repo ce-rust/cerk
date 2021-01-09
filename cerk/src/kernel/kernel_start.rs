@@ -114,7 +114,7 @@ fn process_routing_result(
                         .unwrap()
                         .send(BrokerEvent::OutgoingCloudEvent(subevent));
                 }
-                debug!("all routings sent for event_id={}", routing_id);
+                debug!("all routing sent for event_id={}", routing_id);
             }
         }
         s @ ProcessingResult::PermanentError
@@ -209,15 +209,15 @@ fn process_broker_event(
         BrokerEvent::OutgoingCloudEventProcessed(event) => {
             process_outgoing_cloud_event_processed(event, outboxes, pending_deliveries)
         }
-        BrokerEvent::ConfigUpdated(config, destionation_server_id) => {
+        BrokerEvent::ConfigUpdated(config, destination_server_id) => {
             debug!(
                 "received ConfigUpdated, forward to {}",
-                destionation_server_id
+                destination_server_id
             );
             outboxes
-                .get(&destionation_server_id)
+                .get(&destination_server_id)
                 .unwrap()
-                .send(BrokerEvent::ConfigUpdated(config, destionation_server_id));
+                .send(BrokerEvent::ConfigUpdated(config, destination_server_id));
         }
         BrokerEvent::Batch(broker_events) => {
             for broker_event in broker_events.into_iter() {

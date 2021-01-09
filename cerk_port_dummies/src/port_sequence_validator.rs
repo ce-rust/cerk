@@ -89,10 +89,14 @@ pub fn port_sequence_validator_start(
             BrokerEvent::Init => (),
             BrokerEvent::ConfigUpdated(_, _) => {
                 info!("{} received ConfigUpdated", &id);
-                if let Ok(new_data) = configure(data) {
-                    data = Some(new_data);
-                } else {
-                    data = None;
+                match configure(data) {
+                    Ok(new_data) => {
+                        data = Some(new_data);
+                    }
+                    Err(e) => {
+                        data = None;
+                        error!("{} failed to load config {:?}", &id, e)
+                    }
                 }
             }
             BrokerEvent::OutgoingCloudEvent(event) => {

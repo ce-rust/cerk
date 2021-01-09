@@ -93,7 +93,7 @@ fn connect(
             if sub_delivery_guarantee.requires_acknowledgment() {
                 debug!("ack required - block on_message");
                 let result = receiver.recv().unwrap();
-                debug!("received result for incomming cloud even: {}", result);
+                debug!("received result for incoming cloud even: {}", result);
                 match result {
                     ProcessingResult::Successful => debug!("exiting on_message handler now"),
                     _ => panic!("message could not be forwarded, must prevent on_message from exiting (otherwise PUBACK would be sent)"),
