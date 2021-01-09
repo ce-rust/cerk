@@ -11,7 +11,7 @@ pub enum CloudEventFields {
     Type,
     Source,
     Subject,
-    // schemaurl in v0.3
+    /// schemaurl in v0.3
     Dataschema,
 }
 
@@ -20,10 +20,10 @@ pub enum CloudEventFields {
 /// They decide if an event get forwarded to a specified port.
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum RoutingRules {
-    /// Routes the event to the destionation if all rules match
+    /// Routes the event to the destination if all rules match
     And(Vec<RoutingRules>),
 
-    /// Routes the event to the destionation if any rule matches
+    /// Routes the event to the destination if any rule matches
     Or(Vec<RoutingRules>),
 
     /// Pattern matching on field

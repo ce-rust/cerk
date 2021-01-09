@@ -33,7 +33,7 @@ struct HealthCheckConfig {
 
 struct HealthCheckData {
     config: Option<HealthCheckConfig>,
-    shotdown: Option<Sender<()>>,
+    shutdown: Option<Sender<()>>,
     tokio: Handle,
     sender_to_kernel: BoxedSender,
     id: InternalServerId,
@@ -86,7 +86,7 @@ fn update(config: Config, data: ArcHealthCheckData) -> Result<()> {
 
 fn start_server(data: ArcHealthCheckData) -> Result<()> {
     if let Ok(mut data_config) = data.clone().lock() {
-        if let Some(tx) = data_config.borrow_mut().shotdown.take() {
+        if let Some(tx) = data_config.borrow_mut().shutdown.take() {
             let r = tx.send(());
             if let Err(e) = r {
                 error!("failed to shutdown: {:?}", e);
@@ -97,7 +97,7 @@ fn start_server(data: ArcHealthCheckData) -> Result<()> {
     }
 
     let (tx, rx) = tokio::sync::oneshot::channel::<()>();
-    data.lock().unwrap().borrow_mut().shotdown = Some(tx);
+    data.lock().unwrap().borrow_mut().shutdown = Some(tx);
 
     let tokio = data.clone().lock().unwrap().tokio.clone();
 
@@ -254,7 +254,7 @@ pub fn port_health_check_http(
     let data = HealthCheckData {
         tokio: tokio.handle().clone(),
         config: None,
-        shotdown: None,
+        shutdown: None,
         sender_to_kernel,
         id,
         pending_requests: HashMap::new(),
@@ -314,7 +314,7 @@ mod tests {
             .build()
             .unwrap();
         let mut config = HealthCheckData {
-            shotdown: None,
+            shutdown: None,
             config: None,
             tokio: tokio.handle().clone(),
             sender_to_kernel: send,
@@ -343,8 +343,8 @@ mod tests {
             }
         });
 
-        assert!(data.lock().unwrap().shotdown.is_some());
-        let e = data.lock().unwrap().shotdown.take().unwrap().send(());
+        assert!(data.lock().unwrap().shutdown.is_some());
+        let e = data.lock().unwrap().shutdown.take().unwrap().send(());
         assert!(e.is_ok());
         Ok(())
     }

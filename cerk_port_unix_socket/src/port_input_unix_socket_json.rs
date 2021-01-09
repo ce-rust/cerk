@@ -107,7 +107,7 @@ pub fn port_input_unix_socket_json_start(
                         Config::String(socket_path) => {
                             listener = Some(UnixListener::bind(socket_path).unwrap());
                         }
-                        _ => error!("{} received invalide config", id),
+                        _ => error!("{} received invalid config", id),
                     };
                 }
                 broker_event => warn!("event {} not implemented", broker_event),

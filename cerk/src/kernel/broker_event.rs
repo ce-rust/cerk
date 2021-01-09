@@ -29,7 +29,7 @@ pub enum BrokerEvent {
     ///
     ScheduleInternalServer(ScheduleInternalServerStatic),
 
-    /// The InernalServerScheduled event indicates to the receiver that a new internal server was successfully scheduled.
+    /// The InternalServerScheduled event indicates to the receiver that a new internal server was successfully scheduled.
     /// The event gets produced by the scheduler after a component was scheduled (because of a ScheduleInternalServer event).
     /// The receiver is the Kernel.
     ///
