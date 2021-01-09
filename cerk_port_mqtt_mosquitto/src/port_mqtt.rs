@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use cerk::kernel::{
     BrokerEvent, CloudEventRoutingArgs, Config, ConfigHelpers, DeliveryGuarantee,
-    IncomingCloudEvent, OutgoingCloudEvent, OutgoingCloudEventProcessed, ProcessingResult,
+    IncomingCloudEvent, OutgoingCloudEvent, OutgoingCloudEventProcessed, ProcessingResult,CloudEventMessageRoutingId
 };
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
@@ -70,7 +70,7 @@ fn connect(
     connection: Connection,
     sender_to_kernel: BoxedSender,
     data: ArcData,
-) -> Result<Sender<ProcessingResult>> {
+) -> Result<Sender<(CloudEventMessageRoutingId, ProcessingResult)>> {
     let (sender, receiver) = channel();
     let sub_delivery_guarantee = match connection.subscribe_qos {
         1 => DeliveryGuarantee::AtLeastOnce,
@@ -82,9 +82,10 @@ fn connect(
             let text = msg.text();
             debug!("received cloud event (on_message), text={}", text);
             let cloudevent: Event = serde_json::from_str(text).with_context(|| format!("{} failed to deserialize cloudevent {}", id, text)).unwrap();
+            let routing_id =  cloudevent.id().to_string();
             sender_to_kernel.send(BrokerEvent::IncomingCloudEvent(IncomingCloudEvent {
                 incoming_id: id.clone(),
-                routing_id: cloudevent.id().to_string(),
+                routing_id: routing_id.clone(),
                 cloud_event: cloudevent,
                 args: CloudEventRoutingArgs {
                     delivery_guarantee: sub_delivery_guarantee,
@@ -92,11 +93,18 @@ fn connect(
             }));
             if sub_delivery_guarantee.requires_acknowledgment() {
                 debug!("ack required - block on_message");
-                let result = receiver.recv().unwrap();
-                debug!("received result for incoming cloud even: {}", result);
-                match result {
-                    ProcessingResult::Successful => debug!("exiting on_message handler now"),
-                    _ => panic!("message could not be forwarded, must prevent on_message from exiting (otherwise PUBACK would be sent)"),
+                loop {
+                    let (received_routing_id, result) = receiver.recv().unwrap();
+                    if received_routing_id == routing_id {
+                        debug!("received result for incoming cloud event: {}", result);
+                        match result {
+                            ProcessingResult::Successful => debug!("exiting on_message handler now"),
+                            _ => panic!("message could not be forwarded, must prevent on_message from exiting (otherwise PUBACK would be sent)"),
+                        }
+                        return;
+                    } else {
+                        warn!("expected result for event: {}, got {}", routing_id, received_routing_id);
+                    }
                 }
             } else {
                 debug!("no ack required - exit on_message");
@@ -195,7 +203,7 @@ pub fn port_mqtt_mosquitto_start(
 ) {
     info!("start mqtt port with id {}", id);
     let mut connection: Option<Connection> = None;
-    let mut sender: Option<Sender<ProcessingResult>> = None;
+    let mut sender: Option<Sender<(CloudEventMessageRoutingId, ProcessingResult)>> = None;
     let data: ArcData = Arc::new(Mutex::new(Data {
         unacked: HashMap::new(),
     }));
@@ -252,12 +260,12 @@ pub fn port_mqtt_mosquitto_start(
                     );
                 }
             }
-            BrokerEvent::IncomingCloudEventProcessed(_event_id, result) => {
+            BrokerEvent::IncomingCloudEventProcessed(routing_id, result) => {
                 if let Some(ref sender) = sender {
                     debug!(
                         "received IncomingCloudEventProcessed -> send result to on_message handler"
                     );
-                    sender.send(result).unwrap();
+                    sender.send((routing_id, result)).unwrap();
                 } else {
                     error!("no active connection - can't send result");
                 }
