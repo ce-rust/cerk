@@ -31,7 +31,7 @@ fn clean_pending_deliveries(outboxes: &Outboxes, pending_deliveries: &mut Pendin
             let dead_messages: HashMap<&CloudEventMessageRoutingId, &PendingDelivery> =
                 pending_deliveries
                     .iter()
-                    .filter(|(_, v)| v.ttl > now)
+                    .filter(|(_, v)| v.ttl < now)
                     .collect();
             for (routing_id, data) in dead_messages.iter() {
                 warn!("ttl exceeded for routing_id={}, will send back to receiver={} with  ProcessingResult::Timeout", routing_id, data.sender);
@@ -94,7 +94,7 @@ fn process_routing_result(
                             PendingDelivery {
                                 sender: receiver_id,
                                 missing_receivers,
-                                ttl: SystemTime::now().add(Duration::from_millis(ROUTING_TTL_MS)),
+                                ttl: get_ttl(),
                             },
                         )
                         .is_some()
@@ -128,6 +128,10 @@ fn process_routing_result(
             }
         }
     }
+}
+
+fn get_ttl() -> SystemTime {
+    SystemTime::now().add(Duration::from_millis(ROUTING_TTL_MS))
 }
 
 fn process_outgoing_cloud_event_processed(
@@ -293,5 +297,83 @@ pub fn kernel_start(
             number_of_servers,
             &mut pending_deliveries,
         );
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::runtime::channel::Sender;
+    use std::ops::Sub;
+
+    #[test]
+    fn ttl_should_be_after_now() {
+        assert!(get_ttl() > SystemTime::now());
+    }
+
+    #[test]
+    fn should_not_delete_anything_on_empty_list() {
+        let outboxes = Outboxes::new();
+        let mut pending_deliveries = PendingDeliveries::new();
+        clean_pending_deliveries(&outboxes, &mut pending_deliveries);
+        assert_eq!(pending_deliveries.len(), 0);
+    }
+
+    #[test]
+    fn should_not_delete_anything_on_new_entries() {
+        let outboxes = Outboxes::new();
+        let mut pending_deliveries: PendingDeliveries = (1..11)
+            .into_iter()
+            .map(|n| {
+                (
+                    n.to_string(),
+                    PendingDelivery {
+                        sender: "a sender".to_string(),
+                        missing_receivers: vec![],
+                        ttl: get_ttl(),
+                    },
+                )
+            })
+            .collect();
+        clean_pending_deliveries(&outboxes, &mut pending_deliveries);
+        assert_eq!(pending_deliveries.len(), 10);
+    }
+
+    struct DummySender {}
+
+    impl Sender for DummySender {
+        fn send(&self, _event: BrokerEvent) {}
+        fn clone_boxed(&self) -> Box<dyn Sender + Send> {
+            unimplemented!()
+        }
+    }
+
+    #[test]
+    fn should_delete_old_entry() {
+        let mut outboxes = Outboxes::new();
+        outboxes.insert("real-sender".to_string(), Box::new(DummySender {}));
+        let mut pending_deliveries: PendingDeliveries = (1..11)
+            .into_iter()
+            .map(|n| {
+                (
+                    n.to_string(),
+                    PendingDelivery {
+                        sender: "a sender".to_string(),
+                        missing_receivers: vec![],
+                        ttl: get_ttl(),
+                    },
+                )
+            })
+            .collect();
+        pending_deliveries.insert(
+            "todelete".to_string(),
+            PendingDelivery {
+                sender: "real-sender".to_string(),
+                missing_receivers: vec![],
+                ttl: SystemTime::now().sub(Duration::from_millis(ROUTING_TTL_MS + 1)),
+            },
+        );
+        clean_pending_deliveries(&outboxes, &mut pending_deliveries);
+        assert_eq!(pending_deliveries.len(), 10);
     }
 }
