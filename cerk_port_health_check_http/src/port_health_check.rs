@@ -256,13 +256,14 @@ pub fn port_health_check_http(
         config: None,
         shutdown: None,
         sender_to_kernel,
-        id,
+        id: id.clone(),
         pending_requests: HashMap::new(),
     };
     let data: ArcHealthCheckData = Arc::new(Mutex::new(data));
 
     loop {
         match inbox.receive() {
+            BrokerEvent::Init => info!("{} initiated", &id),
             BrokerEvent::ConfigUpdated(config, _) => {
                 if let Err(e) = update(config, data.clone()) {
                     error!("failed to build config {:?}", e)
