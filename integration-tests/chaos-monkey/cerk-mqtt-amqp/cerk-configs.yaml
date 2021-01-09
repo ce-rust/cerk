@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cerk-configs
+data:
+  init.json: |
+    {
+      "scheduler": "THREADING_SCHEDULER",
+      "router": "ROUTER_BROADCAST",
+      "config_loader": "CONFIG_LOADER_FILE",
+      "ports": {
+        "ampq": "PORT_AMQP",
+        "mqtt": "PORT_MQTT_MOSQUITTO",
+        "dummy-logger-output": "PORT_PRINTER",
+        "health": "PORT_HEALTH_CHECK_HTTP"
+      }
+    }
+  config.json: |
+    {
+      "routing_rules": [
+        "dummy-logger-output",
+        "ampq"
+      ],
+      "ports": {
+        "ampq": {
+          "uri": "amqp://rabbitmq:5672/%2f",
+          "publish_channels": [
+            {
+              "name": "output",
+              "ensure_exchange": true
+            }
+          ]
+        },
+        "mqtt": {
+          "host": "tcp://mosquitto:1883",
+          "subscribe_topic": "input",
+          "subscribe_qos": 1
+        },
+        "dummy-logger-output": null,
+        "health": {
+          "ports_to_check": ["ampq"]
+        }
+      }
+    }
+  no-guarantee.json: |
+    {
+      adsf
+    }

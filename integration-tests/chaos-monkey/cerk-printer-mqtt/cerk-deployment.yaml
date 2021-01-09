@@ -1,27 +1,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cerk-deployment
+  name: cerk-printer-mqtt-deployment
   labels:
-    app: cerk
+    app: cerk-printer-mqtt
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: cerk
+      app: cerk-printer-mqtt
   template:
     metadata:
       labels:
-        app: cerk
-      annotations:
-        chaos.alpha.kubernetes.io/enabled: "true"
+        app: cerk-printer-mqtt
     spec:
       containers:
-        - name: cerk
+        - name: cerk-printer-mqtt
           image: cloudeventsrouter/cerk:common-0.0.14
-          envFrom:
-            - configMapRef:
-                name: cerk-env-config
+          env:
+           - name: RUST_LOG
+             value: debug
+           - name: VALIDATOR_AMOUNT
+             value: '100000'
+           - name: CONFIG_PATH
+             value: '/config.json'
           livenessProbe:
             httpGet:
               path: /
@@ -41,11 +43,8 @@ spec:
             - name: cerk-configs
               mountPath: /config.json
               subPath: config.json
-            - name: cerk-configs
-              mountPath: /no-guarantee.json
-              subPath: no-guarantee.json
       volumes:
         - name: cerk-configs
           configMap:
-              name: cerk-configs
+              name: cerk-printer-mqtt-configs
       terminationGracePeriodSeconds: 3

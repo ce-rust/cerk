@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto-configs
+data:
+  mosquitto.conf: |
+    max_queued_messages 1000000
+    log_type all

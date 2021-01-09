@@ -19,6 +19,9 @@ spec:
       containers:
         - name: cerk
           image: cloudeventsrouter/cerk:common-0.0.14
+          env:
+            - name: RUST_LOG
+              value: debug
           envFrom:
             - configMapRef:
                 name: cerk-env-config
