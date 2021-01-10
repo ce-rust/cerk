@@ -134,25 +134,6 @@ let map: HashMap<String, Config> = [
 let config = Config::HashMap(map);
 ```
 
-#### Full Configuration for receiving and sending events
-
-```rust
-use std::collections::HashMap;
-use cerk::kernel::Config;
-
-let map: HashMap<String, Config> = [
-    ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
-    ("send_topic".to_string(), Config::String("inbox".to_string())),
-    ("subscribe_topic".to_string(), Config::String("outbox".to_string())),
-    ("subscribe_qos".to_string(), Config::U8(1)),
-]
-.iter()
-.cloned()
-.collect();
-
-let config = Config::HashMap(map);
-```
-
 
 ## Update Readme
 
