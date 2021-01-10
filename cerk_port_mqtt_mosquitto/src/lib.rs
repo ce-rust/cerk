@@ -85,7 +85,10 @@ This configuration will connect to the broker but will not send or receive any e
 ```
 use std::collections::HashMap;
 use cerk::kernel::Config;
+# use cerk_port_mqtt_mosquitto::check_configurations;
+# use anyhow::Result;
 
+# fn main() -> Result<()> {
 let map: HashMap<String, Config> = [
     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
 ]
@@ -94,6 +97,8 @@ let map: HashMap<String, Config> = [
 .collect();
 
 let config = Config::HashMap(map);
+# check_configurations(config) // validate example config
+# }
 ```
 
 ### Full Configuration for sending events
@@ -101,7 +106,10 @@ let config = Config::HashMap(map);
 ```
 use std::collections::HashMap;
 use cerk::kernel::Config;
+# use cerk_port_mqtt_mosquitto::check_configurations;
+# use anyhow::Result;
 
+# fn main() -> Result<()> {
 let map: HashMap<String, Config> = [
     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
     ("send_topic".to_string(), Config::String("inbox".to_string())),
@@ -111,6 +119,8 @@ let map: HashMap<String, Config> = [
 .collect();
 
 let config = Config::HashMap(map);
+# check_configurations(config) // validate example config
+# }
 ```
 
 ### Full Configuration for receiving events
@@ -118,7 +128,10 @@ let config = Config::HashMap(map);
 ```
 use std::collections::HashMap;
 use cerk::kernel::Config;
+# use cerk_port_mqtt_mosquitto::check_configurations;
+# use anyhow::Result;
 
+# fn main() -> Result<()> {
 let map: HashMap<String, Config> = [
     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
     ("subscribe_topic".to_string(), Config::String("outbox".to_string())),
@@ -129,25 +142,8 @@ let map: HashMap<String, Config> = [
 .collect();
 
 let config = Config::HashMap(map);
-```
-
-### Full Configuration for receiving and sending events
-
-```
-use std::collections::HashMap;
-use cerk::kernel::Config;
-
-let map: HashMap<String, Config> = [
-    ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
-    ("send_topic".to_string(), Config::String("inbox".to_string())),
-    ("subscribe_topic".to_string(), Config::String("outbox".to_string())),
-    ("subscribe_qos".to_string(), Config::U8(1)),
-]
-.iter()
-.cloned()
-.collect();
-
-let config = Config::HashMap(map);
+# check_configurations(config) // validate example config
+# }
 ```
 
 */
@@ -162,4 +158,4 @@ extern crate log;
 
 mod port_mqtt;
 
-pub use self::port_mqtt::{port_mqtt_mosquitto_start, PORT_MQTT_MOSQUITTO};
+pub use self::port_mqtt::{port_mqtt_mosquitto_start, PORT_MQTT_MOSQUITTO, check_configurations};

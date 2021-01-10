@@ -22,29 +22,51 @@ struct Data {
 }
 
 #[derive(Clone)]
-struct Connection {
-    client: Mosquitto,
+struct Configurations {
     send_topic: Option<String>,
     subscribe_topic: Option<String>,
     subscribe_qos: u8,
+    host_name: String,
+    host_port: u16,
+}
+
+#[derive(Clone)]
+struct Connection {
+    client: Mosquitto,
+    configs: Configurations,
 }
 
 type ArcData = Arc<Mutex<Data>>;
 
-fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection> {
-    const RECONNECT_DELAY_MIN_SECONDS: u32 = 1;
-    const RECONNECT_DELAY_MAX_SECONDS: u32 = 300;
+fn build_configurations(config: Config) -> Result<Configurations> {
     let host = config.get_op_val_string("host")?.unwrap();
     let send_topic = config.get_op_val_string("send_topic")?;
     let subscribe_topic = config.get_op_val_string("subscribe_topic")?;
     let subscribe_qos = config.get_op_val_u8("subscribe_qos")?.unwrap_or(0);
 
+    if send_topic.is_some() && subscribe_topic.is_some() {
+        bail!("received send_topic and subscribe_topic - only once is allowed!")
+    }
+
     let host = Url::parse(&host)?;
-    let host_name = host.host_str().ok_or(anyhow!("no host was provided"))?;
+    let host_name = host.host_str().ok_or(anyhow!("no host was provided"))?.to_string();
     let host_port = host.port().unwrap_or(1883);
+    Ok(Configurations { send_topic, subscribe_topic, subscribe_qos, host_name, host_port })
+}
+
+/// checks if the configurations are valid for this port
+pub fn check_configurations(config: Config) -> Result<()> {
+    build_configurations(config)?;
+    Ok(())
+}
+
+fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection> {
+    const RECONNECT_DELAY_MIN_SECONDS: u32 = 1;
+    const RECONNECT_DELAY_MAX_SECONDS: u32 = 300;
+    let configs = build_configurations(config)?;
 
     debug!("create new session: {}", id);
-    debug!("connect to: {}:{}", host_name, host_port);
+    info!("{} connect to: {}:{}", id, configs.host_name, configs.host_port);
 
     let client = Mosquitto::new_session(&id.clone(), false)?; // keep old session
     client.threaded()?;
@@ -54,13 +76,11 @@ fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection>
         RECONNECT_DELAY_MAX_SECONDS,
         true,
     )?;
-    client.connect(host_name, host_port.into(), 5)?;
+    client.connect(configs.host_name.as_str(), configs.host_port.into(), 5)?;
 
     let connection = Connection {
         client,
-        send_topic,
-        subscribe_topic,
-        subscribe_qos,
+        configs,
     };
 
     return Ok(connection);
@@ -73,7 +93,7 @@ fn connect(
     data: ArcData,
 ) -> Result<Sender<(CloudEventMessageRoutingId, ProcessingResult)>> {
     let (sender, receiver) = channel();
-    let sub_delivery_guarantee = match connection.subscribe_qos {
+    let sub_delivery_guarantee = match connection.configs.subscribe_qos {
         1 => DeliveryGuarantee::AtLeastOnce,
         _ => DeliveryGuarantee::BestEffort,
     };
@@ -83,7 +103,7 @@ fn connect(
             let text = msg.text();
             debug!("received cloud event (on_message), text={}", text);
             let cloudevent: Event = serde_json::from_str(text).with_context(|| format!("{} failed to deserialize cloudevent {}", id, text)).unwrap();
-            let routing_id =  cloudevent.id().to_string();
+            let routing_id = cloudevent.id().to_string();
             sender_to_kernel.send(BrokerEvent::IncomingCloudEvent(IncomingCloudEvent {
                 incoming_id: id.clone(),
                 routing_id: routing_id.clone(),
@@ -131,14 +151,14 @@ fn connect(
         });
         callbacks.on_connect(|_, connection_id| {
             debug!("{} connected: {}", id, connection_id);
-            if let Some(ref subscribe_topic) = connection.subscribe_topic {
+            if let Some(ref subscribe_topic) = connection.configs.subscribe_topic {
                 debug!(
                     "subscribe to: {} with qos {}",
-                    subscribe_topic, connection.subscribe_qos
+                    subscribe_topic, connection.configs.subscribe_qos
                 );
                 connection
                     .client
-                    .subscribe(&subscribe_topic, connection.subscribe_qos.into())
+                    .subscribe(&subscribe_topic, connection.configs.subscribe_qos.into())
                     .unwrap();
             }
         });
@@ -159,7 +179,7 @@ fn send_cloud_event(
 ) -> Result<()> {
     let serialized = serde_json::to_string(&event.cloud_event)?;
 
-    if let Some(ref send_topic) = connection.send_topic {
+    if let Some(ref send_topic) = connection.configs.send_topic {
         let mut data_lock = data.lock().unwrap();
         let message_id = connection.client.publish(
             send_topic,
@@ -279,3 +299,22 @@ pub fn port_mqtt_mosquitto_start(
 /// This is the pointer for the main function to start the port.
 pub static PORT_MQTT_MOSQUITTO: InternalServerFnRefStatic =
     &(port_mqtt_mosquitto_start as InternalServerFn);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn build_subscribe_config() {
+        let map: HashMap<String, Config> = [
+            ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
+            ("send_topic".to_string(), Config::String("inbox".to_string())),
+            ("subscribe_topic".to_string(), Config::String("outbox".to_string())),
+            ("subscribe_qos".to_string(), Config::U8(1)),
+        ]
+            .iter()
+            .cloned()
+            .collect();
+        assert!(check_configurations(Config::HashMap(map)).is_err());
+    }
+}
