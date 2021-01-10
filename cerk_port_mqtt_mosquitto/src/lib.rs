@@ -158,4 +158,4 @@ extern crate log;
 
 mod port_mqtt;
 
-pub use self::port_mqtt::{port_mqtt_mosquitto_start, PORT_MQTT_MOSQUITTO, check_configurations};
+pub use self::port_mqtt::{check_configurations, port_mqtt_mosquitto_start, PORT_MQTT_MOSQUITTO};

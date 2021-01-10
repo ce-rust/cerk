@@ -49,9 +49,18 @@ fn build_configurations(config: Config) -> Result<Configurations> {
     }
 
     let host = Url::parse(&host)?;
-    let host_name = host.host_str().ok_or(anyhow!("no host was provided"))?.to_string();
+    let host_name = host
+        .host_str()
+        .ok_or(anyhow!("no host was provided"))?
+        .to_string();
     let host_port = host.port().unwrap_or(1883);
-    Ok(Configurations { send_topic, subscribe_topic, subscribe_qos, host_name, host_port })
+    Ok(Configurations {
+        send_topic,
+        subscribe_topic,
+        subscribe_qos,
+        host_name,
+        host_port,
+    })
 }
 
 /// checks if the configurations are valid for this port
@@ -66,7 +75,10 @@ fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection>
     let configs = build_configurations(config)?;
 
     debug!("create new session: {}", id);
-    info!("{} connect to: {}:{}", id, configs.host_name, configs.host_port);
+    info!(
+        "{} connect to: {}:{}",
+        id, configs.host_name, configs.host_port
+    );
 
     let client = Mosquitto::new_session(&id.clone(), false)?; // keep old session
     client.threaded()?;
@@ -78,10 +90,7 @@ fn build_connection(id: &InternalServerId, config: Config) -> Result<Connection>
     )?;
     client.connect(configs.host_name.as_str(), configs.host_port.into(), 5)?;
 
-    let connection = Connection {
-        client,
-        configs,
-    };
+    let connection = Connection { client, configs };
 
     return Ok(connection);
 }
@@ -307,14 +316,23 @@ mod tests {
     #[test]
     fn build_subscribe_config() {
         let map: HashMap<String, Config> = [
-            ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
-            ("send_topic".to_string(), Config::String("inbox".to_string())),
-            ("subscribe_topic".to_string(), Config::String("outbox".to_string())),
+            (
+                "host".to_string(),
+                Config::String("tcp://mqtt-broker:1883".to_string()),
+            ),
+            (
+                "send_topic".to_string(),
+                Config::String("inbox".to_string()),
+            ),
+            (
+                "subscribe_topic".to_string(),
+                Config::String("outbox".to_string()),
+            ),
             ("subscribe_qos".to_string(), Config::U8(1)),
         ]
-            .iter()
-            .cloned()
-            .collect();
+        .iter()
+        .cloned()
+        .collect();
         assert!(check_configurations(Config::HashMap(map)).is_err());
     }
 }
