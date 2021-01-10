@@ -19,7 +19,6 @@ data:
     {
       "routing_rules": [
         "dummy-logger-output",
-        "ampq",
         "mqtt"
       ],
       "ports": {
@@ -31,12 +30,6 @@ data:
               "ensure_queue": true,
               "bind_to_exchange": "input",
               "delivery_guarantee": 2
-            }
-          ],
-          "publish_channels": [
-            {
-              "name": "output",
-              "ensure_exchange": true
             }
           ]
         },
@@ -54,7 +47,6 @@ data:
     {
       "routing_rules": [
         "dummy-logger-output",
-        "ampq",
         "mqtt"
       ],
       "ports": {
@@ -66,12 +58,6 @@ data:
               "ensure_queue": true,
               "bind_to_exchange": "input",
               "delivery_guarantee": 0
-            }
-          ],
-          "publish_channels": [
-            {
-              "name": "output",
-              "ensure_exchange": true
             }
           ]
         },
