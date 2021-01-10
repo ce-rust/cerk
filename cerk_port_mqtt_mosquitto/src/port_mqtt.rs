@@ -45,7 +45,7 @@ fn build_configurations(config: Config) -> Result<Configurations> {
     let subscribe_qos = config.get_op_val_u8("subscribe_qos")?.unwrap_or(0);
 
     if send_topic.is_some() && subscribe_topic.is_some() {
-        bail!("received send_topic and subscribe_topic - only once is allowed!")
+        bail!("received send_topic and subscribe_topic - only one is allowed!")
     }
 
     let host = Url::parse(&host)?;
