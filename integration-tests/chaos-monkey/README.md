@@ -89,5 +89,11 @@ Test setup: (generator ->mqtt) -> (mqtt -> amqp) -> (amqp -> validator)
     1. `kubectl apply -f continuous-run-config/ -f rabbitmq/ -f mosquitto/ -f chaos-monkey/` and wait until the services are up and running (`kubernetes get po -w`)
     2. `kubectl apply -f continuous-run-config/ -f 100k-messages-config/ -f cerk-printer/ -f 100k-messages-config/ -f cerk-mqtt-amqp/`
     3. `kubectl apply -f 100k-messages-config/ -f cerk-generator-mqtt/`
-    4. observe the logs:
+    4. observe the logs
+2. Start the test that routs 100'000 messages un-reliable
+    1. Delete the generator, printer, and reliable router `kubectl delete deployments.apps cerk-generator-deployment cerk-printer-deployment` and wait until the pods were deleted (`kubectl get pod -w`), too
+    2. check that all queues are empty
+    3. `kubectl apply -f 100k-no-guarantee/ -f 100k-messages-config/ -f cerk-mqtt-amqp/`
+    4. `kubectl apply -f continuous-run-config/ -f 100k-messages-config/ -f cerk-printer/ -f cerk-generator-mqtt/`
+    5. observe the logs: this time they probably do not end with `missing events: 0`
 2. clean the cluster `kubectl delete all --all`

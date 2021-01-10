@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: cerk-generator-env-config
 data:
-  RUST_LOG: info
+  RUST_LOG: debug
   GENERATOR_SLEEP_MS: '1'
   GENERATOR_AMOUNT: '100000'
   CONFIG_PATH: './config.json'

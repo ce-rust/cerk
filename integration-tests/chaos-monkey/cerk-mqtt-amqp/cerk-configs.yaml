@@ -44,5 +44,28 @@ data:
     }
   no-guarantee.json: |
     {
-      adsf
+      "routing_rules": [
+        "dummy-logger-output",
+        "ampq"
+      ],
+      "ports": {
+        "ampq": {
+          "uri": "amqp://rabbitmq:5672/%2f",
+          "publish_channels": [
+            {
+              "name": "output",
+              "ensure_exchange": true
+            }
+          ]
+        },
+        "mqtt": {
+          "host": "tcp://mosquitto:1883",
+          "subscribe_topic": "input",
+          "subscribe_qos": 0
+        },
+        "dummy-logger-output": null,
+        "health": {
+          "ports_to_check": ["ampq"]
+        }
+      }
     }
