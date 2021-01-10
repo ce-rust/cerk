@@ -97,3 +97,12 @@ Test setup: (generator ->mqtt) -> (mqtt -> amqp) -> (amqp -> validator)
     4. `kubectl apply -f continuous-run-config/ -f 100k-messages-config/ -f cerk-printer/ -f cerk-generator-mqtt/`
     5. observe the logs: this time they probably do not end with `missing events: 0`
 2. clean the cluster `kubectl delete all --all`
+
+## Automated tests
+
+All listed tests and more are automated.
+They could be executed with `cd zz-automation; ./run-all-in-loop.sh`
+
+Additional requirement:
+
+* `rabbitmqadmin` (with yay: `yay -S rabbitmqadmin`)

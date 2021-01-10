@@ -6,6 +6,7 @@ set -e
 kubectl scale deployment cerk-printer-deployment --replicas 0 --timeout 1000s || true
 kubectl scale deployment cerk-printer-mqtt-deployment --replicas 0 --timeout 1000s || true
 kubectl scale deployment cerk-deployment --replicas 0 --timeout 1000s || true
+kubectl scale deployment cerk-generator-deployment --replicas 0 --timeout 1000s || true
 
 kubectl delete deployments cerk-deployment cerk-generator-deployment cerk-printer-deployment cerk-printer-mqtt-deployment --ignore-not-found --wait --force --grace-period 0
 

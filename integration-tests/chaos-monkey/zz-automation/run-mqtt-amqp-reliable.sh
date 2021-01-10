@@ -6,9 +6,10 @@ echo test started > $output
 
 ./setup-base.sh
 
-kubectl apply -f ../continuous-run-config/ -f ../100k-messages-config/ -f ../cerk-printer/ -f ../cerk-generator-mqtt/ -f ../cerk-mqtt-amqp/
-kubectl rollout status deployments.apps/cerk-generator-deployment --timeout=1000s
+kubectl apply -f ../continuous-run-config/ -f ../100k-messages-config/ -f ../cerk-printer/ -f ../cerk-mqtt-amqp/
 kubectl rollout status deployments.apps/cerk-deployment --timeout=1000s # on mqtt we have to wait for the subscriber
+kubectl apply -f ../100k-messages-config/ -f ../cerk-generator-mqtt/
+kubectl rollout status deployments.apps/cerk-generator-deployment --timeout=1000s
 echo "sequence_generator_started: $(date -u "+%Y%m%d%H%M%S")" >> "$output"
 
 ./wait-for-sequence-generator.sh

@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cerk-configs
+data:
+  init.json: |
+    {
+      "scheduler": "THREADING_SCHEDULER",
+      "router": "ROUTER_BROADCAST",
+      "config_loader": "CONFIG_LOADER_FILE",
+      "ports": {
+        "mqtt-in": "PORT_MQTT_MOSQUITTO",
+        "mqtt-out": "PORT_MQTT_MOSQUITTO",
+        "dummy-logger-output": "PORT_PRINTER",
+        "health": "PORT_HEALTH_CHECK_HTTP"
+      }
+    }
+  config.json: |
+    {
+      "routing_rules": [
+        "dummy-logger-output",
+        "mqtt-out"
+      ],
+      "ports": {
+        "mqtt-in": {
+          "host": "tcp://mosquitto:1883",
+          "subscribe_topic": "input",
+          "subscribe_qos": 1
+        },
+        "mqtt-out": {
+          "host": "tcp://mosquitto:1883",
+          "send_topic": "out"
+        },
+        "dummy-logger-output": null,
+        "health": {
+          "ports_to_check": []
+        }
+      }
+    }
+  no-guarantee.json: |
+    {
+      "routing_rules": [
+        "dummy-logger-output",
+        "mqtt-out"
+      ],
+      "ports": {
+        "mqtt-in": {
+          "host": "tcp://mosquitto:1883",
+          "subscribe_topic": "input",
+          "subscribe_qos": 0
+        },
+        "mqtt-out": {
+          "host": "tcp://mosquitto:1883",
+          "send_topic": "out"
+        },
+        "dummy-logger-output": null,
+        "health": {
+          "ports_to_check": []
+        }
+      }
+    }
