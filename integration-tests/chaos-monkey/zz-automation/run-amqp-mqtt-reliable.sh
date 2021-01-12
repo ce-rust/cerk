@@ -8,9 +8,10 @@ echo test started > $output
 
 ./setup-base.sh
 
-kubectl apply -f ../continuous-run-config/ -f ../100k-messages-config/ -f ../cerk-printer-mqtt/ -f ../cerk-generator/ -f ../cerk-amqp-mqtt-only/
-kubectl rollout status deployments.apps/cerk-generator-deployment --timeout=1000s
+kubectl apply -f ../continuous-run-config/ -f ../100k-messages-config/ -f ../cerk-printer-mqtt/ -f ../cerk-amqp-mqtt-only/
 kubectl rollout status deployments.apps/cerk-printer-mqtt-deployment --timeout=1000s # on mqtt we have to wait for the subscriber
+kubectl apply -f ../100k-messages-config/ -f ../cerk-generator/
+kubectl rollout status deployments.apps/cerk-generator-deployment --timeout=1000s
 
 kubectl get po >> "$output"
 

@@ -11,6 +11,7 @@ echo test started > $output
 kubectl apply -f ../continuous-run-config/ -f ../100k-no-guarantee/ -f ../100k-messages-config/ -f ../cerk-printer/ -f ../cerk/
 kubectl rollout status deployments.apps/cerk-deployment --timeout=1000s
 kubectl rollout status deployments.apps/cerk-printer-deployment --timeout=1000s
+sleep 30 # wait until queue is connected to exchange
 kubectl apply -f ../100k-messages-config/ -f ../cerk-generator/
 kubectl rollout status deployments.apps/cerk-generator-deployment --timeout=1000s
 
