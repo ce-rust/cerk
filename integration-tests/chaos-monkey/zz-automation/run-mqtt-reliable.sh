@@ -26,7 +26,7 @@ kubectl logs deployments.apps/cerk-printer-mqtt-deployment --tail 1000 | grep ce
 echo "end: $(date -u "+%Y%m%d%H%M%S")" >> "$output"
 
 kubectl get po >> "$output"
-
+kubectl get events >> "$output"
 ./cleanup-base.sh >> "$output"
 
 echo test finished
