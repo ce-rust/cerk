@@ -2,7 +2,7 @@
 
 set -e
 
-echo "name;setup;mode;missing;start;end;broker-crash;ended" > output.csv
+echo "name;setup;mode;missing;start;end;brokercrash;ended" > output.csv
 
 for p in $( ls ./output/*.log ); do
     f=$(basename -- "$p");
