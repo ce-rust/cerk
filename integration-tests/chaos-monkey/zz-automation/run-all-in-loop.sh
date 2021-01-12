@@ -2,6 +2,10 @@
 
 set -e
 
+# first the setup has to be up and running, sometimes the first run files -> we are not waiting long enough
+./setup-base.sh || true
+./setup-base.sh
+
 for (( i=1; i>0; i++ ));do
   echo "***************************"
   echo "running iteration ${i}"

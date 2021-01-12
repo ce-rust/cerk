@@ -24,4 +24,6 @@ echo "end: $(date -u "+%Y%m%d%H%M%S")" >> "$output"
 
 kubectl get po >> "$output"
 
+./cleanup-base.sh >> "$output"
+
 echo test finished
