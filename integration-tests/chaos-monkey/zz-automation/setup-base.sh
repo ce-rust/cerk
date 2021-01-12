@@ -13,5 +13,7 @@ kubectl delete deployments cerk-deployment cerk-generator-deployment cerk-printe
 kubectl apply -f ../continuous-run-config/ -f ../rabbitmq/ -f ../mosquitto/ -f ../chaos-monkey/
 kubectl rollout status statefulsets.apps/rabbitmq --timeout=100s
 kubectl rollout status statefulsets.apps/mosquitto --timeout=100s
+
+fuser -k 15672/tcp # kill process on port
 kubectl port-forward statefulset/rabbitmq 15672 || true &
 ./create-exchange.sh
