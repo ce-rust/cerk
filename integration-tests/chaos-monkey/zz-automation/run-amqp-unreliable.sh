@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 mkdir -p output
 output=./output/amqp-unreliable-$(date -u "+%Y%m%d%H%M%S").log
 echo test started > $output

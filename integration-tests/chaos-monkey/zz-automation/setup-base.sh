@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # with this command we could be sure that the pod is deleted
 kubectl scale deployment cerk-printer-deployment --replicas 0 --timeout 1000s || true
 kubectl scale deployment cerk-printer-mqtt-deployment --replicas 0 --timeout 1000s || true

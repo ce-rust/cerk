@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 if [ $(kubectl describe po mosquitto-0 rabbitmq-0 | grep Restart | awk '!/0/' | wc -l) -ne 0 ]; then
     echo "a broker crashed during the test!!!!"
     echo "will restart all brokers"

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 while true; do
   if kubectl logs deployments.apps/cerk-generator-deployment --tail 100000 | grep -q "delivery for event_id=100000 was successful"; then
     echo "generator finished"
