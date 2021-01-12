@@ -14,6 +14,7 @@ kubectl apply -f ../continuous-run-config/ -f ../rabbitmq/ -f ../mosquitto/ -f .
 kubectl rollout status statefulsets.apps/rabbitmq --timeout=100s
 kubectl rollout status statefulsets.apps/mosquitto --timeout=100s
 
-fuser -k 15672/tcp # kill process on port
-kubectl port-forward statefulset/rabbitmq 15672 || true &
+fuser -k 15672/tcp || true # kill process on port
+kubectl port-forward statefulset/rabbitmq 15672 || true &\
+while ! curl 127.0.0.1:15672 > /dev/null 2> /dev/null; do echo 'wait for port-forward...'; sleep 10; done
 ./create-exchange.sh
