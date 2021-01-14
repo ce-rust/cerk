@@ -19,4 +19,4 @@ log = "0.4.0"
 cloudevents-sdk = "0.3.0"
 strum_macros = "0.19.4"
 anyhow = "1.0"
-serde = "1.0.117"
+serde = { version = "=1.0.118" }
