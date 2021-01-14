@@ -226,7 +226,7 @@ pub fn port_sequence_generator_start(
                 let id = id.clone();
                 let sender_to_kernel = sender_to_kernel.clone_boxed();
                 tokio.spawn(async move {
-                    if let Err(e) = send_events(&id, &sender_to_kernel, data.clone()) {
+                    if let Err(e) = send_events(&id, &sender_to_kernel, data) {
                         error!("failed to generate sequence: {:?}", e)
                     }
                 });
