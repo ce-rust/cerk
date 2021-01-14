@@ -26,3 +26,13 @@ services:
       - .:/cerk/
     working_dir: /cerk
     command: ./check-readme.sh
+  deny:
+    image: lazzaretti/docker-rust-cerk:0.4.0
+    volumes:
+      - .:/cerk/
+    working_dir: /cerk
+    command: >
+      /bin/bash -c "
+      cargo install cargo-deny
+      && cargo deny check
+      "
