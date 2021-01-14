@@ -90,7 +90,7 @@ Test setup: (generator ->mqtt) -> (mqtt -> amqp) -> (amqp -> validator)
     2. `kubectl apply -f continuous-run-config/ -f 100k-messages-config/ -f cerk-printer/ -f 100k-messages-config/ -f cerk-mqtt-amqp/`
     3. `kubectl apply -f 100k-messages-config/ -f cerk-generator-mqtt/`
     4. observe the logs
-2. Start the test that routs 100'000 messages un-reliable
+2. Start the test that routes 100'000 messages unreliably
     1. Delete the generator, printer, and reliable router `kubectl delete deployments.apps cerk-generator-deployment cerk-printer-deployment` and wait until the pods were deleted (`kubectl get pod -w`), too
     2. check that all queues are empty
     3. `kubectl apply -f 100k-no-guarantee/ -f 100k-messages-config/ -f cerk-mqtt-amqp/`
@@ -101,7 +101,7 @@ Test setup: (generator ->mqtt) -> (mqtt -> amqp) -> (amqp -> validator)
 ## Automated tests
 
 All listed tests and more are automated.
-They could be executed with `cd zz-automation; ./run-all-in-loop.sh`
+They can be executed with `cd zz-automation; ./run-all-in-loop.sh`
 
 Additional requirement:
 
