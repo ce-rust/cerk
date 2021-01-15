@@ -29,7 +29,6 @@ fn static_config_loader_start(
             "subscribe_topic".to_string(),
             Config::String("test".to_string()),
         ),
-        ("subscribe_qos".to_string(), Config::U8(1)),
     ]
     .iter()
     .cloned()
