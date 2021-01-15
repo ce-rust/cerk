@@ -19,22 +19,23 @@ data:
     {
       "routing_rules": [
         "dummy-logger-output",
-        "ampq"
+        "mqtt"
       ],
       "ports": {
         "ampq": {
           "uri": "amqp://rabbitmq:5672/%2f",
-          "publish_channels": [
+          "consume_channels": [
             {
-              "name": "output",
-              "ensure_exchange": true
+              "name": "input",
+              "ensure_queue": true,
+              "bind_to_exchange": "input",
+              "delivery_guarantee": 2
             }
           ]
         },
         "mqtt": {
           "host": "tcp://mosquitto:1883",
-          "subscribe_topic": "input",
-          "subscribe_qos": 1
+          "send_topic": "out"
         },
         "dummy-logger-output": null,
         "health": {
@@ -46,22 +47,23 @@ data:
     {
       "routing_rules": [
         "dummy-logger-output",
-        "ampq"
+        "mqtt"
       ],
       "ports": {
         "ampq": {
           "uri": "amqp://rabbitmq:5672/%2f",
-          "publish_channels": [
+          "consume_channels": [
             {
-              "name": "output",
-              "ensure_exchange": true
+              "name": "input",
+              "ensure_queue": true,
+              "bind_to_exchange": "input",
+              "delivery_guarantee": 0
             }
           ]
         },
         "mqtt": {
           "host": "tcp://mosquitto:1883",
-          "subscribe_topic": "input",
-          "subscribe_qos": 0
+          "send_topic": "out"
         },
         "dummy-logger-output": null,
         "health": {

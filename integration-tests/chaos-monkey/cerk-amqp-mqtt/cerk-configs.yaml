@@ -42,8 +42,7 @@ data:
         },
         "mqtt": {
           "host": "tcp://mosquitto:1883",
-          "send_topic": "out",
-          "send_qos": 1
+          "send_topic": "out"
         },
         "dummy-logger-output": null,
         "health": {
@@ -78,8 +77,7 @@ data:
         },
         "mqtt": {
           "host": "tcp://mosquitto:1883",
-          "send_topic": "out",
-          "send_qos": 1
+          "send_topic": "out"
         },
         "dummy-logger-output": null,
         "health": {

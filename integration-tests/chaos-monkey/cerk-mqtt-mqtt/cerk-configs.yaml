@@ -9,8 +9,8 @@ data:
       "router": "ROUTER_BROADCAST",
       "config_loader": "CONFIG_LOADER_FILE",
       "ports": {
-        "ampq": "PORT_AMQP",
-        "mqtt": "PORT_MQTT_MOSQUITTO",
+        "mqtt-in": "PORT_MQTT_MOSQUITTO",
+        "mqtt-out": "PORT_MQTT_MOSQUITTO",
         "dummy-logger-output": "PORT_PRINTER",
         "health": "PORT_HEALTH_CHECK_HTTP"
       }
@@ -19,26 +19,21 @@ data:
     {
       "routing_rules": [
         "dummy-logger-output",
-        "ampq"
+        "mqtt-out"
       ],
       "ports": {
-        "ampq": {
-          "uri": "amqp://rabbitmq:5672/%2f",
-          "publish_channels": [
-            {
-              "name": "output",
-              "ensure_exchange": true
-            }
-          ]
-        },
-        "mqtt": {
+        "mqtt-in": {
           "host": "tcp://mosquitto:1883",
           "subscribe_topic": "input",
           "subscribe_qos": 1
         },
+        "mqtt-out": {
+          "host": "tcp://mosquitto:1883",
+          "send_topic": "out"
+        },
         "dummy-logger-output": null,
         "health": {
-          "ports_to_check": ["ampq"]
+          "ports_to_check": []
         }
       }
     }
@@ -46,26 +41,21 @@ data:
     {
       "routing_rules": [
         "dummy-logger-output",
-        "ampq"
+        "mqtt-out"
       ],
       "ports": {
-        "ampq": {
-          "uri": "amqp://rabbitmq:5672/%2f",
-          "publish_channels": [
-            {
-              "name": "output",
-              "ensure_exchange": true
-            }
-          ]
-        },
-        "mqtt": {
+        "mqtt-in": {
           "host": "tcp://mosquitto:1883",
           "subscribe_topic": "input",
           "subscribe_qos": 0
         },
+        "mqtt-out": {
+          "host": "tcp://mosquitto:1883",
+          "send_topic": "out"
+        },
         "dummy-logger-output": null,
         "health": {
-          "ports_to_check": ["ampq"]
+          "ports_to_check": []
         }
       }
     }

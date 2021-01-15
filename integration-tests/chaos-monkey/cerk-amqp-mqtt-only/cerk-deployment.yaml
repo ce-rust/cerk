@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cerk-deployment
+  labels:
+    app: cerk
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cerk
+  template:
+    metadata:
+      labels:
+        app: cerk
+      annotations:
+        chaos.alpha.kubernetes.io/enabled: "true"
+    spec:
+      containers:
+        - name: cerk
+          image: cloudeventsrouter/cerk:common-0.0.14
+          env:
+            - name: RUST_LOG
+              value: debug
+          envFrom:
+            - configMapRef:
+                name: cerk-env-config
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          volumeMounts:
+            - name: cerk-configs
+              mountPath: /init.json
+              subPath: init.json
+            - name: cerk-configs
+              mountPath: /config.json
+              subPath: config.json
+            - name: cerk-configs
+              mountPath: /no-guarantee.json
+              subPath: no-guarantee.json
+      volumes:
+        - name: cerk-configs
+          configMap:
+              name: cerk-configs
+      terminationGracePeriodSeconds: 3
