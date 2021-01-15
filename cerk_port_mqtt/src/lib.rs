@@ -133,10 +133,6 @@ let config = Config::HashMap(map);
 
 * [Generator to MQTT](https://github.com/ce-rust/cerk/tree/master/examples/src/mqtt/)
 
-# Limitations
-
-* **reliability** this port does not support any `DeliveryGuarantee` other then `BestEffort` and so does never send a `OutgoingCloudEventProcessed` or `IncomingCloudEventProcessed` messages.
-
 */
 
 #![deny(missing_docs)]
