@@ -6,5 +6,5 @@ A second router subscribes to the same topic with an MQTT port and routs them to
 ## Run
 
 1. run `docker-compose up`
-2. observe CloudEvents arriving in the log output of the `mqtt-client` docker-compose service
+2. observe CloudEvents arriving in the log output of the `mqtt-client` docker-compose service: `docker-compose logs -f mqtt-client`
 3. OPTIONAL: connect with an MQTT client (e.g. [MQTTBox for Chrome](https://chrome.google.com/webstore/detail/mqttbox/kaajoficamnjijhkeomgfljpicifbkaf)) to `mqtt://localhost:1883` and subscribe to topic `test`
