@@ -2,7 +2,7 @@ use anyhow::{bail, Result};
 use async_std::task::block_on;
 use cerk::kernel::{
     BrokerEvent, CloudEventRoutingArgs, Config, DeliveryGuarantee, IncomingCloudEvent,
-    OutgoingCloudEventProcessed, ProcessingResult,
+    OutgoingCloudEvent, OutgoingCloudEventProcessed, ProcessingResult,
 };
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
@@ -16,9 +16,7 @@ use std::time::Duration;
 struct MqttConnection {
     client: AsyncClient,
     send_topic: Option<String>,
-    send_qos: u8,
     subscribe_topic: Option<String>,
-    subscribe_qos: u8,
 }
 
 fn build_connection(id: &InternalServerId, config: Config) -> MqttConnection {
@@ -35,22 +33,10 @@ fn build_connection(id: &InternalServerId, config: Config) -> MqttConnection {
                 _ => None,
             };
 
-            let send_qos = match config_map.get("send_qos") {
-                Some(Config::U8(qos)) => *qos,
-                Some(_) => panic!("{} invalid value for send_qos", id),
-                _ => 0,
-            };
-
             let subscribe_topic = match config_map.get("subscribe_topic") {
                 Some(Config::String(topic)) => Some(topic.clone()),
                 Some(_) => panic!("{} invalid value for subscribe_topic", id),
                 _ => None,
-            };
-
-            let subscribe_qos = match config_map.get("subscribe_qos") {
-                Some(Config::U8(qos)) => *qos,
-                Some(_) => panic!("{} invalid value for subscribe_qos", id),
-                _ => 0,
             };
 
             let mqtt_config = CreateOptionsBuilder::new()
@@ -67,9 +53,7 @@ fn build_connection(id: &InternalServerId, config: Config) -> MqttConnection {
             return MqttConnection {
                 client,
                 send_topic,
-                send_qos,
                 subscribe_topic,
-                subscribe_qos,
             };
         }
         _ => panic!("{} received invalide config", id),
@@ -127,10 +111,7 @@ async fn setup_connection(
     connection.client.connect(connection_options).await?;
 
     let routing_args = CloudEventRoutingArgs {
-        delivery_guarantee: match connection.subscribe_qos {
-            0 => DeliveryGuarantee::BestEffort,
-            _ => panic!("The MQTT Port Currently only supports QoS 0 (see https://github.com/ce-rust/cerk/issues/71)"),
-        },
+        delivery_guarantee: DeliveryGuarantee::BestEffort,
     };
 
     connection.client.set_message_callback(message_handler(
@@ -140,15 +121,9 @@ async fn setup_connection(
     ));
 
     if let Some(ref subscribe_topic) = connection.subscribe_topic {
-        debug!(
-            "{} subscribes to {} with qos {}",
-            id, subscribe_topic, connection.subscribe_qos,
-        );
+        debug!("{} subscribes to {} with qos 0", id, subscribe_topic,);
 
-        connection
-            .client
-            .subscribe(subscribe_topic, connection.subscribe_qos as i32)
-            .await?;
+        connection.client.subscribe(subscribe_topic, 0).await?;
     }
 
     return Ok(connection);
@@ -156,13 +131,17 @@ async fn setup_connection(
 
 async fn send_cloud_event(
     id: &InternalServerId,
-    cloud_event: &Event,
+    event: &OutgoingCloudEvent,
     connection: &MqttConnection,
 ) -> Result<ProcessingResult> {
     if let Some(ref send_topic) = connection.send_topic {
-        let serialized = serde_json::to_string(cloud_event).unwrap();
+        let serialized = serde_json::to_string(&event.cloud_event).unwrap();
         debug!("{} message serialized", id);
-        let msg = Message::new(send_topic, serialized, connection.send_qos as i32);
+        let send_qos = match event.args.delivery_guarantee {
+            DeliveryGuarantee::BestEffort => 0,
+            DeliveryGuarantee::AtLeastOnce => 1,
+        };
+        let msg = Message::new(send_topic, serialized, send_qos);
         debug!("start publishing on {}", send_topic);
 
         match connection.client.publish(msg).await {
@@ -214,7 +193,7 @@ pub fn port_mqtt_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
             BrokerEvent::OutgoingCloudEvent(event) => {
                 debug!("{} cloudevent received", &id);
                 if let Some(ref connection) = connection {
-                    match block_on(send_cloud_event(&id, &event.cloud_event, &connection)) {
+                    match block_on(send_cloud_event(&id, &event, &connection)) {
                         Ok(result) => {
                             debug!("{} cloudevent sent -> {:?}", &id, &result);
 

@@ -3,7 +3,7 @@
 > :warning:  **this port currently supports the "Best Effort" delivery guarantee for incomming events**:
 >
 > The reason for this limitation is that the current version of the paho.mqtt.rust library acknowledges a received PUBLISH message automatically before the content of the message is handed over to the application.
-> 
+>
 > If a "At Least Once" delivery guarantee for incommming messages is required, the `cerk_port_mqtt_mosquitto` must be used.
 
 This is a package for [CERK](https://github.com/ce-rust/cerk).
@@ -52,25 +52,10 @@ E.g. `Config::String(String::from("test"))`
 
 The following configurations are optional.
 
-### send_qos
-
-The [quality of service](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718099) for message delivery.
-The quality of service is only for the MQTT broker and does not change any behavior of the router or the port.
-
-* 0: At most once delivery (default)
-* 1: At least once delivery
-* 2: Exactly once delivery
-
-E.g. `Config::U8(0)`
-
 ### subscribe_topic
 
 The value has to by of type `Config::String` and contain the MQTT topic name  which the router should subscribe to.
 
-### subscribe_qos
-
-The [quality of service](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718099) for the topic subscription.
-The value has to by of type `Config::U8` and currently only `0` (At most once delivery) is supported. (see https://github.com/ce-rust/cerk/issues/71)
 
 ## Configuration Examples
 
