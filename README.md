@@ -84,6 +84,17 @@ The Loader helps by starting the router with different components.
 |------------------------------------------------------------------|------------------------------------------------------|
 | [cerk_loader_file](./cerk_loader_file/)                          | Starts the router by configuration provided by a json file |
 
+
+### Health Check Ports
+
+The Health Check Port provides an interface to check if the router is healthy.
+Technically they use the same plugin interface as the ports; however, they do not send or receive CloudEvents.
+
+| Name                                                             | Interface                                            |
+|------------------------------------------------------------------|------------------------------------------------------|
+| [cerk_port_health_check_http](./cerk_port_health_check_http/)    | HTTP                                                 |
+
+
 ## Examples
 
 Check out the README in the folder of each example for more details and setup instructions.
