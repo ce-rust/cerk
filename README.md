@@ -84,6 +84,17 @@ The Loader helps by starting the router with different components.
 |------------------------------------------------------------------|------------------------------------------------------|
 | [cerk_loader_file](./cerk_loader_file/)                          | Starts the router by configuration provided by a json file |
 
+
+### Health Check Ports
+
+The Health Check Port provides an interface to check if the router is healthy.
+Technically they use the same plugin interface as the ports; however, they do not send or receive CloudEvents.
+
+| Name                                                             | Interface                                            |
+|------------------------------------------------------------------|------------------------------------------------------|
+| [cerk_port_health_check_http](./cerk_port_health_check_http/)    | HTTP                                                 |
+
+
 ## Examples
 
 Check out the README in the folder of each example for more details and setup instructions.
@@ -97,6 +108,12 @@ Check out the README in the folder of each example for more details and setup in
 | [AMQP to Printer](./examples/examples/src/amqp_to_printer/)               | Routes CloudEvents from a RabbitMQ exchange to a queue to CERK and finally prints them to the console. |
 | [Sequence to AMQP to Printer](./examples/examples/src/sequence_to_amqp_to_printer/)   | The setup contains two routers. One Router generates events and routs them to a RabbitMQ exchange. Another router consumes the CloudEvents from a bound queue and prints them to the console. |
 | [UNIX Socket and MQTT for armv7](./examples/unix_socket_and_mqtt_on_armv7/) | Routes CloudEvents that are received on an input UNIX Socket port to an output UNIX Socket port and an MQTT output port. |
+
+## Delivery Guarantees
+
+The router supports two delivery guarantees: `BestEffort` and `AtLeastOnce`
+
+The delivery guarantee is defined on the incoming port and is attached to each message that gets transferred through the router.
 
 ## Development Setup
 

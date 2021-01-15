@@ -9,7 +9,7 @@ services:
   cerk-consumer:
     image: lazzaretti/docker-rust-cerk:0.4.0
     volumes:
-      - ../../../:/cerk/
+      - ../../../../:/cerk/
     working_dir: /cerk
     command: cargo run --bin sequence_to_amqp_to_printer_consumer
     environment:
@@ -21,7 +21,7 @@ services:
   cerk-publisher:
     image: lazzaretti/docker-rust-cerk:0.4.0
     volumes:
-      - ../../../:/cerk/
+      - ../../../../:/cerk/
     working_dir: /cerk
     command: cargo run --bin sequence_to_amqp_to_printer_publisher
     environment:
