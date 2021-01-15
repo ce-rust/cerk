@@ -9,8 +9,12 @@
 > This patch needs to stay until this issue is fixed upstream (see https://github.com/eclipse/mosquitto/pull/1932).
 >
 > This patch could be used by adding the following two parameters to the cargo build command:
+>
 >  * `MOSQUITTO_GIT_URL=https://github.com/ce-rust/mosquitto`
 >  * `MOSQUITTO_GIT_HASH=9f834dff9095e6731937d5eac767dbaca46491ac`
+>
+> These parameters are used in the `build.rs` script in the mosquitto-client-wrapper crate to override the underlying c library.
+>
 > All the docker compose setups use this binary.
 
 This is a package for [CERK](https://github.com/ce-rust/cerk).
