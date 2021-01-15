@@ -90,7 +90,6 @@ fn message_handler(
                 match serde_json::from_str::<Event>(&payload_str) {
                     Ok(cloud_event) => {
                         debug!("{} deserialized event successfully", id);
-                        // todo add delivery attempt to routing id
                         let routing_id = cloud_event.id().to_string();
                         sender_to_kernel.send(BrokerEvent::IncomingCloudEvent(
                             IncomingCloudEvent {
@@ -129,7 +128,7 @@ async fn setup_connection(
 
     let routing_args = CloudEventRoutingArgs {
         delivery_guarantee: match connection.subscribe_qos {
-            0 => DeliveryGuarantee::Unspecified,
+            0 => DeliveryGuarantee::BestEffort,
             _ => panic!("The MQTT Port Currently only supports QoS 0 (see https://github.com/ce-rust/cerk/issues/71)"),
         },
     };
