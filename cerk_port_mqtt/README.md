@@ -68,12 +68,12 @@ E.g. `Config::U8(0)`
 
 #### subscribe_topic
 
-The value has to by of type `Config::String` and contain the MQTT topic name  which the router should subscribe to.
+The value has to be of type `Config::String` and contains the MQTT topic name to which the router should subscribe to.
 
 #### subscribe_qos
 
 The [quality of service](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718099) for the topic subscription.
-The value has to by of type `Config::U8` and currently only `0` (At most once delivery) is supported. (see https://github.com/ce-rust/cerk/issues/71)
+The value has to be of type `Config::U8` and currently only `0` (At most once delivery) is supported. (see https://github.com/ce-rust/cerk/issues/71)
 
 ### Configuration Examples
 
