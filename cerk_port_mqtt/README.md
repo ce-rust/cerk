@@ -55,25 +55,10 @@ E.g. `Config::String(String::from("test"))`
 
 The following configurations are optional.
 
-#### send_qos
-
-The [quality of service](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718099) for message delivery.
-The quality of service is only for the MQTT broker and does not change any behavior of the router or the port.
-
-* 0: At most once delivery (default)
-* 1: At least once delivery
-* 2: Exactly once delivery
-
-E.g. `Config::U8(0)`
-
 #### subscribe_topic
 
-The value has to be of type `Config::String` and contains the MQTT topic name to which the router should subscribe to.
+The value has to by of type `Config::String` and contain the MQTT topic name  which the router should subscribe to.
 
-#### subscribe_qos
-
-The [quality of service](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718099) for the topic subscription.
-The value has to be of type `Config::U8` and currently only `0` (At most once delivery) is supported. (see https://github.com/ce-rust/cerk/issues/71)
 
 ### Configuration Examples
 
@@ -104,7 +89,6 @@ use cerk::kernel::Config;
 let map: HashMap<String, Config> = [
     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
     ("send_topic".to_string(), Config::String("outbox".to_string())),
-    ("send_qos".to_string(), Config::U8(2)),
 ]
 .iter()
 .cloned()
@@ -122,7 +106,6 @@ use cerk::kernel::Config;
 let map: HashMap<String, Config> = [
     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
     ("subscribe_topic".to_string(), Config::String("inbox".to_string())),
-    ("subscribe_qos".to_string(), Config::U8(0)),
 ]
 .iter()
 .cloned()
@@ -140,9 +123,7 @@ use cerk::kernel::Config;
 let map: HashMap<String, Config> = [
     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
     ("subscribe_topic".to_string(), Config::String("inbox".to_string())),
-    ("subscribe_qos".to_string(), Config::U8(0)),
     ("send_topic".to_string(), Config::String("outbox".to_string())),
-    ("send_qos".to_string(), Config::U8(2)),
 ]
 .iter()
 .cloned()
