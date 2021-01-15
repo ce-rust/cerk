@@ -1,5 +1,11 @@
 /*!
 
+> :warning:  **this port currently supports the "Best Effort" delivery guarantee for incomming events**:
+>
+> The reason for this limitation is that the current version of the paho.mqtt.rust library acknowledges a received PUBLISH message automatically before the content of the message is handed over to the application.
+> 
+> If a "At Least Once" delivery guarantee for incommming messages is required, the `cerk_port_mqtt_mosquitto` must be used.
+
 This is a package for [CERK](https://github.com/ce-rust/cerk).
 CERK is an open source [CloudEvents](https://github.com/cloudevents/spec) Router written in Rust with a MicroKernel architecture.
 
@@ -148,7 +154,7 @@ let config = Config::HashMap(map);
 
 # Limitations
 
-* **reliability** this port does not support any `DeliveryGuarantee` other then `Unspecified` (QoS 0) for incomming events (see https://github.com/ce-rust/cerk/issues/71)
+* **reliability** this port does not support any `DeliveryGuarantee` other then `BestEffort` and so does never send a `OutgoingCloudEventProcessed` or `IncomingCloudEventProcessed` messages.
 
 */
 
