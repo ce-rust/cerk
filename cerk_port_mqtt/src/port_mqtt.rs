@@ -126,7 +126,7 @@ async fn setup_connection(
         connection.client.subscribe(subscribe_topic, 0).await?;
     }
 
-    return Ok(connection);
+    Ok(connection)
 }
 
 async fn send_cloud_event(
