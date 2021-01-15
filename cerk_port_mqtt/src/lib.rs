@@ -59,9 +59,7 @@ The value has to by of type `Config::String` and contain the MQTT topic name  wh
 
 ## Configuration Examples
 
-### Minimal Configuration to send events
-
-This configuration will connect to the broker but will not send or receive any events.
+### Configuration for sending and receiving events
 
 ```
 use std::collections::HashMap;
@@ -69,6 +67,8 @@ use cerk::kernel::Config;
 
 let map: HashMap<String, Config> = [
     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
+    ("subscribe_topic".to_string(), Config::String("inbox".to_string())),
+    ("send_topic".to_string(), Config::String("outbox".to_string())),
 ]
 .iter()
 .cloned()
@@ -77,7 +77,7 @@ let map: HashMap<String, Config> = [
 let config = Config::HashMap(map);
 ```
 
-### Full Configuration for sending events
+### Configuration for sending events
 
 ```
 use std::collections::HashMap;
@@ -94,7 +94,7 @@ let map: HashMap<String, Config> = [
 let config = Config::HashMap(map);
 ```
 
-### Full Configuration for recieve events
+### Configuration for receiving events
 
 ```
 use std::collections::HashMap;
@@ -103,24 +103,6 @@ use cerk::kernel::Config;
 let map: HashMap<String, Config> = [
     ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
     ("subscribe_topic".to_string(), Config::String("inbox".to_string())),
-]
-.iter()
-.cloned()
-.collect();
-
-let config = Config::HashMap(map);
-```
-
-### Full Configuration for receiving events
-
-```
-use std::collections::HashMap;
-use cerk::kernel::Config;
-
-let map: HashMap<String, Config> = [
-    ("host".to_string(), Config::String("tcp://mqtt-broker:1883".to_string())),
-    ("subscribe_topic".to_string(), Config::String("inbox".to_string())),
-    ("send_topic".to_string(), Config::String("outbox".to_string())),
 ]
 .iter()
 .cloned()
@@ -131,7 +113,7 @@ let config = Config::HashMap(map);
 
 # Examples
 
-* [Generator to MQTT](https://github.com/ce-rust/cerk/tree/master/examples/src/mqtt/)
+* [Generator to MQTT](https://github.com/ce-rust/cerk/tree/master/examples/examples/src/mqtt/)
 
 */
 
