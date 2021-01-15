@@ -211,9 +211,6 @@ pub fn port_mqtt_start(id: InternalServerId, inbox: BoxedReceiver, sender_to_ker
                     panic!("{} can not send message, no connection configured", id)
                 }
             }
-            BrokerEvent::IncomingCloudEventProcessed(event_id, result) => {
-                debug!("{} message {} processed -> {}", id, event_id, result);
-            }
             broker_event => warn!("event {} not implemented", broker_event),
         }
     }
