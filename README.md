@@ -98,6 +98,12 @@ Check out the README in the folder of each example for more details and setup in
 | [Sequence to AMQP to Printer](./examples/examples/src/sequence_to_amqp_to_printer/)   | The setup contains two routers. One Router generates events and routs them to a RabbitMQ exchange. Another router consumes the CloudEvents from a bound queue and prints them to the console. |
 | [UNIX Socket and MQTT for armv7](./examples/unix_socket_and_mqtt_on_armv7/) | Routes CloudEvents that are received on an input UNIX Socket port to an output UNIX Socket port and an MQTT output port. |
 
+## Delivery Guarantees
+
+The router supports two delivery guarantees: `BestEffort` and `AtLeastOnce`
+
+The delivery guarantee is defined on the incoming port and is attached to each message that gets transferred through the router.
+
 ## Development Setup
 
 Different Docker-based development environments can be found [here](https://github.com/ce-rust/cerk/tree/master/setup).
