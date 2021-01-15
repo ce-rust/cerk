@@ -2,11 +2,11 @@ version: '3.7'
 
 services:
   cerk-publisher:
-    image: lazzaretti/docker-rust-cerk:0.1.0
+    image: lazzaretti/docker-rust-cerk:0.4.0
     environment: 
       - RUST_BACKTRACE=1
     volumes:
-      - ../../../:/cerk/
+      - ../../../../:/cerk/
     working_dir: /cerk
     command: cargo run --bin sequence_to_mqtt
     depends_on: 
@@ -14,9 +14,9 @@ services:
     links: 
       - mqtt-broker
   cerk-subscriber:
-    image: lazzaretti/docker-rust-cerk:0.1.0
+    image: lazzaretti/docker-rust-cerk:0.4.0
     volumes:
-      - ../../../:/cerk/
+      - ../../../../:/cerk/
     working_dir: /cerk
     command: cargo run --bin mqtt-to-printer
     depends_on: 
@@ -31,3 +31,7 @@ services:
   mqtt-client:
     image: eclipse-mosquitto
     command: mosquitto_sub -h "mqtt-broker" -t test
+    depends_on: 
+      - mqtt-broker
+    links: 
+      - mqtt-broker
