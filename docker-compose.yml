@@ -27,7 +27,7 @@ services:
     working_dir: /cerk
     command: ./check-readme.sh
   deny:
-    image: lazzaretti/docker-rust-cerk:0.4.0
+    image: lazzaretti/docker-rust-cerk:0.5.0
     volumes:
       - .:/cerk/
     working_dir: /cerk
