@@ -13,7 +13,9 @@ CERK lets you route your [CloudEvents](https://github.com/cloudevents/spec) betw
 Ports are transport layer bindings over which CloudEvents can be exchanged.
 It is built with modularity and portability in mind.
 
-The project was initially created during the student research project [CloudEvents Router](https://eprints.hsr.ch/832/).
+The project was initially created during the student research project [CloudEvents Router](https://eprints.hsr.ch/832/) and extended in the bachelor thesis [Reliable Messaging using the CloudEvents Router](https://eprints.ost.ch/id/eprint/904/).
+
+The conference paper [Reliable Event Routing in the Cloud and on the Edge: An Internet-of-Things Solution in the AgeTech Domain](https://doi.org/10.1007/978-3-030-86044-8_17) describes a specific problem and the solution that was addressed with CERK.
 
 
 ## Get Started
