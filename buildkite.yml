@@ -46,7 +46,8 @@ steps:
     commands: 
         - cd setup
         - docker-compose run ubuntulinux
-  - label: "setup: archlinux"
-    commands: 
-        - cd setup
-        - docker-compose run archlinux
+  # archlinux setup is not working on buildkite runner - seems related to https://bugs.archlinux.org/task/69563
+  # - label: "setup: archlinux"
+  #   commands: 
+  #       - cd setup
+  #       - docker-compose run archlinux
