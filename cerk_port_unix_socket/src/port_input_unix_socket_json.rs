@@ -24,7 +24,7 @@ fn liten_to_stream(
                 let stream = BufReader::new(socket);
                 liten_to_stream(id, listener, Some(stream), sender_to_kernel, max_tries - 1)
             }
-            Err(err) => panic!(err),
+            Err(err) => std::panic::panic_any(err),
         },
         Some(stream) => {
             let mut line = String::new();

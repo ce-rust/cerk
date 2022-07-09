@@ -151,7 +151,7 @@ fn setup_connection(
 ) -> Result<(Connection, AmqpOptions)> {
     let mut config = match build_config(&id, &config) {
         Ok(c) => c,
-        Err(e) => panic!(e),
+        Err(e) => std::panic::panic_any(e),
     };
 
     async_global_executor::block_on(async {
