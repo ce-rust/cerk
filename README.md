@@ -124,7 +124,7 @@ Different Docker-based development environments can be found [here](https://gith
 ### Prerequisites without Docker
 
 1. latest version of [rustup](https://www.rust-lang.org/tools/install)
-2. Rust version 1.47.0: `rustup install 1.47.0`
+2. Rust version 1.62.0: `rustup install 1.62.0`
 3. Additional C libraries depending on the platform (examples can be found in the Docker containers)
 
 Optional Tooling:
