@@ -12,7 +12,7 @@ documentation = "https://github.com/ce-rust/cerk"
 homepage = "https://github.com/ce-rust/cerk"
 keywords = ["cloudevents", "router", "cerk", "health-check"]
 readme = "README.md"
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

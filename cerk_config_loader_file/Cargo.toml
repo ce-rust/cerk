@@ -12,7 +12,7 @@ documentation = "https://github.com/ce-rust/cerk"
 homepage = "https://github.com/ce-rust/cerk"
 keywords = ["cloudevents", "router", "cerk"]
 readme = "README.md"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 log = "0.4"
