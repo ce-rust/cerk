@@ -21,15 +21,16 @@ steps:
       - docker-compose run hello-world | tee build.log | grep --line-buffered "dummy-logger-output received cloud event with id=3" | exit 0
     timeout_in_minutes: 10
     artifact_paths: "**/build.log"
-  - label: "example: build  UNIX Socket and MQTT for armv7"
-    commands:
-      - cd examples/unix_socket_and_mqtt_on_armv7
-      - docker build . -t armv7
-      - echo "now in $${PWD}"
-      - docker run -v $${PWD}/../../:/cerk armv7
-    plugins:
-      - artifacts#v1.2.0:
-          upload: "target/armv7-unknown-linux-gnueabihf/release/unix_socket_and_mqtt_on_armv7"
+  # todo: needs fixing: https://github.com/ce-rust/cerk/issues/149
+  # - label: "example: build  UNIX Socket and MQTT for armv7"
+  #   commands:
+  #     - cd examples/unix_socket_and_mqtt_on_armv7
+  #     - docker build . -t armv7
+  #     - echo "now in $${PWD}"
+  #     - docker run -v $${PWD}/../../:/cerk armv7
+  #   plugins:
+  #     - artifacts#v1.2.0:
+  #         upload: "target/armv7-unknown-linux-gnueabihf/release/unix_socket_and_mqtt_on_armv7"
   - label: "example: execute rule based routing"
     commands: 
       - cd examples/examples/src/rule_based_routing
@@ -42,10 +43,11 @@ steps:
       - ./run-example.sh
     timeout_in_minutes: 15
     artifact_paths: "**/build.log"
-  - label: "setup: ubuntulinux"
-    commands: 
-        - cd setup
-        - docker-compose run ubuntulinux
+  # todo: needs fixing: https://github.com/ce-rust/cerk/issues/150
+  # - label: "setup: ubuntulinux"
+  #   commands: 
+  #       - cd setup
+  #       - docker-compose run ubuntulinux
   # archlinux setup is not working on buildkite runner - seems related to https://bugs.archlinux.org/task/69563
   # - label: "setup: archlinux"
   #   commands: 

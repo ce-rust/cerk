@@ -10,7 +10,7 @@ license = "Apache-2.0"
 repository = "https://github.com/ce-rust/cerk"
 documentation = "https://github.com/ce-rust/cerk"
 homepage = "https://github.com/ce-rust/cerk"
-edition = "2018"
+edition = "2021"
 publish = false
 
 [[bin]]

@@ -340,7 +340,7 @@ mod tests {
                 .await;
             match r {
                 Ok(r) => assert_eq!(r.status(), status),
-                Err(e) => assert!(false, e),
+                Err(e) => assert!(false, "{}", e),
             }
         });
 
