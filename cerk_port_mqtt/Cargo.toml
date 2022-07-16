@@ -23,3 +23,4 @@ serde_json = "1.0"
 paho-mqtt = { version="0.8", features=["bundled", "build_bindgen"], default-features = false}
 anyhow = "1.0"
 async-std = "1.8"
+unicode-ident = "=1.0.1"
