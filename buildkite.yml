@@ -43,11 +43,10 @@ steps:
       - ./run-example.sh
     timeout_in_minutes: 15
     artifact_paths: "**/build.log"
-  # todo: needs fixing: https://github.com/ce-rust/cerk/issues/150
-  # - label: "setup: ubuntulinux"
-  #   commands: 
-  #       - cd setup
-  #       - docker-compose run ubuntulinux
+  - label: "setup: ubuntulinux"
+    commands: 
+        - cd setup
+        - docker-compose run ubuntulinux
   # archlinux setup is not working on buildkite runner - seems related to https://bugs.archlinux.org/task/69563
   # - label: "setup: archlinux"
   #   commands: 
