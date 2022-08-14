@@ -3,12 +3,14 @@ extern crate log;
 
 use env_logger::Env;
 
-use cerk::kernel::{bootstrap, BrokerEvent, Config, DeliveryGuarantee, StartOptions};
+use cerk::kernel::{
+    bootstrap, BrokerEvent, Config, DeliveryGuarantee, ScheduleInternalServer, StartOptions,
+};
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
-use cerk::runtime::InternalServerId;
-use cerk_port_amqp::port_amqp_start;
-use cerk_router_broadcast::router_start;
-use cerk_runtime_threading::threading_scheduler_start;
+use cerk::runtime::{InternalServerFn, InternalServerId};
+use cerk_port_amqp::PORT_AMQP;
+use cerk_router_broadcast::ROUTER_BROADCAST;
+use cerk_runtime_threading::THREADING_SCHEDULER;
 use std::collections::HashMap;
 use std::env;
 
@@ -88,10 +90,13 @@ fn main() {
     env_logger::from_env(Env::default().default_filter_or("debug")).init();
     info!("start amqp to printer router");
     let start_options = StartOptions {
-        scheduler_start: threading_scheduler_start,
-        router_start: router_start,
-        config_loader_start: &(static_config_loader_start as InternalServerFn),
-        ports: Box::new([(String::from(AMQP_PORT), port_amqp_start)]),
+        scheduler: THREADING_SCHEDULER,
+        router: ROUTER_BROADCAST,
+        config_loader: &(static_config_loader_start as InternalServerFn),
+        ports: vec![ScheduleInternalServer {
+            id: String::from(AMQP_PORT),
+            function: PORT_AMQP,
+        }],
     };
     bootstrap(start_options);
 }

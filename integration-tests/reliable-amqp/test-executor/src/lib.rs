@@ -4,8 +4,6 @@ extern crate log;
 #[macro_use]
 extern crate anyhow;
 
-extern crate ctor;
-
 use anyhow::{Context, Error, Result};
 use cerk_port_amqp::lapin_helper::assert_queue;
 use lapin::{
