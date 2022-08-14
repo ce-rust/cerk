@@ -9,8 +9,8 @@ type ConfigHashMap = HashMap<String, Config>;
 /// It can be defined recursively.
 #[allow(missing_docs)]
 #[derive(Debug, Clone, PartialEq)]
-#[serde(untagged)]
 #[derive(Deserialize, Serialize)]
+#[serde(untagged)]
 pub enum Config {
     /// empty configuration
     Null,
