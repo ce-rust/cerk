@@ -8,8 +8,7 @@ type ConfigHashMap = HashMap<String, Config>;
 /// This object represents the configuration for a component.
 /// It can be defined recursively.
 #[allow(missing_docs)]
-#[derive(Debug, Clone, PartialEq)]
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum Config {
     /// empty configuration
