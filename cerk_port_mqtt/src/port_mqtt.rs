@@ -100,7 +100,7 @@ async fn setup_connection(
 ) -> Result<MqttConnection> {
     debug!("{} start connection to mqtt broker", id);
 
-    let mut connection = build_connection(id, config);
+    let connection = build_connection(id, config);
 
     let connection_options = ConnectOptionsBuilder::new()
         .clean_session(false)
