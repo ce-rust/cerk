@@ -17,4 +17,4 @@ anyhow = "1.0"
 cerk_port_amqp = { path = "../../../cerk_port_amqp" }
 
 [dev-dependencies]
-ctor = "0.1.16"
+ctor = "0.1.23"
