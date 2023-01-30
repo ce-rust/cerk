@@ -10,7 +10,7 @@ steps:
   - label: "check readme"
     plugins:
        - docker-compose#v3.0.3:
-          run: deny
+          run: check-readme
   - label: "check deny"
     plugins:
        - docker-compose#v3.0.3:
