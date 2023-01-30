@@ -18,7 +18,7 @@ steps:
   - label: "example: execute hello world"
     commands: 
       - cd examples/examples/src/hello_world
-      - docker-compose run hello-world | tee build.log | grep --line-buffered "dummy-logger-output received cloud event with id=3" | exit 0
+      - docker-compose run hello-world | tee build.log | grep --line-buffered -q "dummy-logger-output received cloud event with id=3" | exit 0
     timeout_in_minutes: 10
     artifact_paths: "**/build.log"
   # todo: needs fixing: https://github.com/ce-rust/cerk/issues/149
@@ -34,7 +34,7 @@ steps:
   - label: "example: execute rule based routing"
     commands: 
       - cd examples/examples/src/rule_based_routing
-      - docker-compose run rule_based_routing | tee build.log | grep --line-buffered "dummy-logger-output received cloud event with id=10" | exit 0
+      - docker-compose run rule_based_routing | tee build.log | grep --line-buffered -q "dummy-logger-output received cloud event with id=10" | exit 0
     timeout_in_minutes: 15
     artifact_paths: "**/build.log"
   - label: "example: execute sequence_to_amqp_to_printer"
