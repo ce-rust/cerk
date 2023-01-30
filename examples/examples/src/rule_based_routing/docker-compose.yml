@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   rule-based-routing:
-    image: rust:1.62
+    image: rust:1.67
     volumes:
       - ../../../:/cerk/
     working_dir: /cerk
