@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   test:
-    image: lazzaretti/docker-rust-cerk:0.6.0
+    image: lazzaretti/docker-rust-cerk:0.7.0
     volumes:
       - .:/cerk/
       - ./lib/libmosquitto.so.1:/usr/local/lib/libmosquitto.so
@@ -15,19 +15,19 @@ services:
       && cargo fmt -- --check
       "
   doc:
-    image: lazzaretti/docker-rust-cerk:0.6.0
+    image: lazzaretti/docker-rust-cerk:0.7.0
     volumes:
       - .:/cerk/
     working_dir: /cerk
     command: cargo doc --all
   check-readme:
-    image: lazzaretti/ce-rust-docker-cargo-readme:3.1.2-1
+    image: lazzaretti/ce-rust-docker-cargo-readme:3.2.0
     volumes:
       - .:/cerk/
     working_dir: /cerk
     command: ./check-readme.sh
   deny:
-    image: lazzaretti/docker-rust-cerk:0.6.0
+    image: lazzaretti/docker-rust-cerk:0.7.0
     volumes:
       - .:/cerk/
     working_dir: /cerk
