@@ -4,6 +4,6 @@ services:
   rule-based-routing:
     image: rust:1.67
     volumes:
-      - ../../../:/cerk/
-    working_dir: /cerk
+      - ../../../../:/cerk/
+    working_dir: /cerk/examples/examples
     command: cargo run --bin rule_based_routing
