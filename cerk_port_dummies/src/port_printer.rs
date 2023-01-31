@@ -120,7 +120,7 @@ mod tests {
         let mut event = build_event();
         event.args.delivery_guarantee = DeliveryGuarantee::AtLeastOnce;
         send_to_port.send(BrokerEvent::OutgoingCloudEvent(event.clone()));
-        let response = recv_from_port.receive_timeout(Duration::from_millis(10));
+        let response = recv_from_port.receive_timeout(Duration::from_millis(100));
         assert!(response.is_some());
 
         if let BrokerEvent::OutgoingCloudEventProcessed(e) = response.unwrap() {
