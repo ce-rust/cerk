@@ -5,8 +5,6 @@ on:
     branches:
       - master
   pull_request:
-    paths:
-      - 'docker/**'
 
 env:
   REGISTRY: ghcr.io
