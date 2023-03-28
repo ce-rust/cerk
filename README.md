@@ -3,7 +3,6 @@
 [![Build status](https://badge.buildkite.com/4494e29d5f2c47e3fe998af46dff78a447800a76a68024e392.svg?branch=master)](https://buildkite.com/ce-rust/cerk)
 [![Crates.io](https://img.shields.io/crates/v/cerk)](https://docs.rs/cerk/*/cerk/)
 [![Docs status](https://docs.rs/cerk/badge.svg)](https://docs.rs/cerk/)
-![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/cloudeventsrouter/cerk)
 
 [CERK](https://github.com/ce-rust/cerk) is an open-source [CloudEvents](https://github.com/cloudevents/spec) Router written in Rust with a MicroKernel architecture.
 
@@ -20,7 +19,7 @@ The conference paper [Reliable Event Routing in the Cloud and on the Edge: An In
 
 ## Get Started
 
-The easiest way to use the router is to use the [docker image](https://hub.docker.com/repository/docker/cloudeventsrouter/cerk) from Docker Hub.
+The easiest way to use the router is to use the [docker image](https://github.com/orgs/ce-rust/packages?repo_name=cerk).
 
 If you like to build the router by yourself, start with an [example](#examples). E.g. the [hello world example](https://github.com/ce-rust/cerk/tree/master/examples/examples/src/hello_world).
 
