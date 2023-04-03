@@ -1,4 +1,4 @@
-FROM lazzaretti/docker-rust-cerk:0.4.0 as build-env
+FROM --platform=linux/amd64 lazzaretti/docker-rust-cerk:0.7.0 as build-env
 WORKDIR /app
 
 # add missing libraries, inspired by https://github.com/kyos0109/varnish60-distroless/blob/master/Dockerfile
