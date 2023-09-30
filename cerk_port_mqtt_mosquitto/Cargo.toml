@@ -19,7 +19,7 @@ log = "0.4"
 env_logger = "0.7"
 url = "2"
 cerk = { version = "0.2", path = "../cerk" }
-cloudevents-sdk = "0.3"
+cloudevents-sdk = "0.7"
 serde_json = "1.0"
 mosquitto-client-wrapper = "^0.3.1"
 anyhow = "1.0"

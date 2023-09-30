@@ -3,7 +3,7 @@ use crate::kernel::outgoing_processing_result::ProcessingResult;
 use crate::kernel::CloudEventRoutingArgs;
 use crate::runtime::channel::BoxedSender;
 use crate::runtime::{InternalServerFnRef, InternalServerId};
-use cloudevents::Event;
+use cloudevents::event::Event;
 use serde::Serialize;
 use std::fmt;
 

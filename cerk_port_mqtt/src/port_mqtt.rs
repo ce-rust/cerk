@@ -6,7 +6,8 @@ use cerk::kernel::{
 };
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
-use cloudevents::{AttributesReader, Event};
+use cloudevents::event::Event;
+use cloudevents::AttributesReader;
 use paho_mqtt::{
     AsyncClient, ConnectOptionsBuilder, CreateOptionsBuilder, Message, PersistenceType,
 };
