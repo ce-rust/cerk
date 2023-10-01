@@ -7,7 +7,7 @@ services:
       - 5672:5672
       - 15672:15672
   cerk-consumer:
-    image: lazzaretti/docker-rust-cerk:0.7.0
+    image: ghcr.io/ce-rust/rust-cerk:v0.8.0
     volumes:
       - ../../../../:/cerk/
     working_dir: /cerk
@@ -19,7 +19,7 @@ services:
     links:
       - rabbitmq
   cerk-publisher:
-    image: lazzaretti/docker-rust-cerk:0.7.0
+    image: ghcr.io/ce-rust/rust-cerk:v0.8.0
     volumes:
       - ../../../../:/cerk/
     working_dir: /cerk

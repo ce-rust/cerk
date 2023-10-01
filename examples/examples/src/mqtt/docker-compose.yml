@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   cerk-publisher:
-    image: lazzaretti/docker-rust-cerk:0.7.0
+    image: ghcr.io/ce-rust/rust-cerk:v0.8.0
     environment: 
       - RUST_BACKTRACE=1
     volumes:
@@ -14,7 +14,7 @@ services:
     links: 
       - mqtt-broker
   cerk-subscriber:
-    image: lazzaretti/docker-rust-cerk:0.7.0
+    image: ghcr.io/ce-rust/rust-cerk:v0.8.0
     volumes:
       - ../../../../:/cerk/
     working_dir: /cerk/examples/examples
