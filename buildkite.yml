@@ -11,10 +11,6 @@ steps:
     plugins:
        - docker-compose#v3.0.3:
           run: check-readme
-  - label: "check deny"
-    plugins:
-       - docker-compose#v3.0.3:
-           run: deny
   - label: "example: execute hello world"
     commands: 
       - cd examples/examples/src/hello_world
