@@ -4,7 +4,7 @@ use cerk::kernel::{
 };
 use cerk::runtime::channel::{BoxedReceiver, BoxedSender};
 use cerk::runtime::{InternalServerFn, InternalServerFnRefStatic, InternalServerId};
-use cloudevents::Event;
+use cloudevents::event::Event;
 use serde_json;
 use std::io::Write;
 use std::os::unix::net::{UnixListener, UnixStream};
@@ -129,7 +129,7 @@ mod tests {
         OutgoingCloudEventProcessed, ProcessingResult,
     };
     use cerk_runtime_threading::channel::new_channel_with_size;
-    use cloudevents::Event;
+    use cloudevents::event::Event;
     use std::thread;
     use std::time::Duration;
 

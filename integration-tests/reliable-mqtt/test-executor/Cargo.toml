@@ -14,7 +14,7 @@ paho-mqtt = {version="0.11.0", features=["bundled", "build_bindgen"], default-fe
 futures-lite = "1.11.2"
 ctor = "0.1.16"
 anyhow = "1.0"
-cloudevents-sdk = "0.3.0"
+cloudevents-sdk = "0.7"
 chrono = "0.4"
 serde_json = "1.0"
 async-std = {version = "1.7.0", features = ["attributes"]}
